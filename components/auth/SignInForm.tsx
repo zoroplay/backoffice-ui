@@ -85,16 +85,16 @@ export default function SignInForm() {
                 {/* Email Field */}
                 <div>
                   <Label>
-                    Email <span className="text-error-500">*</span>
+                    Username <span className="text-error-500">*</span>
                   </Label>
                   <Input
                     placeholder="username"
                     type="text"
                     {...register("username")}
                   />
-                  {errors.email && (
+                  {errors.username && (
                     <p className="text-error-500 text-xs mt-1">
-                      {errors.email.message}
+                      {errors.username.message}
                     </p>
                   )}
                 </div>
