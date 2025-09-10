@@ -1,13 +1,19 @@
-import axios from 'axios';
+import axios from "axios";
+import { s } from "vitest/dist/chunks/reporters.d.DL9pg5DB.js";
 
-const fullEndpoint = (url) => `${process.env.NEXT_PUBLIC_BASE_URL}${url.startsWith("/") ? url.replace("/", "") : url}`;
+const fullEndpoint = (url: string) =>
+  `${process.env.NEXT_PUBLIC_BASE_URL}${
+    url.startsWith("/") ? url.replace("/", "") : url
+  }`;
 
-export const ApiRequest = async (url, method, data = null) => {
+export const ApiRequest = async (url: string, method: string, data = null) => {
   const options = {
     method: method,
     url: fullEndpoint(url),
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
+      "client-code": "SBE",
+      "sbe-client-id": 4,
     },
     data: data,
   };
@@ -19,21 +25,27 @@ export const ApiRequest = async (url, method, data = null) => {
       status: response.status,
     };
   } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      return {
+        data: error.response.data,
+        status: error.response.status,
+      };
+    }
     return {
-      data: error.response ? error.response.data : null,
-      status: error.response ? error.response.status : 500,
+      data: null,
+      status: 500,
     };
   }
 };
 
-export const GETREQUEST = async (url) => {
-  return ApiRequest(url, 'GET');
+export const GETREQUEST = async (url: string) => {
+  return ApiRequest(url, "GET");
 };
 
-export const POSTREQUEST = async (url, data) => {
-  return ApiRequest(url, 'POST', data);
+export const POSTREQUEST = async (url: string, data: any) => {
+  return ApiRequest(url, "POST", data);
 };
 
-export const PUTREQUEST = async (url, data) => {
-  return ApiRequest(url, 'PUT', data);
+export const PUTREQUEST = async (url: string, data: any) => {
+  return ApiRequest(url, "PUT", data);
 };

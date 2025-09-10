@@ -13,7 +13,7 @@ import { toast } from "sonner";
 
 // Define the validation schema using Zod
 const loginSchema = z.object({
-  email: z.string().min(1, "Email is required").email("Invalid email address"),
+  username: z.string().min(1, "Username is required"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
@@ -45,17 +45,17 @@ export default function SignInForm() {
     setLoading(true);
 
     try {
-      const response = await POSTREQUEST("/auth/login", data);
+      const response = await POSTREQUEST("/auth/login?source=admin", data);
       console.log("Login data:", response);
-      if (response?.data?.status === 200) {
-        toast.success("Login successful");
-        router.push("/dashboard"); // Navigate to the dashboard
-        localStorage.setItem(
-          "token",
-          JSON.stringify(response?.data?.data?.token)
-        );
-        localStorage.setItem("authData", JSON.stringify(response?.data));
-      }
+      // if (response?.data?.status === 200) {
+      toast.success("Login successful");
+      router.push("/dashboard"); // Navigate to the dashboard
+      localStorage.setItem(
+        "token",
+        JSON.stringify(response?.data?.data?.token)
+      );
+      localStorage.setItem("authData", JSON.stringify(response?.data));
+      // }
       if (response?.data?.status === 404) {
         toast.error(response?.data?.error || "Invalid Email or Password");
       }
@@ -88,9 +88,9 @@ export default function SignInForm() {
                     Email <span className="text-error-500">*</span>
                   </Label>
                   <Input
-                    placeholder="info@gmail.com"
-                    type="email"
-                    {...register("email")}
+                    placeholder="username"
+                    type="text"
+                    {...register("username")}
                   />
                   {errors.email && (
                     <p className="text-error-500 text-xs mt-1">
