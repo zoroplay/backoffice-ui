@@ -36,7 +36,7 @@ export default function AdminLayout({
 
 function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen xl:flex">
+    <div className="relative min-h-screen xl:flex">
       {/* Sidebar and Backdrop */}
       <AppSidebar />
       <Backdrop />
@@ -58,12 +58,12 @@ function MainContent({ children }: { children: React.ReactNode }) {
 
   return (
     <div
-      className={`flex-1 transition-all duration-300 ease-in-out ${mainContentMargin}`}
+      className={`relative flex-1 transition-all duration-300 ease-in-out ${mainContentMargin}`}
     >
       {/* Header */}
       <AppHeader />
       {/* Page Content */}
-      <div className="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6">
+      <div className="p-4 mx-auto  md:p-6">
         {children}
       </div>
     </div>

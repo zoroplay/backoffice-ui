@@ -1,4 +1,6 @@
-import GridShape from "@/components/common/GridShape";
+// import GridShape from "@/components/common/GridShape";
+import GridShape from "../../components/common/GridShape";
+
 import ThemeTogglerTwo from "@/components/common/ThemeTogglerTwo";
 import "../globals.css";
 import { ThemeProvider } from "@/context/ThemeContext";

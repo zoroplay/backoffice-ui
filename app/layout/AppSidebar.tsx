@@ -32,6 +32,7 @@ const navItems: NavItem[] = [
     name: "Dashboard",
     path: "/dashboard",
   },
+  
   {
     icon: <CalenderIcon />,
     name: "Reporting & BI",
@@ -77,26 +78,7 @@ const navItems: NavItem[] = [
       { name: "Pending Cashout Bets", path: "/", pro: false },
       { name: "Exposure Monitor", path: "/", pro: false },
     ],
-  },
-
-  // {
-  //   name: "Forms",
-  //   icon: <ListIcon />,
-  //   subItems: [{ name: "Form Elements", path: "/form-elements", pro: false }],
-  // },
-  // {
-  //   name: "Tables",
-  //   icon: <TableIcon />,
-  //   subItems: [{ name: "Basic Tables", path: "/basic-tables", pro: false }],
-  // },
-  // {
-  //   name: "Pages",
-  //   icon: <PageIcon />,
-  //   subItems: [
-  //     { name: "Blank Page", path: "/blank", pro: false },
-  //     { name: "404 Error", path: "/error-404", pro: false },
-  //   ],
-  // },
+  },  
 ];
 
 const othersItems: NavItem[] = [

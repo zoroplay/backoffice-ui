@@ -1,5 +1,5 @@
 "use client";
-
+ import  Button  from "@/components/ui/button/Button";
 import type { Metadata } from "next";
 import { withAuth } from "@/utils/withAuth";
 // import { EcommerceMetrics } from "@/components/ecommerce/EcommerceMetrics";
@@ -19,6 +19,17 @@ import { withAuth } from "@/utils/withAuth";
 function Dashboard() {
   return (
     <div className="grid grid-cols-12 gap-4 md:gap-6">
+     <div className= "size-24 bg-red-200">
+     
+
+
+  
+    <div className="">
+      {/* <Button variant="default">Default</Button> */}
+      <Button variant="outline">Outline</Button>
+      <Button variant="primary">primary</Button>
+    </div>
+         </div>
       {/* <div className="col-span-12 space-y-6 xl:col-span-7">
         <EcommerceMetrics />
 
