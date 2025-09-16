@@ -7,7 +7,7 @@ import "./globals.css";
 // const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "SBE BackOffice",
+  title: "SBE | BackOffice",
   description: "Backoffice UI",
 };
 

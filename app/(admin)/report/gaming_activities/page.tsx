@@ -2,9 +2,9 @@
 
 import React, { useState } from "react";
 import Select from "react-select";
-import { DateRangePicker, Range, RangeKeyDict, DateRangePickerProps } from "react-date-range";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { DataTable } from "@/components/tables/DataTable";
+import { DateRangeFilter } from "@/components/common/DateRangeFilter";
 import { columns } from "./column";
 import { tableData } from "./data";
 import { withAuth } from "@/utils/withAuth";
@@ -54,13 +54,6 @@ const groupedOptions = [
   },
 ];
 
-// ----------------------
-// Date Picker Type Fix
-// ----------------------
-interface FixedDateRangePickerProps extends DateRangePickerProps {
-  showSelectionPreview?: boolean;
-  showMonthAndYearPickers?: boolean;
-}
 
 // ----------------------
 // Component
@@ -68,20 +61,7 @@ interface FixedDateRangePickerProps extends DateRangePickerProps {
 function GamingActivities() {
   const [filters, setFilters] = useState<any[]>([]);
   const [searchText, setSearchText] = useState("");
-  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-  const [selectionRange, setSelectionRange] = useState<Range>({
-    startDate: new Date(),
-    endDate: new Date(),
-    key: "selection",
-  });
-
-  const handleSelect = (ranges: RangeKeyDict): void => {
-    const { startDate, endDate } = ranges.selection;
-    if (startDate && endDate) {
-      setSelectionRange({ startDate, endDate, key: "selection" });
-      setIsCalendarOpen(false);
-    }
-  };
+  
 
   // ----------------------
   // Filter & Search logic placeholder
@@ -110,26 +90,12 @@ function GamingActivities() {
         </div>
 
         {/* Date Range Picker */}
-        <div className="relative">
-          <input
-            type="text"
-            value={`${selectionRange.startDate?.toLocaleDateString()} - ${selectionRange.endDate?.toLocaleDateString()}`}
-            readOnly
-            onClick={() => setIsCalendarOpen(!isCalendarOpen)}
-            className="border py-2 pl-3 rounded focus:outline-none focus:ring focus:ring-zinc-500"
-            placeholder="Select date range"
-          />
-          {isCalendarOpen && (
-            <div className="absolute top-full left-0 mt-2 z-10">
-              <DateRangePicker
-                ranges={[selectionRange]}
-                onChange={handleSelect}
-                {...({ showSelectionPreview: true, showMonthAndYearPickers: true } as FixedDateRangePickerProps)}
-                className="shadow-lg border rounded"
-              />
-            </div>
-          )}
-        </div>
+        <DateRangeFilter
+        onChange={(range) => {
+        console.log("Selected Range:", range);
+    // You can trigger table filtering here
+  }}
+/>
 
         {/* Search */}
         <input
@@ -143,7 +109,6 @@ function GamingActivities() {
 
       {/* Breadcrumb */}
       <PageBreadcrumb pageTitle="Gaming Activities" />
-
       {/* Table */}
       <DataTable columns={columns} data={filteredData} />
     </div>

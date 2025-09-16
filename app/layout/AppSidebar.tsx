@@ -44,26 +44,17 @@ const navItems: NavItem[] = [
       },
       { name: "Network Sales", path: "/report/network_sales", pro: false },
       {
-        name: "Registration History",
-        path: "/report/registration_history",
+        name: "Net Cash Report",
+        path: "/report/net_cash_report",
         pro: false,
       },
-      {
-        name: "Accounting Report",
-        path: "/report/accounting_report",
-        pro: false,
-      },
-      {
-        name: "Payout Transactions",
-        path: "/report/paylout_transaction",
-        pro: false,
-      },
-      { name: "Net Cash Report", path: "/report/net_cash_report", pro: false },
-      {
+      {        name: "Retail Cash Report",        path: "/report/retail_cash_report",    pro: false,      },
+         {
         name: "Money Transactions",
-        path: "/report/money_transaction",
+        path: "/report/money_transactions",
         pro: false,
       },
+         { name: "Tax Report", path: "/report/tax_report", pro: false },
     ],
   },
 
