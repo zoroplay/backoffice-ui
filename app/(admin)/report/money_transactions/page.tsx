@@ -51,8 +51,8 @@ function MoneyTransactions() {
   >(null);
 
   const [searchFields, setSearchFields] = useState<SearchField[]>([
-    searchOptions[0],
-  ]); // default: Transaction ID
+    searchOptions[0]
+  ]); // default is Transaction ID
 
   const [searchValue, setSearchValue] = useState("");
 

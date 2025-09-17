@@ -1,4 +1,3 @@
-// Data model for Gaming Activities table
 export interface TableDataTypes {
   group: number
   bets: number

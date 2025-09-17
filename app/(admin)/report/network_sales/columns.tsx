@@ -1,4 +1,3 @@
-// columns/networkSalesColumns.ts
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"

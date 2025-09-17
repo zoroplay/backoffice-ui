@@ -54,7 +54,11 @@ const navItems: NavItem[] = [
         path: "/report/money_transactions",
         pro: false,
       },
-         { name: "Tax Report", path: "/report/tax_report", pro: false },
+     {
+           name: "Tax Report",
+           path: "/report/tax_report", 
+           pro: false
+           },
     ],
   },
 
