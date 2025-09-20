@@ -6,7 +6,7 @@ import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { DataTable } from "@/components/tables/DataTable";
 import { FilterActions } from "@/components/common/FilterActions";
 import type { Range } from "react-date-range";
-import { DateRangeFilter } from "@/components/common/DateRangeFilter";
+import { DateRangeFilter, defaultDateRange } from "@/components/common/DateRangeFilter";
 import { networkSalesColumns } from "../network_sales/columns";
 import { NetworkSalesTypes } from "./columns";
 import { networkSalesData } from "../network_sales/data";
@@ -27,16 +27,13 @@ const groupedOptions = [
   },
 ];
 
+
 // ----------------------
 // Component
 // ----------------------
 function NetworkSales() {
   const [selectedFilter, setSelectedFilter] = useState<any[]>([]);
-  const [dateRange, setDateRange] = useState<Range>({
-    startDate: new Date(),
-    endDate: new Date(),
-    key: "selection",
-  });
+  const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
 
   const [filteredData, setFilteredData] = useState<NetworkSalesTypes[]>(
     networkSalesData
@@ -46,11 +43,7 @@ function NetworkSales() {
   // Clear filters
   // ----------------------
   const handleClear = () => {
-    setDateRange({
-      startDate: new Date(),
-      endDate: new Date(),
-      key: "selection",
-    });
+    setDateRange(defaultDateRange);
     setSelectedFilter([]);
     setFilteredData(networkSalesData);
   };
@@ -89,6 +82,7 @@ function NetworkSales() {
           {/* Multi-Select */}
           <div className="w-[20rem]">
             <Select
+              className="dark:text-black"
               options={groupedOptions}
               isMulti
               placeholder="Filter by Product Type"

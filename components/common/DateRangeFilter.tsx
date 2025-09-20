@@ -58,10 +58,16 @@ export function DateRangeFilter({ range, onChange }: DateRangeFilterProps) {
               showSelectionPreview: true,
               showMonthAndYearPickers: true,
             } as FixedDateRangePickerProps)}
-            className="shadow-lg border rounded bg-white dark:bg-gray-800"
+            className="shadow-lg border rounded dark:text-black "
           />
         </div>
       )}
     </div>
   );
 }
+
+export const defaultDateRange: Range = {
+  startDate: new Date(new Date().setDate(new Date().getDate() - 30)), // 30 days ago
+  endDate: new Date(), // today
+  key: "selection",
+};

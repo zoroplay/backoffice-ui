@@ -63,7 +63,7 @@ function MainContent({ children }: { children: React.ReactNode }) {
       {/* Header */}
       <AppHeader />
       {/* Page Content */}
-      <div className="p-4 mx-auto  md:p-6 dark:bg-gray-900 h-full">
+      <div className="p-4 mx-auto  md:p-6 dark:bg-gray-900 min-h-[calc(100vh-64px)]">
         {children}
       </div>
     </div>

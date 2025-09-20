@@ -19,14 +19,14 @@ export const summaryColumns: ColumnDef<TaxSummary>[] = [
 // Detailed Columns
 // ----------------------
 export const detailColumns: ColumnDef<TaxDetail>[] = [
+  { accessorKey: "date", header: "Date" },
   { accessorKey: "customer", header: "Customer" },
   { accessorKey: "betslipId", header: "Betslip ID" },
   { accessorKey: "punterAmt", header: "Punter Amt" },
   { accessorKey: "stakeAmt", header: "Stake Amt" },
   { accessorKey: "exciseAmt", header: "Excise Amt" },
   { accessorKey: "odds", header: "Odds" },
-  { accessorKey: "type", header: "Type" },
-  { accessorKey: "date", header: "Date" },
+  { accessorKey: "type", header: "Type" },  
   { accessorKey: "potentialWinnings", header: "Pot. Winnings" },
   { accessorKey: "wthTax", header: "WTH Tax" },
 ];

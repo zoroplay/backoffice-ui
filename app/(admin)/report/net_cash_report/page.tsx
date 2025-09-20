@@ -6,7 +6,7 @@ import makeAnimated from "react-select/animated";
 import type { Range } from "react-date-range";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { DataTable } from "@/components/tables/DataTable";
-import { DateRangeFilter } from "@/components/common/DateRangeFilter";
+import { DateRangeFilter, defaultDateRange } from "@/components/common/DateRangeFilter";
 import { FilterActions } from "@/components/common/FilterActions";
 import { summaryColumns, groupColumns } from "./columns";
 import {
@@ -40,13 +40,6 @@ const filterOptions = [
 ];
 
 const animatedComponents = makeAnimated();
-
-// Default wide date range
-const defaultDateRange: Range = {
-  startDate: new Date(),
-  endDate: new Date(),
-  key: "selection",
-};
 
 function NetCashReport() {
   const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
@@ -125,6 +118,7 @@ function NetCashReport() {
           {/* Combined Select */}
           <div className="w-[20rem]">
             <Select
+              className="dark:text-black"
               options={filterOptions}
               components={animatedComponents}
               isMulti

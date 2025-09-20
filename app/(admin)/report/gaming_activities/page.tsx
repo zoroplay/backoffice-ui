@@ -5,16 +5,11 @@ import Select from "react-select";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { DataTable } from "@/components/tables/DataTable";
 import type { Range } from "react-date-range";
-import { DateRangeFilter } from "@/components/common/DateRangeFilter";
+import { DateRangeFilter, defaultDateRange } from "@/components/common/DateRangeFilter";
 import { columns } from "./column";
 import { tableData } from "./data";
 import { withAuth } from "@/utils/withAuth";
 
-const defaultDateRange: Range = {
-  startDate: new Date(),
-  endDate: new Date(),
-  key: "selection",
-};
 
 // ----------------------
 // Select Options
@@ -90,6 +85,7 @@ function GamingActivities() {
         {/* Grouped Multi-Select */}
         <div className="w-[28rem]">
           <Select
+            className="dark:text-black"
             options={groupedOptions}
             isMulti
             placeholder="Filter by Game, Match, Ticket, Bet, Client..."
