@@ -2,7 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table"
 
-export type NetworkSales = {
+export type NetworkSalesTypes = {
   name: string
   bets: number
   turnover: number
@@ -10,9 +10,11 @@ export type NetworkSales = {
   ggr: number
   margin: string
   ngr: number
+  date: string
+  productType: string
 }
 
-export const networkSalesColumns: ColumnDef<NetworkSales>[] = [
+export const networkSalesColumns: ColumnDef<NetworkSalesTypes>[] = [
   {
     accessorKey: "name",
     header: "Name",

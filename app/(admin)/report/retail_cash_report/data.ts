@@ -1,10 +1,10 @@
-// data.ts
 export type RetailCashRecord = {
   username: string;
   deposits: number;
   depositAmount: number;
   withdrawals: number;
   withdrawalAmount: number;
+  date: string;
 };
 
 export const retailCashData: RetailCashRecord[] = [
@@ -14,6 +14,7 @@ export const retailCashData: RetailCashRecord[] = [
     depositAmount: 1200,
     withdrawals: 2,
     withdrawalAmount: 500,
+    date: "2025-09-01",
   },
   {
     username: "mary_smith",
@@ -21,6 +22,7 @@ export const retailCashData: RetailCashRecord[] = [
     depositAmount: 900,
     withdrawals: 1,
     withdrawalAmount: 200,
+    date: "2025-09-05",
   },
   {
     username: "bettingKing",
@@ -28,6 +30,7 @@ export const retailCashData: RetailCashRecord[] = [
     depositAmount: 2500,
     withdrawals: 4,
     withdrawalAmount: 1000,
+    date: "2025-09-10",
   },
   {
     username: "luckyStar",
@@ -35,5 +38,6 @@ export const retailCashData: RetailCashRecord[] = [
     depositAmount: 300,
     withdrawals: 0,
     withdrawalAmount: 0,
+    date: "2025-09-14",
   },
 ];

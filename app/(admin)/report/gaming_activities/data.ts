@@ -5,7 +5,7 @@ export interface TableDataTypes {
   winnings: number
   ggr: number
   margin: string
-}
+} 
 
 // Mock data (can be replaced with API fetch later)
 export const tableData: TableDataTypes[] = [

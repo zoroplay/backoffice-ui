@@ -5,6 +5,12 @@ import { RetailCashRecord } from "./data";
 
 export const columns: ColumnDef<RetailCashRecord>[] = [
   {
+    accessorKey: "date",
+    header: "Date",
+    cell: ({ row }) =>
+      new Date(row.original.date).toLocaleDateString("en-GB"), // dd/mm/yyyy
+  },
+  {
     accessorKey: "username",
     header: "Username",
   },

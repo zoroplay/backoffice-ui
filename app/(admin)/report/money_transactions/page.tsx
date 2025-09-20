@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Select from "react-select";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { DataTable } from "@/components/tables/DataTable";
+import type { Range } from "react-date-range";
 import { DateRangeFilter } from "@/components/common/DateRangeFilter";
 import { columns } from "./columns";
 import { transactions } from "./data";
@@ -23,6 +24,12 @@ type Transaction = {
   balance: number;
 };
 
+const defaultDateRange: Range = {
+  startDate: new Date(),
+  endDate: new Date(),
+  key: "selection",
+};
+
 // ----------------------
 // Options
 // ----------------------
@@ -34,7 +41,9 @@ const searchOptions: SearchField[] = [
   { value: "user", label: "Username" },
 ];
 
-const operationOptions = [
+const operationOptions = [{
+  label: "Operation Type",
+  options: [
   { value: "bet deposit", label: "Bet Deposit" },
   { value: "bet winnings", label: "Bet Winnings" },
   { value: "deposit", label: "Deposit" },
@@ -43,7 +52,7 @@ const operationOptions = [
   { value: "interaccount transfers", label: "Interaccount Transfers" },
   { value: "cut stake", label: "CUT(1) Stake" },
   { value: "cut 5%", label: "CUT(1) 5%" },
-];
+]}];
 
 function MoneyTransactions() {
   const [operationFilter, setOperationFilter] = useState<
@@ -53,6 +62,7 @@ function MoneyTransactions() {
   const [searchFields, setSearchFields] = useState<SearchField[]>([
     searchOptions[0]
   ]); // default is Transaction ID
+  const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
 
   const [searchValue, setSearchValue] = useState("");
 
@@ -109,10 +119,9 @@ function MoneyTransactions() {
 
         {/* Date Range Picker */}
         <DateRangeFilter
-          onChange={(range) => {
-            console.log("Selected Range:", range);
-          }}
-        />
+                    range={dateRange}
+                    onChange={(range) => setDateRange(range)}
+                  />
       </div>
 
       {/* Breadcrumb */}

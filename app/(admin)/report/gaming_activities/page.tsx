@@ -4,10 +4,17 @@ import React, { useState } from "react";
 import Select from "react-select";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { DataTable } from "@/components/tables/DataTable";
+import type { Range } from "react-date-range";
 import { DateRangeFilter } from "@/components/common/DateRangeFilter";
 import { columns } from "./column";
 import { tableData } from "./data";
 import { withAuth } from "@/utils/withAuth";
+
+const defaultDateRange: Range = {
+  startDate: new Date(),
+  endDate: new Date(),
+  key: "selection",
+};
 
 // ----------------------
 // Select Options
@@ -61,6 +68,8 @@ const groupedOptions = [
 function GamingActivities() {
   const [filters, setFilters] = useState<any[]>([]);
   const [searchText, setSearchText] = useState("");
+  const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
+
   
 
   // ----------------------
@@ -91,10 +100,8 @@ function GamingActivities() {
 
         {/* Date Range Picker */}
         <DateRangeFilter
-        onChange={(range) => {
-        console.log("Selected Range:", range);
-    // You can trigger table filtering here
-  }}
+          range={dateRange}
+          onChange={(range) => setDateRange(range)}
 />
 
         {/* Search */}
@@ -103,7 +110,7 @@ function GamingActivities() {
           placeholder="Search..."
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
-          className="border py-2 px-3 rounded focus:outline-none focus:ring focus:ring-zinc-500 w-[20rem]"
+          className="border py-2 px-3 rounded focus:outline-none  dark:text-gray-50 focus:ring focus:ring-zinc-500 w-[20rem]"
         />
       </div>
 
