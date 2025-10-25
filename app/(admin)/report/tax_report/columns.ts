@@ -1,6 +1,3 @@
-// columns.tsx
-"use client";
-
 import { ColumnDef } from "@tanstack/react-table";
 import { TaxSummary, TaxDetail } from "./data";
 
@@ -26,7 +23,7 @@ export const detailColumns: ColumnDef<TaxDetail>[] = [
   { accessorKey: "stakeAmt", header: "Stake Amt" },
   { accessorKey: "exciseAmt", header: "Excise Amt" },
   { accessorKey: "odds", header: "Odds" },
-  { accessorKey: "type", header: "Type" },  
+  { accessorKey: "type", header: "Type" },
   { accessorKey: "potentialWinnings", header: "Pot. Winnings" },
   { accessorKey: "wthTax", header: "WTH Tax" },
 ];

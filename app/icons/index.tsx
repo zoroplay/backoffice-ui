@@ -51,10 +51,16 @@ import HorizontaLDots from "./horizontal-dots.svg";
 import ChatIcon from "./chat.svg";
 import MoreDotIcon from "./more-dot.svg";
 import BellIcon from "./bell.svg";
+import SportsBallsIcon from "./sports-balls.svg";
+import CasinoSlotIcon from "./casino-slot.svg";
+import GiftBoxIcon from "./gift-box.svg";
 
 export {
   DownloadIcon,
   BellIcon,
+  SportsBallsIcon,
+  CasinoSlotIcon,
+  GiftBoxIcon,
   MoreDotIcon,
   FileIcon,
   GridIcon,

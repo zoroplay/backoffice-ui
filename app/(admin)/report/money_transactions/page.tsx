@@ -7,14 +7,13 @@ import { DataTable } from "@/components/tables/DataTable";
 import type { Range } from "react-date-range";
 import { DateRangeFilter } from "@/components/common/DateRangeFilter";
 import { FilterActions } from "@/components/common/FilterActions";
-import { columns } from "./columns";
-import { Transaction } from "./columns";
+import { columns,Transaction } from "./columns";
 import { transactions } from "./data";
 import { withAuth } from "@/utils/withAuth";
 
 const defaultDateRange: Range = {
-  startDate: new Date(new Date().setDate(new Date().getDate() - 30)), // 30 days ago
-  endDate: new Date(), // today
+  startDate: new Date(new Date().setDate(new Date().getDate() - 30)), 
+  endDate: new Date(), 
   key: "selection",
 };
 
@@ -105,6 +104,9 @@ function MoneyTransactions() {
 
   return (
     <div className="space-y-6 p-4">
+      {/* Breadcrumb */}
+      <PageBreadcrumb pageTitle="Money Transactions" />
+
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-4">
         {/* Select + Single Search Bar */}
@@ -150,9 +152,6 @@ function MoneyTransactions() {
        
         <FilterActions onSearch={applyFilters} onClear={clearFilters} />
       </div>
-
-      {/* Breadcrumb */}
-      <PageBreadcrumb pageTitle="Money Transactions" />
 
       {/* Table */}
       <DataTable columns={columns} data={filteredData} />

@@ -105,6 +105,9 @@ function NetCashReport() {
 
   return (
     <section className="space-y-6 p-4">
+      {/* Breadcrumb */}
+      <PageBreadcrumb pageTitle="Net Cash Report" />
+
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-4 justify-between">
         <div className="flex flex-col md:flex-row gap-4">
@@ -134,9 +137,6 @@ function NetCashReport() {
         {/* Search & Clear */}
         <FilterActions onSearch={handleSearch} onClear={handleClear} />
       </div>
-
-      {/* Breadcrumb */}
-      <PageBreadcrumb pageTitle="Net Cash Report" />
 
       {/* First Table */}
       <div>

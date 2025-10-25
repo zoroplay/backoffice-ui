@@ -22,21 +22,19 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className={`${outfit.variable} dark:bg-gray-900`}>
-        <ThemeProvider>
-          <SidebarProvider>
-            <AdminLayoutContent>{children}</AdminLayoutContent>
-          </SidebarProvider>
-        </ThemeProvider>
-      </body>
-    </html>
+    <div className={`${outfit.variable}`}>
+      <ThemeProvider>
+        <SidebarProvider>
+          <AdminLayoutContent>{children}</AdminLayoutContent>
+        </SidebarProvider>
+      </ThemeProvider>
+    </div>
   );
 }
 
 function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative min-h-screen xl:flex">
+    <div className=" min-h-screen xl:flex">
       {/* Sidebar and Backdrop */}
       <AppSidebar />
       <Backdrop />
@@ -58,13 +56,15 @@ function MainContent({ children }: { children: React.ReactNode }) {
 
   return (
     <div
-      className={`relative flex-1 transition-all duration-300 ease-in-out ${mainContentMargin}`}
+      className={`fixed inset-0 ${mainContentMargin} flex flex-col transition-all duration-300 ease-in-out`}
     >
-      {/* Header */}
+      {/* Fixed Header */}
       <AppHeader />
-      {/* Page Content */}
-      <div className="p-4 mx-auto  md:p-6 dark:bg-gray-900 min-h-[calc(100vh-64px)]">
-        {children}
+      {/* Scrollable Content Area */}
+      <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 scrollbar-track-transparent">
+        <div className="min-h-full p-4 md:p-6">
+          {children}
+        </div>
       </div>
     </div>
   );

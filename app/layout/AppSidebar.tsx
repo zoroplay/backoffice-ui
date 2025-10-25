@@ -16,6 +16,20 @@ import {
   PlugInIcon,
   TableIcon,
   UserCircleIcon,
+  FolderIcon,
+  DollarLineIcon,
+  GroupIcon,
+  BoltIcon,
+  ChatIcon,
+  ShootingStarIcon,
+  PencilIcon,
+  FileIcon,
+  MailIcon,
+  UserIcon,
+  LockIcon,
+  SportsBallsIcon,
+  CasinoSlotIcon,
+  GiftBoxIcon
 } from "../icons/index";
 import SidebarWidget from "./SidebarWidget";
 
@@ -63,17 +77,165 @@ const navItems: NavItem[] = [
   },
 
   {
-    icon: <BoxCubeIcon />,
+    icon: <TableIcon />,
     name: "Tickets",
     subItems: [
-      { name: "Quick Bet Search", path: "/", pro: false },
-      { name: "Ticket On Hold", path: "/", pro: false },
-      { name: "Open Bet (Sports)", path: "/", pro: false },
-      { name: "Bets History", path: "/", pro: false },
-      { name: "Pending Cashout Bets", path: "/", pro: false },
-      { name: "Exposure Monitor", path: "/", pro: false },
+      { name: "Quick Bet Search", path: "/tickets/quick_bet", pro: false },
+      { name: "Ticket On Hold", path: "/tickets/ticket-on-hold", pro: false },
+      { name: "Open Bet (Sports)", path: "/tickets/open_bet", pro: false },
+      { name: "Bets History", path: "/tickets/bets-history", pro: false },
+      { name: "Pending Cashout Bets", path: "/tickets/pending-cashout-bets", pro: false },
+      
     ],
-  },  
+  }, 
+  
+  {
+    icon: <UserCircleIcon />,
+    name: "Player Management",
+    subItems: [
+      { name: "Player Search", path: "/player-management/player-search", pro: false },
+      { name: "Online Players Report", path: "/player-management/online-players-report", pro: false },
+      { name: "Registration Report", path: "/player-management/registration-report", pro: false },
+      { name: "Player Segmentation", path: "/player-management/player-segmentation", pro: false },
+      { name: "Inactive Players Report", path: "/player-management/inactive-players-report", pro: false },
+      { name: "Frozen Account Report", path: "/player-management/frozen-account-report", pro: false },
+    ],
+  },
+
+  {
+    icon: <GroupIcon />,
+    name: "Network",
+    subItems: [
+      { name: "Agency List", path: "/network/agency-list", pro: false },
+      { name: "Pending Requests", path: "/network/pending-requests", pro: false },
+      { name: "Add New Agent", path: "/network/add-new-agent", pro: false },
+      { name: "Commissions", path: "/network/commissions", pro: false },      
+    ],
+  },
+
+  {
+    icon: <DollarLineIcon />,
+    name: "Banking",
+    subItems: [
+      { name: "Deposits/Withdrawals Manager", path: "/banking/deposits-withdrawals", pro: false },
+      { name: "Retail Cash Sales", path: "/banking/retail-cash-sales", pro: false },
+      { name: "CashFlow", path: "/banking/cashflow", pro: false },
+    ]
+  },
+
+  {
+    icon: <BoltIcon />,
+    name: "Bonus Management",
+    subItems: [
+      { name: "Player Bonuses", path: "/bonus-management/player-bonuses", pro: false },
+      { name: "Bonus Campaigns", path: "/bonus-management/bonus-campaigns", pro: false },
+      { name: "Multibet Bonus", path: "/bonus-management/multibet-bonus", pro: false },
+      { name: "Grant Mass Bonuses", path: "/bonus-management/grant-mass-bonuses", pro: false },
+      { name: "Mass Free Spins", path: "/bonus-management/mass-free-spins", pro: false },
+      { name: "Cashout", path: "/bonus-management/cashout", pro: false },
+      { name: "Player Bonuses Report", path: "/bonus-management/player-bonuses-report", pro: false },
+      { name: "Power Bonus Report", path: "/bonus-management/power-bonus-report", pro: false },
+    ],
+  },
+
+  {
+    icon: <ShootingStarIcon />,
+    name: "Jackpots",
+    subItems: [
+      { name: "Weekly Jackpots", path: "/jackpots/weekly-jackpots", pro: false },
+      { name: "Ticket Jackpot", path: "/jackpots/ticket-jackpot", pro: false },
+      { name: "Create new Jackpot", path: "/jackpots/create-new-jackpot", pro: false },
+      { name: "Tickets", path: "/jackpots/tickets", pro: false },
+    ]
+  },
+
+  {
+    icon: <ChatIcon />,
+    name: "Communications",
+    subItems: [
+      { name: "Players Messages", path: "/communications/players-messages", pro: false },
+      { name: "Network Messsages", path: "/communications/network-messages", pro: false },
+      { name: "Mass Inbox Messages", path: "/communications/mass-inbox-messages", pro: false },
+      { name: "SMS settings", path: "/communications/sms-settings", pro: false },
+    ]
+  },
+
+  {
+    icon: <PencilIcon />,
+    name: "Risk Management",
+    subItems: [
+      { name: "Betting Parameters", path: "/risk-management/betting-parameters", pro: false },
+      { name: "Liability", path: "/risk-management/liability", pro: false },
+      { name: "Profitability", path: "/risk-management/profitability", pro: false },
+      { name: "Manual Odds Adjustment", path: "/risk-management/manual-odds-adjustment", pro: false },
+      { name: "Event & Odds Margins", path: "/risk-management/event-odds-margins", pro: false },
+    ]
+  },
+
+  {
+    icon: <SportsBallsIcon />,
+    name: "Pools Management",
+    subItems: [
+      { name: "Fixtures", path: "/pools-management/fixtures", pro: false },
+      { name: "Tickets", path: "/pools-management/tickets", pro: false },
+      { name: "Coupon Tickets", path: "/pools-management/coupon-tickets", pro: false },
+    ]
+  },
+
+  {
+    icon: <FileIcon />,
+    name: "Content Management",
+    subItems: [
+      { name: "Site Menu", path: "/content-management/site-menu", pro: false },
+      { name: "Sports Menu", path: "/content-management/sports-menu", pro: false },
+      { name: "Pages", path: "/content-management/pages", pro: false },
+      { name: "Banners", path: "/content-management/banners", pro: false },
+      { name: "Markets Manager", path: "/content-management/markets-manager", pro: false },
+      { name: "Top Bets", path: "/content-management/top-bets", pro: false },
+    ]
+  },
+
+  {
+    icon: <CasinoSlotIcon />,
+    name: "Casino",
+    path: "/casino",
+  },
+
+  {
+    icon: <GiftBoxIcon />,
+    name: "Promotions",
+    path: "/promotions",
+  },
+
+  {
+    icon: <PlugInIcon />,
+    name: "Configurations",
+    subItems: [
+      { name: "General", path: "/configurations/general", pro: false },
+      { name: "Commision Setting", path: "/configurations/commission-setting", pro: false },
+      { name: "Commision Bonus Group", path: "/configurations/commission-bonus-group", pro: false },
+      { name: "Payment Methods", path: "/configurations/payment-methods", pro: false },
+      { name: "Game Keys", path: "/configurations/game-keys", pro: false },
+      { name: "Tipster Settings", path: "/configurations/tipster-settings", pro: false },
+      { name: "Exposure Monitor Settings", path: "/configurations/exposure-monitor-settings", pro: false },
+    ]
+  },
+
+  {
+    icon: <UserIcon />,
+    name: "User Management",
+    subItems: [
+      { name: "Users", path: "/user-management/users", pro: false },
+      { name: "Roles & Permissions", path: "/user-management/roles-permissions", pro: false },
+      { name: "Activity Logs", path: "/user-management/activity-logs", pro: false },  
+    ]
+  },
+
+  {
+    icon: <LockIcon />,
+    name: "Change Password",
+    path: "/change-password",
+  },
 ];
 
 const othersItems: NavItem[] = [

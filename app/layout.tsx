@@ -17,7 +17,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en"> 
       <body
         // className={inter.className} // if you add a font
         className="antialiased bg-gray-50 text-gray-900"

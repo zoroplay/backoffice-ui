@@ -80,6 +80,9 @@ function GamingActivities() {
 
   return (
     <div className="space-y-6 p-4">
+      {/* Breadcrumb */}
+      <PageBreadcrumb pageTitle="Gaming Activities" />
+
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-4">
         {/* Grouped Multi-Select */}
@@ -109,9 +112,6 @@ function GamingActivities() {
           className="border py-2 px-3 rounded focus:outline-none  dark:text-gray-50 focus:ring focus:ring-zinc-500 w-[20rem]"
         />
       </div>
-
-      {/* Breadcrumb */}
-      <PageBreadcrumb pageTitle="Gaming Activities" />
       {/* Table */}
       <DataTable columns={columns} data={filteredData} />
     </div>

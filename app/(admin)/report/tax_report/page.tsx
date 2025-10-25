@@ -74,6 +74,9 @@ function TaxReport() {
 
   return (
     <section className="space-y-6 p-4">
+      {/* Breadcrumb */}
+      <PageBreadcrumb pageTitle="Tax Report" />
+
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         {/* Filters */} 
         <div className="flex flex-wrap items-center gap-4">
@@ -96,10 +99,6 @@ function TaxReport() {
         {/* Search & Clear Actions */}
         <FilterActions onSearch={applyFilters} onClear={clearFilters} />          
       </div>
-      
-
-      {/* Breadcrumb */}
-      <PageBreadcrumb pageTitle="Tax Report" />
 
       {/* Summary Table */}
       <div>

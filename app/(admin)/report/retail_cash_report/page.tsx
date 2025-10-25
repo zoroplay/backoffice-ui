@@ -41,6 +41,9 @@ function RetailCashReport() {
 
   return (
     <div className="space-y-6 p-4">
+      {/* Breadcrumb */}
+      <PageBreadcrumb pageTitle="Retail Cash Report" />
+
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-4">
         {/* Date Range Picker */}
@@ -48,9 +51,6 @@ function RetailCashReport() {
 
         <FilterActions onSearch={handleSearch} onClear={handleClear} />
       </div>
-
-      {/* Breadcrumb */}
-      <PageBreadcrumb pageTitle="Retail Cash Report" />
 
       {/* Table */}
       <DataTable columns={columns} data={filteredData} />

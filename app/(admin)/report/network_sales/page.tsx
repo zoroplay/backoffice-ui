@@ -76,6 +76,9 @@ function NetworkSales() {
 
   return (
     <section className="space-y-6 p-4">
+      {/* Breadcrumb */}
+      <PageBreadcrumb pageTitle="Network Sales" />
+
       {/* Filters */}
       <div className="flex flex-wrap items-center justify-between">
         <div className="flex flex-col md:flex-row gap-4">
@@ -104,9 +107,6 @@ function NetworkSales() {
 
         <FilterActions onSearch={handleSearch} onClear={handleClear} />
       </div>
-
-      {/* Breadcrumb */}
-      <PageBreadcrumb pageTitle="Network Sales" />
 
       {/* Table */}
       <DataTable columns={networkSalesColumns} data={filteredData} />
