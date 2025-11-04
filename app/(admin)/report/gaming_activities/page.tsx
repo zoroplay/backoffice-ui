@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Select from "react-select";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { DataTable } from "@/components/tables/DataTable";
@@ -9,6 +9,7 @@ import { DateRangeFilter, defaultDateRange } from "@/components/common/DateRange
 import { columns } from "./column";
 import { tableData } from "./data";
 import { withAuth } from "@/utils/withAuth";
+import { useSearch } from "@/context/SearchContext";
 
 
 // ----------------------
@@ -62,21 +63,33 @@ const groupedOptions = [
 // ----------------------
 function GamingActivities() {
   const [filters, setFilters] = useState<any[]>([]);
-  const [searchText, setSearchText] = useState("");
   const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
+  const { query, setPlaceholder, resetPlaceholder } = useSearch();
+
+  useEffect(() => {
+    setPlaceholder("Search by Group");
+
+    return () => {
+      resetPlaceholder();
+    };
+  }, [resetPlaceholder, setPlaceholder]);
 
   
 
   // ----------------------
   // Filter & Search logic placeholder
   // ----------------------
-  const filteredData = tableData.filter((row) => {
-    // Example: filter by search text in group column
-    if (searchText) {
-      return row.group.toString().includes(searchText);
+  const filteredData = useMemo(() => {
+    const searchTerm = query.trim().toLowerCase();
+
+    if (!searchTerm) {
+      return tableData;
     }
-    return true;
-  });
+
+    return tableData.filter((row) =>
+      row.group.toString().toLowerCase().includes(searchTerm)
+    );
+  }, [query]);
 
   return (
     <div className="space-y-6 p-4">
@@ -85,6 +98,11 @@ function GamingActivities() {
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-4">
+        {/* Date Range Picker */}
+       <DateRangeFilter
+          range={dateRange}
+          onChange={(range) => setDateRange(range)}
+/>
         {/* Grouped Multi-Select */}
         <div className="w-[28rem]">
           <Select
@@ -97,20 +115,8 @@ function GamingActivities() {
           />
         </div>
 
-        {/* Date Range Picker */}
-        <DateRangeFilter
-          range={dateRange}
-          onChange={(range) => setDateRange(range)}
-/>
+     
 
-        {/* Search */}
-        <input
-          type="text"
-          placeholder="Search..."
-          value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-          className="border py-2 px-3 rounded focus:outline-none  dark:text-gray-50 focus:ring focus:ring-zinc-500 w-[20rem]"
-        />
       </div>
       {/* Table */}
       <DataTable columns={columns} data={filteredData} />

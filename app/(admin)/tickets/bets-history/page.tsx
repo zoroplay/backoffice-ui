@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { DataTable } from "@/components/tables/DataTable";
 import { columns, BetHistory } from "./columns";
@@ -10,6 +10,7 @@ import type { Range } from "react-date-range";
 import { DateRangeFilter } from "@/components/common/DateRangeFilter";
 import { FilterActions } from "@/components/common/FilterActions";
 import { withAuth } from "@/utils/withAuth";
+import { useSearch } from "@/context/SearchContext";
 
 //  Default last 30 days range
 const defaultDateRange: Range = {
@@ -28,6 +29,13 @@ const searchOptions: SearchField[] = [
   { value: "placedBy", label: "Username" },
   { value: "sport", label: "Sport" },
   { value: "league", label: "League" },
+];
+
+const searchableFields: Array<keyof BetHistory> = [
+  "betslipId",
+  "placedBy",
+  "sport",
+  "league",
 ];
 
 const operationOptions = [
@@ -99,102 +107,132 @@ const operationOptions = [
 ];
 
 function BetsHistoryPage() {
-  const [searchValue, setSearchValue] = useState("");
   const [filteredData, setFilteredData] = useState<BetHistory[]>(betHistory);
 
   const [operationFilter, setOperationFilter] = useState<
     { value: string; label: string } | null
   >(null);
 
-  const [searchField, setSearchField] = useState<SearchField>(searchOptions[0]);
   const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
+  const [appliedOperationFilter, setAppliedOperationFilter] = useState<
+    { value: string; label: string } | null
+  >(null);
+  const [appliedDateRange, setAppliedDateRange] = useState<Range | null>(null);
+  const { query, setPlaceholder, resetPlaceholder, resetQuery } = useSearch();
+
+  useEffect(() => {
+    const placeholderText =
+      "Search by Betslip ID, Username, Sport, or League";
+    setPlaceholder(placeholderText);
+
+    return () => {
+      resetPlaceholder();
+    };
+  }, [resetPlaceholder, setPlaceholder]);
 
   // ----------------------
   // Filtering logic
   // ----------------------
+  const filterBets = useCallback(
+    (
+      value: string,
+      operation: { value: string; label: string } | null = appliedOperationFilter,
+      range: Range | null = appliedDateRange
+    ) => {
+      const searchTerm = value.trim().toLowerCase();
+
+      return betHistory.filter((row) => {
+        let match = true;
+
+        if (searchTerm) {
+          const matchesSearch = searchableFields.some((field) =>
+            String(row[field] ?? "").toLowerCase().includes(searchTerm)
+          );
+
+          if (!matchesSearch) {
+            return false;
+          }
+        }
+
+        if (operation) {
+          const val = operation.value.toLowerCase();
+
+          if (["website", "cashier", "mobile"].includes(val)) {
+            match = match && row.clientType.toLowerCase() === val;
+          }
+
+          if (["single", "multi", "system", "split"].includes(val)) {
+            match = match && row.betType.toLowerCase() === val;
+          }
+
+          if (val.startsWith("stake_")) {
+            const stake = row.stake;
+            if (val === "stake_low") match = match && stake < 1000;
+            if (val === "stake_medium")
+              match = match && stake >= 1000 && stake <= 5000;
+            if (val === "stake_high") match = match && stake > 5000;
+          }
+
+          if (val.startsWith("return_")) {
+            const returns = row.returns;
+            if (val === "return_low") match = match && returns < 5000;
+            if (val === "return_medium")
+              match = match && returns >= 5000 && returns <= 10000;
+            if (val === "return_high") match = match && returns > 10000;
+          }
+
+          if (["prematch", "live"].includes(val)) {
+            const text = `${row.market} ${row.event}`.toLowerCase();
+            match = match && text.includes(val);
+          }
+
+          if (["pending", "won", "lost", "canceled", "cut 2"].includes(val)) {
+            match = match && row.betStatus.toLowerCase() === val;
+          }
+
+          if (["paid", "unpaid"].includes(val)) {
+            const paidStatus = row.winLoss.startsWith("+") ? "paid" : "unpaid";
+            match = match && paidStatus === val;
+          }
+        }
+
+        if (range && range.startDate && range.endDate) {
+          const rowDate = new Date(row.placedOn);
+          const start = new Date(range.startDate);
+          const end = new Date(range.endDate);
+
+          start.setHours(0, 0, 0, 0);
+          end.setHours(23, 59, 59, 999);
+
+          match = match && rowDate >= start && rowDate <= end;
+        }
+
+        return match;
+      });
+    },
+    [appliedDateRange, appliedOperationFilter]
+  );
+
+  useEffect(() => {
+    setFilteredData(filterBets(query));
+  }, [filterBets, query]);
+
   const applyFilters = () => {
-  const filtered = betHistory.filter((row) => {
-    let match = true;
+    const nextOperation = operationFilter;
+    const nextDateRange = dateRange;
 
-    // 🔍 Text search filter
-    if (searchValue && searchField) {
-      const rowValue = String(row[searchField.value] ?? "").toLowerCase();
-      match = match && rowValue.includes(searchValue.toLowerCase());
-    }
-
-    // ⚙️ Operation filter (handles multiple types)
-    if (operationFilter) {
-      const val = operationFilter.value.toLowerCase();
-
-      // ✅ Client Type
-      if (["website", "cashier", "mobile"].includes(val)) {
-        match = match && row.clientType.toLowerCase() === val;
-      }
-
-      // ✅ Bet Type
-      if (["single", "multi", "system", "split"].includes(val)) {
-        match = match && row.betType.toLowerCase() === val;
-      }
-
-      // ✅ Stake range
-      if (val.startsWith("stake_")) {
-        const stake = row.stake;
-        if (val === "stake_low") match = match && stake < 1000;
-        if (val === "stake_medium") match = match && stake >= 1000 && stake <= 5000;
-        if (val === "stake_high") match = match && stake > 5000;
-      }
-
-        // ✅ Return range
-        if (val.startsWith("return_")) {
-          const returns = row.returns;
-          if (val === "return_low") match = match && returns < 5000;
-          if (val === "return_medium") match = match && returns >= 5000 && returns <= 10000;
-          if (val === "return_high") match = match && returns > 10000;
-        }      // ✅ Pre-Match / Live
-      if (["prematch", "live"].includes(val)) {
-        // Assuming market or event name contains "live" or "prematch"
-        const text = `${row.market} ${row.event}`.toLowerCase();
-        match = match && text.includes(val);
-      }
-
-      // ✅ Bet Status
-      if (["pending", "won", "lost", "canceled", "cut 2"].includes(val)) {
-        match = match && row.betStatus.toLowerCase() === val;
-      }
-
-      // ✅ Paid Status
-      if (["paid", "unpaid"].includes(val)) {
-        // Use winLoss field to determine paid status
-        const paidStatus = row.winLoss.startsWith("+") ? "paid" : "unpaid";
-        match = match && paidStatus === val;
-      }
-    }
-
-    // 📅 Date range filter
-    if (dateRange.startDate && dateRange.endDate) {
-      const rowDate = new Date(row.placedOn);
-      const start = new Date(dateRange.startDate);
-      const end = new Date(dateRange.endDate);
-
-      start.setHours(0, 0, 0, 0);
-      end.setHours(23, 59, 59, 999);
-
-      match = match && rowDate >= start && rowDate <= end;
-    }
-
-    return match;
-  });
-
-  setFilteredData(filtered);
-};
-
+    setAppliedOperationFilter(nextOperation);
+    setAppliedDateRange(nextDateRange);
+    setFilteredData(filterBets(query, nextOperation, nextDateRange));
+  };
 
   const clearFilters = () => {
-    setSearchValue("");
     setOperationFilter(null);
     setDateRange(defaultDateRange);
-    setSearchField(searchOptions[0]);
+    setAppliedOperationFilter(null);
+    setAppliedDateRange(null);
     setFilteredData(betHistory);
+    resetQuery();
   };
 
   // ----------------------
@@ -206,46 +244,25 @@ function BetsHistoryPage() {
       <PageBreadcrumb pageTitle="Bets History" />
       
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-4">
-        {/* Search by dropdown and input */}
-        <div className="flex items-center gap-2">
-          <div className="w-[16rem]">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-4">
+          {/* Date Range Picker */}
+          <DateRangeFilter range={dateRange} onChange={(range) => setDateRange(range)} />
+          {/* Operation Filter */}
+          <div className="w-[18rem]">
             <Select
               className="dark:text-black"
-              options={searchOptions}
-              placeholder="Search by..."
-              value={searchField}
-              onChange={(val) => setSearchField(val as SearchField)}
+              options={operationOptions}
+              placeholder="Filter Options"
+              value={operationFilter}
+              onChange={(val) => setOperationFilter(val)}
             />
           </div>
-
-          <input
-            type="text"
-            value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
-            placeholder={`Search by ${searchField?.label || "..."}`}
-            className="border rounded px-3 py-2 w-[16rem] dark:bg-gray-900 dark:text-white"
-          />
         </div>
-
-        {/* Operation Filter */}
-        <div className="w-[18rem]">
-          <Select
-            className="dark:text-black"
-            options={operationOptions}
-            placeholder="Filter Options"
-            value={operationFilter}
-            onChange={(val) => setOperationFilter(val)}
-          />
-        </div>
-
-        {/* Date Range Picker */}
-        <DateRangeFilter range={dateRange} onChange={(range) => setDateRange(range)} />
-
         {/* Filter Actions */}
         <FilterActions onSearch={applyFilters} onClear={clearFilters} />
       </div>
-
+,...
       
 
       {/* Table */}

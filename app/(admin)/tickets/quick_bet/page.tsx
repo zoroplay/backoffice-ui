@@ -1,47 +1,61 @@
 "use client";
 
-import React, { useState} from "react";
+import React, { useCallback, useEffect, useState} from "react";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { DataTable } from "@/components/tables/DataTable";
 import { columns, QuickBet } from "./columns";
 import { quickBets } from "./data";
 import { FilterActions } from "@/components/common/FilterActions";
 import { withAuth } from "@/utils/withAuth";
+import { useSearch } from "@/context/SearchContext";
 
 function QuickBetPage() {
-  const [searchValue, setSearchValue] = useState("");
   const [filteredData, setFilteredData] = useState<QuickBet[]>(quickBets);
+  const { query, setPlaceholder, resetPlaceholder, resetQuery } = useSearch();
+
+  const filterByQuery = useCallback(
+    (value: string) => {
+      const trimmed = value.trim().toLowerCase();
+
+      if (!trimmed) {
+        return quickBets;
+      }
+
+      return quickBets.filter((row) =>
+        row.betslipId.toLowerCase().includes(trimmed)
+      );
+    },
+    []
+  );
+
+  useEffect(() => {
+    setPlaceholder("Search by Betslip ID");
+
+    return () => {
+      resetPlaceholder();
+    };
+  }, [resetPlaceholder, setPlaceholder]);
+
+  useEffect(() => {
+    setFilteredData(filterByQuery(query));
+  }, [filterByQuery, query]);
 
   const applyFilter = () => {
-    if (!searchValue) {
-      setFilteredData(quickBets);
-      return;
-    }
-    const filtered = quickBets.filter((row) =>
-      row.betslipId.toLowerCase().includes(searchValue.toLowerCase())
-    );
-    setFilteredData(filtered);
+    setFilteredData(filterByQuery(query));
   };
 
   const clearFilter = () => {
-    setSearchValue("");
+    resetQuery();
     setFilteredData(quickBets);
-  }
+  };
 
   return (
     <div className="p-4">
       <PageBreadcrumb pageTitle="Quick Bet Search" />
-      
-      <div className="flex flex-col md:flex-row gap-4 mb-6">
-        <input
-          type="text"
-          value={searchValue}
-          onChange={(e) => setSearchValue(e.target.value)}
-          placeholder="Search by Betslip ID"
-          className="border rounded px-3 py-2 w-[20rem] dark:bg-gray-900 dark:text-white"
-        />
+{/*       
+      <div className="flex flex-col md:flex-row gap-4 mb-6 md:justify-between">
         <FilterActions onSearch={applyFilter} onClear={clearFilter} />
-      </div>
+      </div> */}
       
       <div className="mt-6">
         <DataTable columns={columns} data={filteredData} />

@@ -151,7 +151,7 @@ function TicketOnHoldPage() {
               placeholder="Filter by Bet Type, Stake or Returns"
               value={selectedFilters}
               onChange={handleSelectChange}
-              isClearable={true}
+              // isClearable={true}
             />
           </div>
         </div>

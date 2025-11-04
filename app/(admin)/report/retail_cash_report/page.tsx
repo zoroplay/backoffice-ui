@@ -45,7 +45,7 @@ function RetailCashReport() {
       <PageBreadcrumb pageTitle="Retail Cash Report" />
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         {/* Date Range Picker */}
         <DateRangeFilter range={dateRange} onChange={(range) => setDateRange(range)} />
 

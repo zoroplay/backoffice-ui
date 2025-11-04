@@ -52,25 +52,25 @@ export const Modal: React.FC<ModalProps> = ({
 
   const contentClasses = isFullscreen
     ? "w-full h-full"
-    : "relative w-full rounded-3xl bg-white  dark:bg-gray-900";
+    : "relative w-full max-w-[95vw] mx-4 rounded-3xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50 shadow-2xl";
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center overflow-y-auto modal z-99999">
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center overflow-y-auto p-4">
       {!isFullscreen && (
         <div
-          className="fixed inset-0 h-full w-full bg-gray-400/50 backdrop-blur-[32px]"
+          className="fixed inset-0 z-[99998] h-full w-full bg-gray-400/50 backdrop-blur-[32px]"
           onClick={onClose}
         ></div>
       )}
       <div
         ref={modalRef}
-        className={`${contentClasses}  ${className}`}
+        className={`${contentClasses} z-[99999] ${className}`}
         onClick={(e) => e.stopPropagation()}
       >
         {showCloseButton && (
           <button
             onClick={onClose}
-            className="absolute right-3 top-3 z-999 flex h-9.5 w-9.5 items-center justify-center rounded-full bg-gray-100 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white sm:right-6 sm:top-6 sm:h-11 sm:w-11"
+            className="absolute right-3 top-3 z-999 flex h-9.5 w-9.5 items-center justify-center rounded-full bg-gray-100/80 text-gray-400 backdrop-blur-sm transition-colors hover:bg-gray-200/80 hover:text-gray-700 dark:bg-gray-800/80 dark:text-gray-400 dark:hover:bg-gray-700/80 dark:hover:text-white sm:right-6 sm:top-6 sm:h-11 sm:w-11"
           >
             <svg
               width="24"

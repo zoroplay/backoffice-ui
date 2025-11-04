@@ -82,12 +82,16 @@ function NetworkSales() {
       {/* Filters */}
       <div className="flex flex-wrap items-center justify-between">
         <div className="flex flex-col md:flex-row gap-4">
+          {/* Date Range Picker */}
+          <DateRangeFilter
+             range={dateRange}
+             onChange={(range) => setDateRange(range)}
+           />
           {/* Multi-Select */}
           <div className="w-[20rem]">
             <Select
               className="dark:text-black"
               options={groupedOptions}
-              isMulti
               placeholder="Filter by Product Type"
               value={selectedFilter}
               onChange={(val) => {
@@ -96,13 +100,7 @@ function NetworkSales() {
               }
               }
             />
-          </div>
-
-          {/* Date Range Picker */}
-          <DateRangeFilter
-             range={dateRange}
-             onChange={(range) => setDateRange(range)}
-           />
+          </div>          
         </div>
 
         <FilterActions onSearch={handleSearch} onClear={handleClear} />

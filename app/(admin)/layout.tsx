@@ -6,6 +6,7 @@ import AppSidebar from "@/app/layout/AppSidebar";
 import Backdrop from "@/app/layout/Backdrop";
 import React from "react";
 import { ThemeProvider } from "@/context/ThemeContext";
+import { SearchProvider } from "@/context/SearchContext";
 import { Outfit } from "next/font/google";
 import "react-date-range/dist/styles.css"; // main style file
 import "react-date-range/dist/theme/default.css";
@@ -22,11 +23,13 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className={`${outfit.variable}`}>
+    <div className="">
       <ThemeProvider>
-        <SidebarProvider>
-          <AdminLayoutContent>{children}</AdminLayoutContent>
-        </SidebarProvider>
+        <SearchProvider>
+          <SidebarProvider>
+            <AdminLayoutContent>{children}</AdminLayoutContent>
+          </SidebarProvider>
+        </SearchProvider>
       </ThemeProvider>
     </div>
   );
