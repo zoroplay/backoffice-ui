@@ -15,24 +15,23 @@ import { withAuth } from "@/utils/withAuth";
 // ----------------------
 // Select Options
 // ----------------------
-const groupedOptions = [
-  {
-    label: "Product Type",
-    options: [
-      { value: "sport", label: "Sport" },
-      { value: "casino", label: "Casino" },
-      { value: "games", label: "Games" },
-      { value: "virtual sport", label: "Virtual Sport" },
-    ],
-  },
-];
+type FilterOption = {
+  value: string;
+  label: string;
+};
 
+const productTypeOptions: FilterOption[] = [
+  { value: "sport", label: "Sport" },
+  { value: "casino", label: "Casino" },
+  { value: "games", label: "Games" },
+  { value: "virtual sport", label: "Virtual Sport" },
+];
 
 // ----------------------
 // Component
 // ----------------------
 function NetworkSales() {
-  const [selectedFilter, setSelectedFilter] = useState<any[]>([]);
+  const [selectedFilter, setSelectedFilter] = useState<FilterOption | null>(null);
   const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
 
   const [filteredData, setFilteredData] = useState<NetworkSalesTypes[]>(
@@ -40,39 +39,46 @@ function NetworkSales() {
   );
 
   // ----------------------
+  // Apply filters
+  // ----------------------
+  const handleSearch = () => {
+    const filtered = networkSalesData.filter((row) => {
+      // Product Type filter
+      const matchesProductType = selectedFilter
+        ? selectedFilter.value.toLowerCase() === row.productType.toLowerCase()
+        : true;
+
+      
+      // Date range filter
+      const matchesDate =
+        dateRange && dateRange.startDate && dateRange.endDate
+          ? (() => {
+              const rowDate = new Date(row.date);
+              const start = new Date(dateRange.startDate);
+              const end = new Date(dateRange.endDate);
+
+              rowDate.setHours(0, 0, 0, 0);
+              start.setHours(0, 0, 0, 0);
+              end.setHours(23, 59, 59, 999);
+
+              return rowDate >= start && rowDate <= end;
+            })()
+          : true;
+
+      return matchesProductType && matchesDate;
+    });
+
+    setFilteredData(filtered);
+  };
+
+  // ----------------------
   // Clear filters
   // ----------------------
   const handleClear = () => {
     setDateRange(defaultDateRange);
-    setSelectedFilter([]);
+    setSelectedFilter(null);
     setFilteredData(networkSalesData);
   };
-
-  // ----------------------
-  // Apply filters
-  // ----------------------
-  const handleSearch = () => {
-  const start = dateRange.startDate ?? new Date("1900-01-01");
-  const end = dateRange.endDate ?? new Date("2100-12-31");
-
-  // Extract selected product types in lowercase
-  const selectedProductTypes = selectedFilter
-    .filter((f) => ["sport", "games", "casino", "virtual sport"].includes(f.value.toLowerCase()))
-    .map((f) => f.value.toLowerCase());
-
-  const filterFn = (item: { date: string; productType?: string }) => {
-    const itemDate = new Date(item.date);
-    const matchesDate = itemDate >= start && itemDate <= end;
-
-    const matchesProductType =
-      selectedProductTypes.length === 0 ||
-      (item.productType && selectedProductTypes.includes(item.productType.toLowerCase()));
-
-    return matchesDate && matchesProductType;
-  };
-
-  setFilteredData(networkSalesData.filter(filterFn));
-};
 
   return (
     <section className="space-y-6 p-4">
@@ -80,27 +86,25 @@ function NetworkSales() {
       <PageBreadcrumb pageTitle="Network Sales" />
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center justify-between">
-        <div className="flex flex-col md:flex-row gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-4">
           {/* Date Range Picker */}
           <DateRangeFilter
-             range={dateRange}
-             onChange={(range) => setDateRange(range)}
-           />
-          {/* Multi-Select */}
+            range={dateRange}
+            onChange={(range) => setDateRange(range)}
+          />
+
+          {/* Single Select */}
           <div className="w-[20rem]">
             <Select
               className="dark:text-black"
-              options={groupedOptions}
+              options={productTypeOptions}
               placeholder="Filter by Product Type"
               value={selectedFilter}
-              onChange={(val) => {
-                setSelectedFilter(val as any[])
-                console.log(selectedFilter)
-              }
-              }
+              onChange={(val) => setSelectedFilter(val as FilterOption | null)}
+              isClearable
             />
-          </div>          
+          </div>
         </div>
 
         <FilterActions onSearch={handleSearch} onClear={handleClear} />

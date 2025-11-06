@@ -143,9 +143,8 @@ const navItems: NavItem[] = [
     name: "Jackpots",
     subItems: [
       { name: "Weekly Jackpots", path: "/jackpots/weekly-jackpots", pro: false },
-      { name: "Ticket Jackpot", path: "/jackpots/ticket-jackpot", pro: false },
-      { name: "Create new Jackpot", path: "/jackpots/create-new-jackpot", pro: false },
-      { name: "Tickets", path: "/jackpots/tickets", pro: false },
+      { name: "Ticket Jackpots", path: "/jackpots/ticket-jackpots", pro: false },
+      { name: "Tickets", path: "/jackpots/jackpot-tickets", pro: false },
     ]
   },
 

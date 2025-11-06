@@ -24,17 +24,26 @@ import Button from "@/components/ui/button/Button";
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  onRowSelectionChange?: (selection: any) => void;
+  rowSelection?: any;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
+  onRowSelectionChange,
+  rowSelection,
 }: DataTableProps<TData, TValue>) {
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    onRowSelectionChange,
+    state: {
+      rowSelection,
+    },
+    enableRowSelection: true,
     initialState: {
       pagination: {
         pageSize: 5, // Set to 5 rows per page
