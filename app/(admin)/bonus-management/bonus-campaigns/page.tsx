@@ -1,11 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import { FileSpreadsheet } from "lucide-react";
 
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { DataTable } from "@/components/tables/DataTable";
-import Button from "@/components/ui/button/Button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { withAuth } from "@/utils/withAuth";
 
@@ -50,11 +48,6 @@ function BonusCampaignsPage() {
   const handleCancel = () => {
     setEditingCampaign(null);
     setActiveTab("campaigns");
-  };
-
-  const handleExport = () => {
-    // TODO: Implement export functionality
-    console.log("Export campaigns data");
   };
 
   // Combine columns with action column

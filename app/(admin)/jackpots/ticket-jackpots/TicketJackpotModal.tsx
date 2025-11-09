@@ -1,13 +1,15 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X } from "lucide-react";
 import Select from "react-select";
 
+import { Modal, ModalHeader, ModalBody, ModalFooter } from "@/components/ui/modal";
 import Form from "@/components/form/Form";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import Button from "@/components/ui/button/Button";
+import { reactSelectStyles } from "@/utils/reactSelectStyles";
+import { useTheme } from "@/context/ThemeContext";
 import { TicketJackpot } from "./types";
 
 interface TicketJackpotModalProps {
@@ -36,6 +38,7 @@ const TicketJackpotModal: React.FC<TicketJackpotModalProps> = ({
   onSave,
   editData,
 }) => {
+  const { theme } = useTheme();
   const [displayName, setDisplayName] = useState("");
   const [currency, setCurrency] = useState("NGN");
   const [lowLimitAmount, setLowLimitAmount] = useState("");
@@ -116,27 +119,12 @@ const TicketJackpotModal: React.FC<TicketJackpotModalProps> = ({
     onClose();
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 lg:left-[90px] z-[9999] flex items-center justify-center backdrop-blur-sm p-4 overflow-y-auto">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-2xl my-8 relative">
-        {/* Header */}
-        <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex justify-between items-center rounded-t-2xl">
-          <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">
-            {editData ? "Edit Ticket Jackpot" : "New Ticket Jackpot"}
-          </h2>
-          <button
-            onClick={handleCancel}
-            className="text-gray-500 hover:text-gray-700 dark:hover:text-white"
-          >
-            <X className="h-6 w-6" />
-          </button>
-        </div>
+    <Modal isOpen={isOpen} onClose={handleCancel} size="2xl">
+      <ModalHeader>{editData ? "Edit Ticket Jackpot" : "New Ticket Jackpot"}</ModalHeader>
 
-        {/* Form - Scrollable Content */}
-        <div className="p-6 max-h-[calc(90vh-120px)] overflow-y-auto">
-          <Form onSubmit={handleSubmit}>
+      <ModalBody>
+        <Form onSubmit={handleSubmit}>
             <div className="space-y-4">
               {/* Row 1 */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -155,7 +143,7 @@ const TicketJackpotModal: React.FC<TicketJackpotModalProps> = ({
                   <Label htmlFor="currency">Currency</Label>
                   <Select
                     id="currency"
-                    className="dark:text-black"
+                    styles={reactSelectStyles(theme)}
                     options={currencyOptions}
                     value={currencyOptions.find((opt) => opt.value === currency)}
                     onChange={(val) => setCurrency(val?.value || "NGN")}
@@ -269,7 +257,7 @@ const TicketJackpotModal: React.FC<TicketJackpotModalProps> = ({
                 <Label htmlFor="allowedGames">Allowed Games</Label>
                 <Select
                   id="allowedGames"
-                  className="dark:text-black"
+                  styles={reactSelectStyles(theme)}
                   options={gameOptions}
                   value={gameOptions.filter((opt) => allowedGames.includes(opt.value))}
                   onChange={(val) => setAllowedGames(val.map((v) => v.value))}
@@ -293,18 +281,17 @@ const TicketJackpotModal: React.FC<TicketJackpotModalProps> = ({
             </div>
 
             {/* Actions */}
-            <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <ModalFooter className="mt-6">
               <Button variant="outline" onClick={handleCancel} type="button">
                 Cancel
               </Button>
               <Button type="submit" className="bg-green-500 hover:bg-green-600 text-white">
                 {editData ? "Update" : "Save"}
               </Button>
-            </div>
+            </ModalFooter>
           </Form>
-        </div>
-      </div>
-    </div>
+      </ModalBody>
+    </Modal>
   );
 };
 

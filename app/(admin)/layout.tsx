@@ -64,7 +64,7 @@ function MainContent({ children }: { children: React.ReactNode }) {
       {/* Fixed Header */}
       <AppHeader />
       {/* Scrollable Content Area */}
-      <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 scrollbar-track-transparent">
+      <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 custom-scrollbar">
         <div className="min-h-full p-4 md:p-6">
           {children}
         </div>

@@ -7,6 +7,8 @@ import Form from "@/components/form/Form";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import Button from "@/components/ui/button/Button";
+import { reactSelectStyles } from "@/utils/reactSelectStyles";
+import { useTheme } from "@/context/ThemeContext";
 import { BonusCampaign } from "./columns";
 
 interface CampaignFormProps {
@@ -34,6 +36,7 @@ const bonusOptions: BonusOption[] = [
 ];
 
 const CampaignForm: React.FC<CampaignFormProps> = ({ onSave, onCancel, editData }) => {
+  const { theme } = useTheme();
   const [campaignName, setCampaignName] = useState("");
   const [bonusCode, setBonusCode] = useState("");
   const [chooseBonus, setChooseBonus] = useState<BonusOption | null>(null);
@@ -131,7 +134,7 @@ const CampaignForm: React.FC<CampaignFormProps> = ({ onSave, onCancel, editData 
             <Label htmlFor="chooseBonus">Choose Bonus</Label>
             <Select
               id="chooseBonus"
-              className="dark:text-black"
+              styles={reactSelectStyles(theme)}
               options={bonusOptions}
               placeholder="Select bonus"
               value={chooseBonus}

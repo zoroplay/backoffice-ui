@@ -31,7 +31,7 @@ function NetworkSalesReportPage() {
   }, [resetPlaceholder, setPlaceholder]);
 
   const filterSalesData = useCallback(
-    (value: string, range: Range = appliedDateRange) => {
+    (value: string) => {
       const searchTerm = value.trim().toLowerCase();
 
       return networkSalesData.filter((row) => {
@@ -50,7 +50,7 @@ function NetworkSalesReportPage() {
         return true;
       });
     },
-    [appliedDateRange]
+    []
   );
 
   useEffect(() => {
@@ -60,7 +60,7 @@ function NetworkSalesReportPage() {
   const applyFilters = () => {
     const nextRange = dateRange.startDate && dateRange.endDate ? dateRange : defaultDateRange;
     setAppliedDateRange(nextRange);
-    setFilteredData(filterSalesData(query, nextRange));
+    setFilteredData(filterSalesData(query));
   };
 
   const clearFilters = () => {

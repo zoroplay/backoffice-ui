@@ -7,8 +7,10 @@ import {
   getPaginationRowModel,
   useReactTable,
   ColumnDef,
+  Row,
+  RowSelectionState,
+  OnChangeFn,
 } from "@tanstack/react-table";
-import styles from './scrollbar.module.css';
 
 import {
   Table,
@@ -20,12 +22,14 @@ import {
 } from "@/components/ui/table";
 
 import Button from "@/components/ui/button/Button";
+import { cn } from "@/lib/utils";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
-  onRowSelectionChange?: (selection: any) => void;
-  rowSelection?: any;
+  onRowSelectionChange?: OnChangeFn<RowSelectionState>;
+  rowSelection?: RowSelectionState;
+  onRowClick?: (row: Row<TData>) => void;
 }
 
 export function DataTable<TData, TValue>({
@@ -33,6 +37,7 @@ export function DataTable<TData, TValue>({
   data,
   onRowSelectionChange,
   rowSelection,
+  onRowClick,
 }: DataTableProps<TData, TValue>) {
   const table = useReactTable({
     data,
@@ -54,9 +59,9 @@ export function DataTable<TData, TValue>({
   return (
     <div className="w-full">
       {/* Fixed height container with scroll for table content only */}
-      <div className="w-full border-2 rounded-md dark:text-gray-100">
-        <div className={`max-h-[60vh] overflow-auto relative ${styles.scrollbarCustom}`}>
-          <Table className="w-full">
+      <div className="w-full overflow-x-auto rounded-md border border-gray-200 dark:border-gray-700 dark:text-gray-100">
+        <div className="relative max-h-[60vh] overflow-y-auto overflow-x-hidden custom-scrollbar">
+          <Table className="w-full min-w-full">
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
@@ -80,11 +85,28 @@ export function DataTable<TData, TValue>({
             <TableBody>
               {table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id}>
+                  <TableRow
+                    key={row.id}
+                    onClick={onRowClick ? () => onRowClick(row) : undefined}
+                    className={
+                      onRowClick
+                        ? "cursor-pointer hover:bg-gray-100/70 dark:hover:bg-gray-800"
+                        : undefined
+                    }
+                  >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell
                         key={cell.id}
-                        className="whitespace-nowrap text-sm text-center"
+                        className={cn(
+                          "whitespace-nowrap text-sm text-center",
+                          (
+                            cell.column.columnDef.meta as
+                              | {
+                                  cellClassName?: string;
+                                }
+                              | undefined
+                          )?.cellClassName
+                        )}
                       >
                         {flexRender(
                           cell.column.columnDef.cell,

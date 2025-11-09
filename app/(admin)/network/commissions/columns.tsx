@@ -43,7 +43,10 @@ export const columns: ColumnDef<Commission>[] = [
     id: "select",
     header: ({ table }) => (
       <Checkbox
-        checked={table.getIsAllPageRowsSelected()}
+        checked={
+          table.getFilteredRowModel().rows.length > 0 &&
+          table.getIsAllPageRowsSelected()
+        }
         onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
         aria-label="Select all rows"
       />

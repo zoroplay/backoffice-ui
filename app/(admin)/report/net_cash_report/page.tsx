@@ -16,6 +16,8 @@ import {
   NetCashGroup,
 } from "./data";
 import { withAuth } from "@/utils/withAuth";
+import { reactSelectStyles } from "@/utils/reactSelectStyles";
+import { useTheme } from "@/context/ThemeContext";
 
 // ----------------------
 // Filter Options
@@ -41,9 +43,12 @@ const filterOptions = [
 
 const animatedComponents = makeAnimated();
 
+type FilterSelection = { value: string; label: string };
+
 function NetCashReport() {
+  const { theme } = useTheme();
   const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
-  const [selectedFilters, setSelectedFilters] = useState<any[]>([]);
+  const [selectedFilters, setSelectedFilters] = useState<FilterSelection[]>([]);
 
   // state for filtered data
   const [filteredSummary, setFilteredSummary] =
@@ -70,7 +75,11 @@ function NetCashReport() {
 
     const selectedPayments = selectedFilters
       .filter((f) =>
-        ["paystack", "internal transfer", "bank transfer"].includes(f.value)
+        [
+          "paystack",
+          "internal transfer",
+          "bank transfer",
+        ].includes(f.value)
       )
       .map((f) => f.value.toLowerCase());
 
@@ -120,16 +129,14 @@ function NetCashReport() {
 
           {/* Combined Select */}
           <div className="w-[20rem]">
-            <Select
-              className="dark:text-black"
+            <Select<FilterSelection, true>
+              styles={reactSelectStyles(theme)}
               options={filterOptions}
               components={animatedComponents}
               isMulti
               placeholder="Filter by Payment / Client Type"
               value={selectedFilters}
-              onChange={(val) => {setSelectedFilters(val as any[])
-                console.log(selectedFilters)
-              }}
+              onChange={(val) => setSelectedFilters(val ?? [])}
             />
           </div>
         </div>

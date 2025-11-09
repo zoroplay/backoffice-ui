@@ -17,6 +17,35 @@ const statusColors: Record<
   Failed: { color: "error", label: "Failed" },
 };
 
+const NoteActionCell: React.FC<{ player: InactivePlayer }> = ({ player }) => {
+  const [open, setOpen] = useState(false);
+
+  const handleSave = (note: string) => {
+    console.log(`Note saved for ${player.username}:`, note);
+  };
+
+  return (
+    <>
+      <Button
+        variant="outline"
+        size="sm"
+        className="flex items-center gap-1 border-brand-500 text-brand-500 hover:bg-brand-50"
+        onClick={() => setOpen(true)}
+      >
+        <Pencil className="h-4 w-4" />
+        Add Note
+      </Button>
+
+      <AddNoteModal
+        isOpen={open}
+        onClose={() => setOpen(false)}
+        onSave={handleSave}
+        playerName={player.username}
+      />
+    </>
+  );
+};
+
 export const columns: ColumnDef<InactivePlayer>[] = [
   {
     accessorKey: "username",
@@ -63,33 +92,6 @@ export const columns: ColumnDef<InactivePlayer>[] = [
   {
     id: "actions",
     header: "Add Note",
-    cell: ({ row }) => {
-      const [open, setOpen] = useState(false);
-
-      const handleSave = (note: string) => {
-        console.log(`Note saved for ${row.original.username}:`, note);
-      };
-
-      return (
-        <>
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-1 text-brand-500 border-brand-500 hover:bg-brand-50"
-            onClick={() => setOpen(true)}
-          >
-            <Pencil className="h-4 w-4" />
-            Add Note
-          </Button>
-
-          <AddNoteModal
-            isOpen={open}
-            onClose={() => setOpen(false)}
-            onSave={handleSave}
-            playerName={row.original.username}
-          />
-        </>
-      );
-    },
+    cell: ({ row }) => <NoteActionCell player={row.original} />,
   },
 ];

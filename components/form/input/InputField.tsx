@@ -6,6 +6,7 @@ interface InputProps {
   name?: string;
   placeholder?: string;
   defaultValue?: string | number;
+  value?: string | number;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   className?: string;
   // allow numeric or string min/max when inputs are number types or strings
@@ -26,6 +27,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
       name,
       placeholder,
       defaultValue,
+      value,
       onChange,
       className = "",
       min,
@@ -67,6 +69,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           disabled={disabled}
           className={inputClasses}
           ref={ref}
+          value={value}
         />
 
         {/* Optional Hint Text */}

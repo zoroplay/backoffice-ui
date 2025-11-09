@@ -8,6 +8,8 @@ import { FilterActions } from "@/components/common/FilterActions";
 import { columns } from "./columns";
 import { inactivePlayersData, InactivePlayer } from "./data";
 import { withAuth } from "@/utils/withAuth";
+import { reactSelectStyles } from "@/utils/reactSelectStyles";
+import { useTheme } from "@/context/ThemeContext";
 import { useSearch } from "@/context/SearchContext";
 
 // Client type options
@@ -17,10 +19,13 @@ const clientTypeOptions = [
   { value: "retail", label: "Retail" },
 ];
 
+type ClientTypeOption = { value: string; label: string };
+
 function InactivePlayersReport() {
-  const [selectedClientType, setSelectedClientType] = useState<any[]>([]);
+  const { theme } = useTheme();
+  const [selectedClientType, setSelectedClientType] = useState<ClientTypeOption[]>([]);
   const [filteredData, setFilteredData] = useState<InactivePlayer[]>(inactivePlayersData);
-  const [appliedClientTypes, setAppliedClientTypes] = useState<any[]>([]);
+  const [appliedClientTypes, setAppliedClientTypes] = useState<ClientTypeOption[]>([]);
   const { query, setPlaceholder, resetPlaceholder, resetQuery } = useSearch();
 
   useEffect(() => {
@@ -41,7 +46,7 @@ function InactivePlayersReport() {
 
   // Apply filters
   const filterData = useCallback(
-    (value: string, clientFilters?: any[]) => {
+    (value: string, clientFilters?: ClientTypeOption[]) => {
       const activeClientFilters = clientFilters ?? appliedClientTypes;
       const clientTypeValues = activeClientFilters.map((f) =>
         (f.value ?? "").toLowerCase()
@@ -82,13 +87,13 @@ function InactivePlayersReport() {
           {/* Username Input */}
           {/* Client Type Multi-Select */}
           <div className="w-[20rem]">
-            <Select
-              className="dark:text-black"
+            <Select<ClientTypeOption, true>
+              styles={reactSelectStyles(theme)}
               options={clientTypeOptions}
               isMulti
               placeholder="Filter by Client Type"
               value={selectedClientType}
-              onChange={(val) => setSelectedClientType(val as any[])}
+              onChange={(val) => setSelectedClientType(val ?? [])}
             />
           </div>
         </div>

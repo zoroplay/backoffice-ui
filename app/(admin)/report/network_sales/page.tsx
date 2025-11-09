@@ -11,6 +11,8 @@ import { networkSalesColumns } from "../network_sales/columns";
 import { NetworkSalesTypes } from "./columns";
 import { networkSalesData } from "../network_sales/data";
 import { withAuth } from "@/utils/withAuth";
+import { reactSelectStyles } from "@/utils/reactSelectStyles";
+import { useTheme } from "@/context/ThemeContext";
 
 // ----------------------
 // Select Options
@@ -31,6 +33,7 @@ const productTypeOptions: FilterOption[] = [
 // Component
 // ----------------------
 function NetworkSales() {
+  const { theme } = useTheme();
   const [selectedFilter, setSelectedFilter] = useState<FilterOption | null>(null);
   const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
 
@@ -97,7 +100,7 @@ function NetworkSales() {
           {/* Single Select */}
           <div className="w-[20rem]">
             <Select
-              className="dark:text-black"
+              styles={reactSelectStyles(theme)}
               options={productTypeOptions}
               placeholder="Filter by Product Type"
               value={selectedFilter}

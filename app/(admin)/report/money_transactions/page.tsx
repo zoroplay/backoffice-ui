@@ -10,6 +10,8 @@ import { FilterActions } from "@/components/common/FilterActions";
 import { columns, Transaction } from "./columns";
 import { transactions } from "./data";
 import { withAuth } from "@/utils/withAuth";
+import { reactSelectStyles } from "@/utils/reactSelectStyles";
+import { useTheme } from "@/context/ThemeContext";
 import { useSearch } from "@/context/SearchContext";
 
 const defaultDateRange: Range = {
@@ -41,6 +43,7 @@ const searchableFields: Array<keyof Transaction> = [
 ];
 
 function MoneyTransactions() {
+  const { theme } = useTheme();
   const [operationFilter, setOperationFilter] = useState<
     { value: string; label: string } | null
   >(null);
@@ -139,7 +142,7 @@ function MoneyTransactions() {
            {/* Operation Type */}
           <div className="w-[15rem]">
             <Select
-              className="dark:text-black"
+              styles={reactSelectStyles(theme)}
               options={operationOptions}
               placeholder="Operation Type"
               value={operationFilter}

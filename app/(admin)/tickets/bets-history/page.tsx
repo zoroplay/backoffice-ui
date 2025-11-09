@@ -11,6 +11,8 @@ import { DateRangeFilter } from "@/components/common/DateRangeFilter";
 import { FilterActions } from "@/components/common/FilterActions";
 import { withAuth } from "@/utils/withAuth";
 import { useSearch } from "@/context/SearchContext";
+import { reactSelectStyles } from "@/utils/reactSelectStyles";
+import { useTheme } from "@/context/ThemeContext";
 
 //  Default last 30 days range
 const defaultDateRange: Range = {
@@ -107,6 +109,7 @@ const operationOptions = [
 ];
 
 function BetsHistoryPage() {
+  const { theme } = useTheme();
   const [filteredData, setFilteredData] = useState<BetHistory[]>(betHistory);
 
   const [operationFilter, setOperationFilter] = useState<
@@ -251,7 +254,7 @@ function BetsHistoryPage() {
           {/* Operation Filter */}
           <div className="w-[18rem]">
             <Select
-              className="dark:text-black"
+              styles={reactSelectStyles(theme)}
               options={operationOptions}
               placeholder="Filter Options"
               value={operationFilter}

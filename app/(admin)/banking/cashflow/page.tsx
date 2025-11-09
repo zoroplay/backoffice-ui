@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import Select from "react-select";
+import React, { useCallback, useMemo, useState } from "react";
+import Select, { MultiValue } from "react-select";
 import makeAnimated from "react-select/animated";
 import type { Range } from "react-date-range";
 import { Plus } from "lucide-react";
@@ -11,15 +11,23 @@ import { DataTable } from "@/components/tables/DataTable";
 import { DateRangeFilter, defaultDateRange } from "@/components/common/DateRangeFilter";
 import { FilterActions } from "@/components/common/FilterActions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import Button from "@/components/ui/button/Button";
+import { Modal, ModalBody, ModalFooter, ModalHeader } from "@/components/ui/modal";
 import { withAuth } from "@/utils/withAuth";
+import { reactSelectStyles } from "@/utils/reactSelectStyles";
+import { useTheme } from "@/context/ThemeContext";
+import Form from "@/components/form/Form";
+import TextArea from "@/components/form/input/TextArea";
+import Input from "@/components/form/input/InputField";
+import Label from "@/components/form/Label";
 
 import {
-  cashbooksColumns,
-  cashinColumns,
-  cashoutColumns,
-  expensesColumns,
-  expenseTypeColumns,
-  expenseCategoryColumns,
+  createCashbooksColumns,
+  createCashinColumns,
+  createCashoutColumns,
+  createExpensesColumns,
+  createExpenseTypeColumns,
+  createExpenseCategoryColumns,
 } from "./columns";
 import {
   cashBooks,
@@ -28,6 +36,14 @@ import {
   expenses,
   expenseTypes,
   expenseCategories,
+  type CashBook,
+  type CashIn,
+  type CashInStatus,
+  type CashOut,
+  type CashOutStatus,
+  type Expense,
+  type ExpenseType,
+  type ExpenseCategory,
 } from "./data";
 
 const animatedComponents = makeAnimated();
@@ -36,6 +52,23 @@ type FilterOption = {
   value: string;
   label: string;
 };
+
+type StatusOption<T extends string> = {
+  value: T;
+  label: string;
+};
+
+const cashInStatusOptions: StatusOption<CashInStatus>[] = [
+  { value: "Pending", label: "Pending" },
+  { value: "Approved", label: "Approved" },
+  { value: "Rejected", label: "Rejected" },
+];
+
+const cashOutStatusOptions: StatusOption<CashOutStatus>[] = [
+  { value: "Pending", label: "Pending" },
+  { value: "Approved", label: "Approved" },
+  { value: "Rejected", label: "Rejected" },
+];
 
 const cashbookFilterOptions: Array<{ label: string; options: FilterOption[] }> = [
   {
@@ -105,50 +138,95 @@ const expenseFilterOptions: Array<{ label: string; options: FilterOption[] }> = 
 ];
 
 function CashBooksPage() {
+  const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState("cashbooks");
+
+  const [cashBooksData, setCashBooksData] = useState<CashBook[]>(cashBooks);
+  const [cashInsData, setCashInsData] = useState<CashIn[]>(cashIns);
+  const [cashOutsData, setCashOutsData] = useState<CashOut[]>(cashOuts);
+  const [expensesData, setExpensesData] = useState<Expense[]>(expenses);
+  const [expenseTypesData, setExpenseTypesData] = useState<ExpenseType[]>(expenseTypes);
+  const [expenseCategoriesData, setExpenseCategoriesData] =
+    useState<ExpenseCategory[]>(expenseCategories);
 
   // CashBooks filters
   const [cashbookFilters, setCashbookFilters] = useState<FilterOption[]>([]);
   const [cashbookDateRange, setCashbookDateRange] = useState<Range>(defaultDateRange);
   const [appliedCashbookFilters, setAppliedCashbookFilters] = useState<FilterOption[]>([]);
   const [appliedCashbookDateRange, setAppliedCashbookDateRange] = useState<Range>(defaultDateRange);
-  const [filteredCashbooks, setFilteredCashbooks] = useState(cashBooks);
+  const [filteredCashbooks, setFilteredCashbooks] = useState<CashBook[]>(cashBooksData);
 
   // Cash In filters
   const [cashinFilters, setCashinFilters] = useState<FilterOption[]>([]);
   const [cashinDateRange, setCashinDateRange] = useState<Range>(defaultDateRange);
   const [appliedCashinFilters, setAppliedCashinFilters] = useState<FilterOption[]>([]);
   const [appliedCashinDateRange, setAppliedCashinDateRange] = useState<Range>(defaultDateRange);
-  const [filteredCashIns, setFilteredCashIns] = useState(cashIns);
+  const [filteredCashIns, setFilteredCashIns] = useState<CashIn[]>(cashInsData);
 
   // Cash Out filters
   const [cashoutFilters, setCashoutFilters] = useState<FilterOption[]>([]);
   const [cashoutDateRange, setCashoutDateRange] = useState<Range>(defaultDateRange);
   const [appliedCashoutFilters, setAppliedCashoutFilters] = useState<FilterOption[]>([]);
   const [appliedCashoutDateRange, setAppliedCashoutDateRange] = useState<Range>(defaultDateRange);
-  const [filteredCashOuts, setFilteredCashOuts] = useState(cashOuts);
+  const [filteredCashOuts, setFilteredCashOuts] = useState<CashOut[]>(cashOutsData);
 
   // Expenses filters
   const [expenseFilters, setExpenseFilters] = useState<FilterOption[]>([]);
   const [expenseDateRange, setExpenseDateRange] = useState<Range>(defaultDateRange);
   const [appliedExpenseFilters, setAppliedExpenseFilters] = useState<FilterOption[]>([]);
   const [appliedExpenseDateRange, setAppliedExpenseDateRange] = useState<Range>(defaultDateRange);
-  const [filteredExpenses, setFilteredExpenses] = useState(expenses);
+  const [filteredExpenses, setFilteredExpenses] = useState<Expense[]>(expensesData);
+
+  const [selectedCashBook, setSelectedCashBook] = useState<CashBook | null>(null);
+  const [isCashBookModalOpen, setIsCashBookModalOpen] = useState(false);
+
+  const [editingCashIn, setEditingCashIn] = useState<CashIn | null>(null);
+  const [isCashInModalOpen, setIsCashInModalOpen] = useState(false);
+  const [cashInForm, setCashInForm] = useState({
+    branch: "",
+    amount: "",
+    comment: "",
+    status: cashInStatusOptions[0] as StatusOption<CashInStatus> | null,
+  });
+
+  const [editingCashOut, setEditingCashOut] = useState<CashOut | null>(null);
+  const [isCashOutModalOpen, setIsCashOutModalOpen] = useState(false);
+  const [cashOutForm, setCashOutForm] = useState({
+    branch: "",
+    amount: "",
+    comment: "",
+    status: cashOutStatusOptions[0] as StatusOption<CashOutStatus> | null,
+  });
+
+  const [editingExpenseType, setEditingExpenseType] = useState<ExpenseType | null>(null);
+  const [isExpenseTypeModalOpen, setIsExpenseTypeModalOpen] = useState(false);
+  const [expenseTypeForm, setExpenseTypeForm] = useState({
+    title: "",
+    category: "",
+    amount: "",
+  });
+
+  const [editingExpenseCategory, setEditingExpenseCategory] = useState<ExpenseCategory | null>(null);
+  const [isExpenseCategoryModalOpen, setIsExpenseCategoryModalOpen] = useState(false);
+  const [expenseCategoryForm, setExpenseCategoryForm] = useState({
+    title: "",
+    description: "",
+  });
 
   const handleMultiSelectChange = (
-    val: any,
+    val: MultiValue<FilterOption>,
     setter: React.Dispatch<React.SetStateAction<FilterOption[]>>
   ) => {
-    if (!val || (Array.isArray(val) && val.length === 0)) {
+    if (!val || val.length === 0) {
       setter([]);
       return;
     }
 
-    const nextSelection = Array.isArray(val) ? [...val] : [val];
-    const latest = nextSelection[nextSelection.length - 1] as FilterOption;
+    const nextSelection = [...val];
+    const latest = nextSelection[nextSelection.length - 1];
 
     if (!latest) {
-      setter(nextSelection as FilterOption[]);
+      setter(nextSelection);
       return;
     }
 
@@ -157,12 +235,12 @@ function CashBooksPage() {
       (item) => item.value.split(":")[0] !== categoryPrefix
     );
 
-    setter([...(filtered as FilterOption[]), latest]);
+    setter([...filtered, latest]);
   };
 
-  const filterCashbooks = React.useCallback(
+  const filterCashbooks = useCallback(
     (filters: FilterOption[], range: Range) => {
-      return cashBooks.filter((row) => {
+      return cashBooksData.filter((row) => {
         // Parse multi-select filters
         const selections = filters.reduce<Record<string, string>>((acc, option) => {
           if (!option?.value) return acc;
@@ -200,12 +278,12 @@ function CashBooksPage() {
         return matchesBranch && matchesStatus && matchesDate;
       });
     },
-    []
+    [cashBooksData]
   );
 
-  const filterCashIns = React.useCallback(
+  const filterCashIns = useCallback(
     (filters: FilterOption[], range: Range) => {
-      return cashIns.filter((row) => {
+      return cashInsData.filter((row) => {
         // Parse multi-select filters
         const selections = filters.reduce<Record<string, string>>((acc, option) => {
           if (!option?.value) return acc;
@@ -243,12 +321,12 @@ function CashBooksPage() {
         return matchesBranch && matchesStatus && matchesDate;
       });
     },
-    []
+    [cashInsData]
   );
 
-  const filterCashOuts = React.useCallback(
+  const filterCashOuts = useCallback(
     (filters: FilterOption[], range: Range) => {
-      return cashOuts.filter((row) => {
+      return cashOutsData.filter((row) => {
         // Parse multi-select filters
         const selections = filters.reduce<Record<string, string>>((acc, option) => {
           if (!option?.value) return acc;
@@ -286,12 +364,12 @@ function CashBooksPage() {
         return matchesBranch && matchesStatus && matchesDate;
       });
     },
-    []
+    [cashOutsData]
   );
 
-  const filterExpenses = React.useCallback(
+  const filterExpenses = useCallback(
     (filters: FilterOption[], range: Range) => {
-      return expenses.filter((row) => {
+      return expensesData.filter((row) => {
         // Parse multi-select filters
         const selections = filters.reduce<Record<string, string>>((acc, option) => {
           if (!option?.value) return acc;
@@ -329,7 +407,7 @@ function CashBooksPage() {
         return matchesBranch && matchesStatus && matchesDate;
       });
     },
-    []
+    [expensesData]
   );
 
   React.useEffect(() => {
@@ -382,27 +460,403 @@ function CashBooksPage() {
       setCashbookDateRange(defaultDateRange);
       setAppliedCashbookFilters([]);
       setAppliedCashbookDateRange(defaultDateRange);
-      setFilteredCashbooks(cashBooks);
+      setFilteredCashbooks(cashBooksData);
     } else if (activeTab === "cashin") {
       setCashinFilters([]);
       setCashinDateRange(defaultDateRange);
       setAppliedCashinFilters([]);
       setAppliedCashinDateRange(defaultDateRange);
-      setFilteredCashIns(cashIns);
+      setFilteredCashIns(cashInsData);
     } else if (activeTab === "cashout") {
       setCashoutFilters([]);
       setCashoutDateRange(defaultDateRange);
       setAppliedCashoutFilters([]);
       setAppliedCashoutDateRange(defaultDateRange);
-      setFilteredCashOuts(cashOuts);
+      setFilteredCashOuts(cashOutsData);
     } else if (activeTab === "expenses") {
       setExpenseFilters([]);
       setExpenseDateRange(defaultDateRange);
       setAppliedExpenseFilters([]);
       setAppliedExpenseDateRange(defaultDateRange);
-      setFilteredExpenses(expenses);
+      setFilteredExpenses(expensesData);
     }
   };
+
+  const handleViewCashBook = useCallback((row: CashBook) => {
+    setSelectedCashBook(row);
+    setIsCashBookModalOpen(true);
+  }, []);
+
+  const closeCashBookModal = useCallback(() => {
+    setIsCashBookModalOpen(false);
+    setSelectedCashBook(null);
+  }, []);
+
+  const handleCreateCashIn = useCallback(() => {
+    setEditingCashIn(null);
+    setCashInForm({
+      branch: cashInsData[0]?.branch ?? "",
+      amount: "",
+      comment: "",
+      status: cashInStatusOptions[0],
+    });
+    setIsCashInModalOpen(true);
+  }, [cashInsData]);
+
+  const closeCashInModal = useCallback(() => {
+    setIsCashInModalOpen(false);
+    setEditingCashIn(null);
+  }, []);
+
+  const handleEditCashIn = useCallback((row: CashIn) => {
+    setEditingCashIn(row);
+    setCashInForm({
+      branch: row.branch,
+      amount: row.amount.toString(),
+      comment: row.comment,
+      status: cashInStatusOptions.find((option) => option.value === row.status) ?? cashInStatusOptions[0],
+    });
+    setIsCashInModalOpen(true);
+  }, []);
+
+  const handleSaveCashIn = useCallback(() => {
+    if (!cashInForm.branch.trim()) {
+      alert("Please provide a branch.");
+      return;
+    }
+
+    const amountValue = Number(cashInForm.amount);
+    if (Number.isNaN(amountValue) || amountValue <= 0) {
+      alert("Amount must be greater than zero.");
+      return;
+    }
+
+    setCashInsData((prev) => {
+      if (editingCashIn) {
+        return prev.map((item) =>
+          item.id === editingCashIn.id
+            ? {
+                ...item,
+                branch: cashInForm.branch,
+                amount: amountValue,
+                comment: cashInForm.comment,
+                status: (cashInForm.status?.value ?? item.status) as CashInStatus,
+              }
+            : item
+        );
+      }
+
+      const newEntry: CashIn = {
+        id: `cashin-${Date.now()}`,
+        date: new Date().toISOString(),
+        branch: cashInForm.branch,
+        amount: amountValue,
+        comment: cashInForm.comment,
+        status: (cashInForm.status?.value ?? "Pending") as CashInStatus,
+      };
+      return [newEntry, ...prev];
+    });
+
+    setIsCashInModalOpen(false);
+    setEditingCashIn(null);
+  }, [cashInForm, editingCashIn]);
+
+  const handleDeleteCashIn = useCallback((row: CashIn) => {
+    const confirmed = window.confirm(`Delete cash in record for ${row.branch}?`);
+    if (!confirmed) return;
+    setCashInsData((prev) => prev.filter((item) => item.id !== row.id));
+    setFilteredCashIns((prev) => prev.filter((item) => item.id !== row.id));
+  }, []);
+
+  const handleCreateCashOut = useCallback(() => {
+    setEditingCashOut(null);
+    setCashOutForm({
+      branch: cashOutsData[0]?.branch ?? "",
+      amount: "",
+      comment: "",
+      status: cashOutStatusOptions[0],
+    });
+    setIsCashOutModalOpen(true);
+  }, [cashOutsData]);
+
+  const closeCashOutModal = useCallback(() => {
+    setIsCashOutModalOpen(false);
+    setEditingCashOut(null);
+  }, []);
+
+  const handleEditCashOut = useCallback((row: CashOut) => {
+    setEditingCashOut(row);
+    setCashOutForm({
+      branch: row.branch,
+      amount: row.amount.toString(),
+      comment: row.comment,
+      status: cashOutStatusOptions.find((option) => option.value === row.status) ?? cashOutStatusOptions[0],
+    });
+    setIsCashOutModalOpen(true);
+  }, []);
+
+  const handleSaveCashOut = useCallback(() => {
+    if (!cashOutForm.branch.trim()) {
+      alert("Please provide a branch.");
+      return;
+    }
+
+    const amountValue = Number(cashOutForm.amount);
+    if (Number.isNaN(amountValue) || amountValue <= 0) {
+      alert("Amount must be greater than zero.");
+      return;
+    }
+
+    setCashOutsData((prev) => {
+      if (editingCashOut) {
+        return prev.map((item) =>
+          item.id === editingCashOut.id
+            ? {
+                ...item,
+                branch: cashOutForm.branch,
+                amount: amountValue,
+                comment: cashOutForm.comment,
+                status: (cashOutForm.status?.value ?? item.status) as CashOutStatus,
+              }
+            : item
+        );
+      }
+
+      const newEntry: CashOut = {
+        id: `cashout-${Date.now()}`,
+        date: new Date().toISOString(),
+        branch: cashOutForm.branch,
+        amount: amountValue,
+        comment: cashOutForm.comment,
+        status: (cashOutForm.status?.value ?? "Pending") as CashOutStatus,
+      };
+      return [newEntry, ...prev];
+    });
+
+    setIsCashOutModalOpen(false);
+    setEditingCashOut(null);
+  }, [cashOutForm, editingCashOut]);
+
+  const handleDeleteCashOut = useCallback((row: CashOut) => {
+    const confirmed = window.confirm(`Delete cash out record for ${row.branch}?`);
+    if (!confirmed) return;
+    setCashOutsData((prev) => prev.filter((item) => item.id !== row.id));
+    setFilteredCashOuts((prev) => prev.filter((item) => item.id !== row.id));
+  }, []);
+
+  const handleApproveExpense = useCallback((row: Expense) => {
+    setExpensesData((prev) =>
+      prev.map((item) =>
+        item.id === row.id
+          ? {
+              ...item,
+              status: "Approved",
+              approvedBy: "System Admin",
+              approvedAt: new Date().toISOString(),
+            }
+          : item
+      )
+    );
+  }, []);
+
+  const handleRejectExpense = useCallback((row: Expense) => {
+    setExpensesData((prev) =>
+      prev.map((item) =>
+        item.id === row.id
+          ? {
+              ...item,
+              status: "Rejected",
+              approvedBy: "System Admin",
+              approvedAt: new Date().toISOString(),
+            }
+          : item
+      )
+    );
+  }, []);
+
+  const handleCreateExpenseType = useCallback(() => {
+    setEditingExpenseType(null);
+    setExpenseTypeForm({
+      title: "",
+      category: "",
+      amount: "",
+    });
+    setIsExpenseTypeModalOpen(true);
+  }, []);
+
+  const closeExpenseTypeModal = useCallback(() => {
+    setIsExpenseTypeModalOpen(false);
+    setEditingExpenseType(null);
+  }, []);
+
+  const handleEditExpenseType = useCallback((row: ExpenseType) => {
+    setEditingExpenseType(row);
+    setExpenseTypeForm({
+      title: row.title,
+      category: row.category,
+      amount: row.amount.toString(),
+    });
+    setIsExpenseTypeModalOpen(true);
+  }, []);
+
+  const handleSaveExpenseType = useCallback(() => {
+    if (!expenseTypeForm.title.trim() || !expenseTypeForm.category.trim()) {
+      alert("Please provide title and category.");
+      return;
+    }
+
+    const amountValue = Number(expenseTypeForm.amount);
+    if (Number.isNaN(amountValue) || amountValue <= 0) {
+      alert("Amount must be greater than zero.");
+      return;
+    }
+
+    setExpenseTypesData((prev) => {
+      if (editingExpenseType) {
+        return prev.map((item) =>
+          item.id === editingExpenseType.id
+            ? {
+                ...item,
+                title: expenseTypeForm.title,
+                category: expenseTypeForm.category,
+                amount: amountValue,
+              }
+            : item
+        );
+      }
+
+      const newEntry: ExpenseType = {
+        id: `expense-type-${Date.now()}`,
+        title: expenseTypeForm.title,
+        category: expenseTypeForm.category,
+        amount: amountValue,
+      };
+
+      return [newEntry, ...prev];
+    });
+
+    setIsExpenseTypeModalOpen(false);
+    setEditingExpenseType(null);
+  }, [editingExpenseType, expenseTypeForm]);
+
+  const handleDeleteExpenseType = useCallback((row: ExpenseType) => {
+    const confirmed = window.confirm(`Delete expense type "${row.title}"?`);
+    if (!confirmed) return;
+    setExpenseTypesData((prev) => prev.filter((item) => item.id !== row.id));
+  }, []);
+
+  const handleCreateExpenseCategory = useCallback(() => {
+    setEditingExpenseCategory(null);
+    setExpenseCategoryForm({
+      title: "",
+      description: "",
+    });
+    setIsExpenseCategoryModalOpen(true);
+  }, []);
+
+  const closeExpenseCategoryModal = useCallback(() => {
+    setIsExpenseCategoryModalOpen(false);
+    setEditingExpenseCategory(null);
+  }, []);
+
+  const handleEditExpenseCategory = useCallback((row: ExpenseCategory) => {
+    setEditingExpenseCategory(row);
+    setExpenseCategoryForm({
+      title: row.title,
+      description: row.description,
+    });
+    setIsExpenseCategoryModalOpen(true);
+  }, []);
+
+  const handleSaveExpenseCategory = useCallback(() => {
+    if (!expenseCategoryForm.title.trim()) {
+      alert("Please provide a title.");
+      return;
+    }
+
+    setExpenseCategoriesData((prev) => {
+      if (editingExpenseCategory) {
+        return prev.map((item) =>
+          item.id === editingExpenseCategory.id
+            ? {
+                ...item,
+                title: expenseCategoryForm.title,
+                description: expenseCategoryForm.description,
+              }
+            : item
+        );
+      }
+
+      const newEntry: ExpenseCategory = {
+        id: `expense-category-${Date.now()}`,
+        title: expenseCategoryForm.title,
+        description: expenseCategoryForm.description,
+      };
+      return [newEntry, ...prev];
+    });
+
+    setIsExpenseCategoryModalOpen(false);
+    setEditingExpenseCategory(null);
+  }, [editingExpenseCategory, expenseCategoryForm]);
+
+  const handleDeleteExpenseCategory = useCallback((row: ExpenseCategory) => {
+    const confirmed = window.confirm(`Delete expense category "${row.title}"?`);
+    if (!confirmed) return;
+    setExpenseCategoriesData((prev) => prev.filter((item) => item.id !== row.id));
+  }, []);
+
+  const cashbookColumns = useMemo(
+    () =>
+      createCashbooksColumns({
+        onView: handleViewCashBook,
+      }),
+    [handleViewCashBook]
+  );
+
+  const cashInColumns = useMemo(
+    () =>
+      createCashinColumns({
+        onEdit: handleEditCashIn,
+        onDelete: handleDeleteCashIn,
+      }),
+    [handleDeleteCashIn, handleEditCashIn]
+  );
+
+  const cashOutColumns = useMemo(
+    () =>
+      createCashoutColumns({
+        onEdit: handleEditCashOut,
+        onDelete: handleDeleteCashOut,
+      }),
+    [handleDeleteCashOut, handleEditCashOut]
+  );
+
+  const expensesColumns = useMemo(
+    () =>
+      createExpensesColumns({
+        onApprove: handleApproveExpense,
+        onReject: handleRejectExpense,
+      }),
+    [handleApproveExpense, handleRejectExpense]
+  );
+
+  const expenseTypeColumns = useMemo(
+    () =>
+      createExpenseTypeColumns({
+        onEdit: handleEditExpenseType,
+        onDelete: handleDeleteExpenseType,
+      }),
+    [handleDeleteExpenseType, handleEditExpenseType]
+  );
+
+  const expenseCategoryColumns = useMemo(
+    () =>
+      createExpenseCategoryColumns({
+        onEdit: handleEditExpenseCategory,
+        onDelete: handleDeleteExpenseCategory,
+      }),
+    [handleDeleteExpenseCategory, handleEditExpenseCategory]
+  );
 
   return (
     <div className="space-y-6 p-4">
@@ -453,7 +907,7 @@ function CashBooksPage() {
 
               <div className="w-[22rem]">
                 <Select
-                  className="dark:text-black"
+                  styles={reactSelectStyles(theme)}
                   options={cashbookFilterOptions}
                   placeholder="Filter by Branch, Status"
                   components={animatedComponents}
@@ -472,7 +926,7 @@ function CashBooksPage() {
               <h2 className="text-base font-semibold text-white">Cashbooks</h2>
             </div>
             <div className="p-4">
-              <DataTable columns={cashbooksColumns} data={filteredCashbooks} />
+              <DataTable columns={cashbookColumns} data={filteredCashbooks} />
             </div>
           </div>
         </TabsContent>
@@ -481,7 +935,11 @@ function CashBooksPage() {
         <TabsContent value="cashin" className="mt-0">
           <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
             <div className="flex flex-wrap items-center gap-4">
-              <button className="inline-flex items-center gap-2 rounded-md bg-orange-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500">
+              <button
+                type="button"
+                onClick={handleCreateCashIn}
+                className="inline-flex items-center gap-2 rounded-md bg-orange-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500"
+              >
                 <Plus className="h-4 w-4" />
                 Add
               </button>
@@ -493,7 +951,7 @@ function CashBooksPage() {
 
               <div className="w-[22rem]">
                 <Select
-                  className="dark:text-black"
+                  styles={reactSelectStyles(theme)}
                   options={cashinCashoutFilterOptions}
                   placeholder="Filter by Branch, Status"
                   components={animatedComponents}
@@ -512,7 +970,7 @@ function CashBooksPage() {
               <h2 className="text-base font-semibold text-white">Cash In</h2>
             </div>
             <div className="p-4">
-              <DataTable columns={cashinColumns} data={filteredCashIns} />
+              <DataTable columns={cashInColumns} data={filteredCashIns} />
             </div>
           </div>
         </TabsContent>
@@ -521,7 +979,11 @@ function CashBooksPage() {
         <TabsContent value="cashout" className="mt-0">
           <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
             <div className="flex flex-wrap items-center gap-4">
-              <button className="inline-flex items-center gap-2 rounded-md bg-orange-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500">
+              <button
+                type="button"
+                onClick={handleCreateCashOut}
+                className="inline-flex items-center gap-2 rounded-md bg-orange-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500"
+              >
                 <Plus className="h-4 w-4" />
                 Add
               </button>
@@ -533,7 +995,7 @@ function CashBooksPage() {
 
               <div className="w-[22rem]">
                 <Select
-                  className="dark:text-black"
+                  styles={reactSelectStyles(theme)}
                   options={cashinCashoutFilterOptions}
                   placeholder="Filter by Branch, Status"
                   components={animatedComponents}
@@ -552,7 +1014,7 @@ function CashBooksPage() {
               <h2 className="text-base font-semibold text-white">Cash Out</h2>
             </div>
             <div className="p-4">
-              <DataTable columns={cashoutColumns} data={filteredCashOuts} />
+              <DataTable columns={cashOutColumns} data={filteredCashOuts} />
             </div>
           </div>
         </TabsContent>
@@ -568,7 +1030,7 @@ function CashBooksPage() {
 
               <div className="w-[22rem]">
                 <Select
-                  className="dark:text-black"
+                  styles={reactSelectStyles(theme)}
                   options={expenseFilterOptions}
                   placeholder="Filter by Branch, Status"
                   components={animatedComponents}
@@ -601,12 +1063,16 @@ function CashBooksPage() {
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                   Expense Type
                 </h3>
-                <button className="inline-flex items-center gap-2 rounded-md bg-green-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-600">
+                <button
+                  type="button"
+                  onClick={handleCreateExpenseType}
+                  className="inline-flex items-center gap-2 rounded-md bg-green-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-600"
+                >
                   New Expense Type
                 </button>
               </div>
               <div className="p-4">
-                <DataTable columns={expenseTypeColumns} data={expenseTypes} />
+                <DataTable columns={expenseTypeColumns} data={expenseTypesData} />
               </div>
             </div>
 
@@ -616,17 +1082,297 @@ function CashBooksPage() {
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                   Expense Category
                 </h3>
-                <button className="inline-flex items-center gap-2 rounded-md bg-green-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-600">
+                <button
+                  type="button"
+                  onClick={handleCreateExpenseCategory}
+                  className="inline-flex items-center gap-2 rounded-md bg-green-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-600"
+                >
                   New Expense Category
                 </button>
               </div>
               <div className="p-4">
-                <DataTable columns={expenseCategoryColumns} data={expenseCategories} />
+                <DataTable columns={expenseCategoryColumns} data={expenseCategoriesData} />
               </div>
             </div>
           </div>
         </TabsContent>
       </Tabs>
+
+      <Modal isOpen={isCashBookModalOpen} onClose={closeCashBookModal} size="md">
+        <ModalHeader>Cashbook Summary</ModalHeader>
+        <ModalBody>
+          {selectedCashBook && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <p className="text-xs uppercase text-gray-500 dark:text-gray-400">Date</p>
+                  <p className="font-medium text-gray-900 dark:text-gray-100">{selectedCashBook.date}</p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase text-gray-500 dark:text-gray-400">Branch</p>
+                  <p className="font-medium text-gray-900 dark:text-gray-100">{selectedCashBook.branch}</p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase text-gray-500 dark:text-gray-400">Normal Sales</p>
+                  <p className="font-medium text-gray-900 dark:text-gray-100">
+                    ₦{selectedCashBook.normalSales.toLocaleString()}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase text-gray-500 dark:text-gray-400">Normal Payout</p>
+                  <p className="font-medium text-gray-900 dark:text-gray-100">
+                    ₦{selectedCashBook.normalPayout.toLocaleString()}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase text-gray-500 dark:text-gray-400">Virtual Sales</p>
+                  <p className="font-medium text-gray-900 dark:text-gray-100">
+                    ₦{selectedCashBook.virtualSales.toLocaleString()}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase text-gray-500 dark:text-gray-400">Virtual Payout</p>
+                  <p className="font-medium text-gray-900 dark:text-gray-100">
+                    ₦{selectedCashBook.virtualPayout.toLocaleString()}
+                  </p>
+                </div>
+              </div>
+              <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900/60">
+                <p className="text-xs uppercase text-gray-500 dark:text-gray-400">Closing Balance</p>
+                <p className="text-lg font-semibold text-emerald-600 dark:text-emerald-400">
+                  ₦{selectedCashBook.closingBalance.toLocaleString()}
+                </p>
+              </div>
+            </div>
+          )}
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="outline" onClick={closeCashBookModal}>
+            Close
+          </Button>
+        </ModalFooter>
+      </Modal>
+
+      <Modal isOpen={isCashInModalOpen} onClose={closeCashInModal} size="md">
+        <ModalHeader>{editingCashIn ? "Edit Cash In" : "Add Cash In"}</ModalHeader>
+        <ModalBody>
+          <Form
+            onSubmit={(event) => {
+              event.preventDefault();
+              handleSaveCashIn();
+            }}
+            className="space-y-4"
+          >
+            <div>
+              <Label>Branch</Label>
+              <Input
+                value={cashInForm.branch}
+                onChange={(event) =>
+                  setCashInForm((prev) => ({ ...prev, branch: event.target.value }))
+                }
+                placeholder="Branch name"
+              />
+            </div>
+            <div>
+              <Label>Amount</Label>
+              <Input
+                type="number"
+                min={0}
+                value={cashInForm.amount}
+                onChange={(event) =>
+                  setCashInForm((prev) => ({ ...prev, amount: event.target.value }))
+                }
+                placeholder="Enter amount"
+              />
+            </div>
+            <div>
+              <Label>Comment</Label>
+              <TextArea
+                rows={3}
+                value={cashInForm.comment}
+                onChange={(value) => setCashInForm((prev) => ({ ...prev, comment: value }))}
+                placeholder="Add notes"
+              />
+            </div>
+            <div>
+              <Label>Status</Label>
+              <Select<StatusOption<CashInStatus>, false>
+                styles={reactSelectStyles(theme)}
+                options={cashInStatusOptions}
+                value={cashInForm.status}
+                onChange={(option) =>
+                  setCashInForm((prev) => ({ ...prev, status: option ?? cashInStatusOptions[0] }))
+                }
+              />
+            </div>
+          </Form>
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="outline" onClick={closeCashInModal}>
+            Cancel
+          </Button>
+          <Button onClick={handleSaveCashIn}>{editingCashIn ? "Update" : "Save"}</Button>
+        </ModalFooter>
+      </Modal>
+
+      <Modal isOpen={isCashOutModalOpen} onClose={closeCashOutModal} size="md">
+        <ModalHeader>{editingCashOut ? "Edit Cash Out" : "Add Cash Out"}</ModalHeader>
+        <ModalBody>
+          <Form
+            onSubmit={(event) => {
+              event.preventDefault();
+              handleSaveCashOut();
+            }}
+            className="space-y-4"
+          >
+            <div>
+              <Label>Branch</Label>
+              <Input
+                value={cashOutForm.branch}
+                onChange={(event) =>
+                  setCashOutForm((prev) => ({ ...prev, branch: event.target.value }))
+                }
+                placeholder="Branch name"
+              />
+            </div>
+            <div>
+              <Label>Amount</Label>
+              <Input
+                type="number"
+                min={0}
+                value={cashOutForm.amount}
+                onChange={(event) =>
+                  setCashOutForm((prev) => ({ ...prev, amount: event.target.value }))
+                }
+                placeholder="Enter amount"
+              />
+            </div>
+            <div>
+              <Label>Comment</Label>
+              <TextArea
+                rows={3}
+                value={cashOutForm.comment}
+                onChange={(value) => setCashOutForm((prev) => ({ ...prev, comment: value }))}
+                placeholder="Add notes"
+              />
+            </div>
+            <div>
+              <Label>Status</Label>
+              <Select<StatusOption<CashOutStatus>, false>
+                styles={reactSelectStyles(theme)}
+                options={cashOutStatusOptions}
+                value={cashOutForm.status}
+                onChange={(option) =>
+                  setCashOutForm((prev) => ({ ...prev, status: option ?? cashOutStatusOptions[0] }))
+                }
+              />
+            </div>
+          </Form>
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="outline" onClick={closeCashOutModal}>
+            Cancel
+          </Button>
+          <Button onClick={handleSaveCashOut}>{editingCashOut ? "Update" : "Save"}</Button>
+        </ModalFooter>
+      </Modal>
+
+      <Modal isOpen={isExpenseTypeModalOpen} onClose={closeExpenseTypeModal} size="md">
+        <ModalHeader>{editingExpenseType ? "Edit Expense Type" : "New Expense Type"}</ModalHeader>
+        <ModalBody>
+          <Form
+            onSubmit={(event) => {
+              event.preventDefault();
+              handleSaveExpenseType();
+            }}
+            className="space-y-4"
+          >
+            <div>
+              <Label>Title</Label>
+              <Input
+                value={expenseTypeForm.title}
+                onChange={(event) =>
+                  setExpenseTypeForm((prev) => ({ ...prev, title: event.target.value }))
+                }
+                placeholder="Expense title"
+              />
+            </div>
+            <div>
+              <Label>Category</Label>
+              <Input
+                value={expenseTypeForm.category}
+                onChange={(event) =>
+                  setExpenseTypeForm((prev) => ({ ...prev, category: event.target.value }))
+                }
+                placeholder="Category"
+              />
+            </div>
+            <div>
+              <Label>Amount</Label>
+              <Input
+                type="number"
+                min={0}
+                value={expenseTypeForm.amount}
+                onChange={(event) =>
+                  setExpenseTypeForm((prev) => ({ ...prev, amount: event.target.value }))
+                }
+                placeholder="0.00"
+              />
+            </div>
+          </Form>
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="outline" onClick={closeExpenseTypeModal}>
+            Cancel
+          </Button>
+          <Button onClick={handleSaveExpenseType}>{editingExpenseType ? "Update" : "Save"}</Button>
+        </ModalFooter>
+      </Modal>
+
+      <Modal isOpen={isExpenseCategoryModalOpen} onClose={closeExpenseCategoryModal} size="md">
+        <ModalHeader>
+          {editingExpenseCategory ? "Edit Expense Category" : "New Expense Category"}
+        </ModalHeader>
+        <ModalBody>
+          <Form
+            onSubmit={(event) => {
+              event.preventDefault();
+              handleSaveExpenseCategory();
+            }}
+            className="space-y-4"
+          >
+            <div>
+              <Label>Title</Label>
+              <Input
+                value={expenseCategoryForm.title}
+                onChange={(event) =>
+                  setExpenseCategoryForm((prev) => ({ ...prev, title: event.target.value }))
+                }
+                placeholder="Category title"
+              />
+            </div>
+            <div>
+              <Label>Description</Label>
+              <TextArea
+                rows={3}
+                value={expenseCategoryForm.description}
+                onChange={(value) =>
+                  setExpenseCategoryForm((prev) => ({ ...prev, description: value }))
+                }
+                placeholder="Describe this category"
+              />
+            </div>
+          </Form>
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="outline" onClick={closeExpenseCategoryModal}>
+            Cancel
+          </Button>
+          <Button onClick={handleSaveExpenseCategory}>
+            {editingExpenseCategory ? "Update" : "Save"}
+          </Button>
+        </ModalFooter>
+      </Modal>
     </div>
   );
 }

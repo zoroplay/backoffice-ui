@@ -52,7 +52,7 @@ function PlayerSmartSearchPage() {
       <PageBreadcrumb pageTitle="Player Smart Search" />
 
       {/* Data Table */}
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto custom-scrollbar">
         <DataTable columns={columns} data={filteredData} />
       </div>
     </div>

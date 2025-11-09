@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState } from "react";
 import Select from "react-select";
 import type { Range } from "react-date-range";
+import type { RowSelectionState } from "@tanstack/react-table";
 
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { DataTable } from "@/components/tables/DataTable";
@@ -10,6 +11,8 @@ import { DateRangeFilter, defaultDateRange } from "@/components/common/DateRange
 import { FilterActions } from "@/components/common/FilterActions";
 import Button from "@/components/ui/button/Button";
 import { withAuth } from "@/utils/withAuth";
+import { reactSelectStyles } from "@/utils/reactSelectStyles";
+import { useTheme } from "@/context/ThemeContext";
 
 import { columns, MassBonusPlayer } from "./columns";
 import { massBonusPlayersData } from "./data";
@@ -39,11 +42,12 @@ const bonusOptions: FilterOption[] = [
 ];
 
 function GrantMassBonusesPage() {
+  const { theme } = useTheme();
   const [filteredData, setFilteredData] = useState<MassBonusPlayer[]>(massBonusPlayersData);
   const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
   const [segmentType, setSegmentType] = useState<FilterOption | null>(null);
-  const [selectedBonus, setSelectedBonus] = useState<FilterOption | null>(null);  
-  const [rowSelection, setRowSelection] = useState({});
+  const [selectedBonus, setSelectedBonus] = useState<FilterOption | null>(null);
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
   const handleSearch = () => {
     // Apply filters based on segment type
@@ -141,7 +145,7 @@ function GrantMassBonusesPage() {
           {/* Segment Type */}
           <div className="w-[20rem]">
             <Select
-              className="dark:text-black"
+              styles={reactSelectStyles(theme)}
               options={segmentTypeOptions}
               placeholder="Segment Type"
               value={segmentType}
@@ -180,7 +184,7 @@ function GrantMassBonusesPage() {
             {/* Select Bonus Dropdown */}
             <div className="w-64">
               <Select
-                className="dark:text-black"
+                styles={reactSelectStyles(theme)}
                 options={bonusOptions}
                 placeholder="Select Bonus"
                 value={selectedBonus}

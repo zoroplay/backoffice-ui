@@ -9,6 +9,8 @@ import { DateRangeFilter, defaultDateRange } from "@/components/common/DateRange
 import { columns } from "./column";
 import { tableData } from "./data";
 import { withAuth } from "@/utils/withAuth";
+import { reactSelectStyles } from "@/utils/reactSelectStyles";
+import { useTheme } from "@/context/ThemeContext";
 import { useSearch } from "@/context/SearchContext";
 
 
@@ -57,12 +59,15 @@ const groupedOptions = [
   },
 ];
 
+type FilterSelection = { value: string; label: string };
+
 
 // ----------------------
 // Component
 // ----------------------
 function GamingActivities() {
-  const [filters, setFilters] = useState<any[]>([]);
+  const { theme } = useTheme();
+  const [filters, setFilters] = useState<FilterSelection[]>([]);
   const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
   const { query, setPlaceholder, resetPlaceholder } = useSearch();
 
@@ -105,13 +110,13 @@ function GamingActivities() {
 />
         {/* Grouped Multi-Select */}
         <div className="w-[28rem]">
-          <Select
-            className="dark:text-black"
+          <Select<FilterSelection, true>
+            styles={reactSelectStyles(theme)}
             options={groupedOptions}
             isMulti
             placeholder="Filter by Game, Match, Ticket, Bet, Client..."
             value={filters}
-            onChange={(val) => setFilters(val as any[])}
+            onChange={(val) => setFilters(val ?? [])}
           />
         </div>
 

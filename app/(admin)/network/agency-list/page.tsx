@@ -6,6 +6,8 @@ import Select from "react-select";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { DataTable } from "@/components/tables/DataTable";
 import { withAuth } from "@/utils/withAuth";
+import { reactSelectStyles } from "@/utils/reactSelectStyles";
+import { useTheme } from "@/context/ThemeContext";
 import { useSearch } from "@/context/SearchContext";
 
 import { columns, Agency } from "./columns";
@@ -30,6 +32,7 @@ const agentTypeOptions: FilterOption[] = [
 const searchableFields: Array<keyof Agency> = ["username", "name"];
 
 function AgencyListPage() {
+  const { theme } = useTheme();
   const [filteredData, setFilteredData] = useState<Agency[]>(agencies);
   const [selectedAgentType, setSelectedAgentType] = useState<FilterOption>(
     agentTypeOptions[0]
@@ -90,7 +93,7 @@ function AgencyListPage() {
       <div className="flex flex-wrap items-center gap-4">
         <div className="w-full sm:w-[200px]">
           <Select
-            className="dark:text-black"
+            styles={reactSelectStyles(theme)}
             options={agentTypeOptions}
             placeholder="All"
             value={selectedAgentType}

@@ -11,6 +11,8 @@ import { DateRangeFilter } from "@/components/common/DateRangeFilter";
 import { FilterActions } from "@/components/common/FilterActions";
 import { withAuth } from "@/utils/withAuth";
 import { useSearch } from "@/context/SearchContext";
+import { reactSelectStyles } from "@/utils/reactSelectStyles";
+import { useTheme } from "@/context/ThemeContext";
 
 //  Default last 30 days range
 const defaultDateRange: Range = {
@@ -77,6 +79,7 @@ const searchableFields: Array<keyof OpenBet> = [
 ];
 
 function OpenBetsPage() {
+  const { theme } = useTheme();
   const [filteredData, setFilteredData] = useState<OpenBet[]>(openBets);
 
   const [operationFilter, setOperationFilter] = useState<
@@ -209,9 +212,9 @@ function OpenBetsPage() {
         <DateRangeFilter range={dateRange} onChange={(range) => setDateRange(range)} />
            {/* Operation Filter */}
         <div className="w-[18rem]">
-          <Select
-            className="dark:text-black"
-            options={operationOptions}
+            <Select
+              styles={reactSelectStyles(theme)}
+              options={operationOptions}
             placeholder="Filter Options"
             value={operationFilter}
             onChange={(val) => setOperationFilter(val)}

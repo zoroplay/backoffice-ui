@@ -131,7 +131,7 @@ const navItems: NavItem[] = [
       { name: "Bonus Campaigns", path: "/bonus-management/bonus-campaigns", pro: false },
       { name: "Multibet Bonus", path: "/bonus-management/multibet-bonus", pro: false },
       { name: "Grant Mass Bonuses", path: "/bonus-management/grant-mass-bonuses", pro: false },
-      { name: "Mass Free Spins", path: "/bonus-management/mass-free-spins", pro: false },
+      // { name: "Mass Free Spins", path: "/bonus-management/mass-free-spins", pro: false },
       { name: "Cashout", path: "/bonus-management/cashout", pro: false },
       { name: "Player Bonuses Report", path: "/bonus-management/player-bonuses-report", pro: false },
       { name: "Power Bonus Report", path: "/bonus-management/power-bonus-report", pro: false },
@@ -152,7 +152,7 @@ const navItems: NavItem[] = [
     icon: <ChatIcon />,
     name: "Communications",
     subItems: [
-      { name: "Players Messages", path: "/communications/players-messages", pro: false },
+      { name: "Player Messages", path: "/communications/player-messages", pro: false },
       { name: "Network Messsages", path: "/communications/network-messages", pro: false },
       { name: "Mass Inbox Messages", path: "/communications/mass-inbox-messages", pro: false },
       { name: "SMS settings", path: "/communications/sms-settings", pro: false },

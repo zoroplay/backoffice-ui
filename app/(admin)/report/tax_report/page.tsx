@@ -13,6 +13,8 @@ import { DateRangeFilter, defaultDateRange } from "@/components/common/DateRange
 import { summaryColumns, detailColumns } from "./columns";
 import { taxSummary, taxDetails } from "./data";
 import { withAuth } from "@/utils/withAuth";
+import { reactSelectStyles } from "@/utils/reactSelectStyles";
+import { useTheme } from "@/context/ThemeContext";
 
 
 
@@ -21,56 +23,58 @@ import { withAuth } from "@/utils/withAuth";
 // ----------------------
 const clientTypeOptions = [
   {
-  label: "Client Type",
-  options: [
-  { value: "website", label: "Website" },
-  { value: "mobile", label: "Mobile" },
-  { value: "cashier", label: "Cashier" },
-]
-}]
+    label: "Client Type",
+    options: [
+      { value: "website", label: "Website" },
+      { value: "mobile", label: "Mobile" },
+      { value: "cashier", label: "Cashier" },
+    ],
+  },
+];
 
 const animatedComponents = makeAnimated();
 
-
+type ClientTypeOption = { value: string; label: string };
 
 function TaxReport() {
+  const { theme } = useTheme();
   const [clientType, setClientType] = useState<
-    { value: string; label: string } | null
+    ClientTypeOption | null
   >(null);
   const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
   const [filteredData, setFilteredData] = useState<TaxDetail[]>(taxDetails);
 
   const applyFilters = () => {
-      const filtered = taxDetails.filter((row: TaxDetail) => {
-        let match = true;     
-            
-        if (clientType) {
-          match = match && row.type.toLowerCase() === clientType.value.toLowerCase();
-        }  
-        
-        if (dateRange.startDate && dateRange.endDate) {
-          const rowDate = new Date(row.date);
-          const start = new Date(dateRange.startDate);
-          const end = new Date(dateRange.endDate);
-  
-          rowDate.setHours(0, 0, 0, 0);
-          start.setHours(0, 0, 0, 0);
-          end.setHours(23, 59, 59, 999);
-  
-          match = match && rowDate >= start && rowDate <= end;
-        }
-        console.log(match);
-        return match;
-      });
-  
-      setFilteredData(filtered);
-    };
-  
-    const clearFilters = () => {
-      setClientType(null);
-      setDateRange(defaultDateRange);     
-      setFilteredData(taxDetails);
-    };
+    const filtered = taxDetails.filter((row: TaxDetail) => {
+      let match = true;
+
+      if (clientType) {
+        match = match && row.type.toLowerCase() === clientType.value.toLowerCase();
+      }
+
+      if (dateRange.startDate && dateRange.endDate) {
+        const rowDate = new Date(row.date);
+        const start = new Date(dateRange.startDate);
+        const end = new Date(dateRange.endDate);
+
+        rowDate.setHours(0, 0, 0, 0);
+        start.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 59, 999);
+
+        match = match && rowDate >= start && rowDate <= end;
+      }
+
+      return match;
+    });
+
+    setFilteredData(filtered);
+  };
+
+  const clearFilters = () => {
+    setClientType(null);
+    setDateRange(defaultDateRange);
+    setFilteredData(taxDetails);
+  };
 
   return (
     <section className="space-y-6 p-4">
@@ -82,15 +86,16 @@ function TaxReport() {
         <div className="flex flex-wrap items-center gap-4">
           {/* Client Type */}
           <div className="w-[20rem]">
-              <Select
-                className="dark:text-black"
-                options={clientTypeOptions}
-                components={animatedComponents}
-                placeholder="Filter by Client Type"
-                value={clientType}
-                onChange={(selected) => setClientType(selected as any[0])}
-              />
-            </div>
+            <Select<ClientTypeOption, false>
+              styles={reactSelectStyles(theme)}
+              options={clientTypeOptions}
+              components={animatedComponents}
+              placeholder="Filter by Client Type"
+              value={clientType}
+              onChange={(selected) => setClientType(selected ?? null)}
+              isClearable
+            />
+          </div>
 
           {/* Date Range Picker */}
           <DateRangeFilter range={dateRange} onChange={(range) => setDateRange(range)} />

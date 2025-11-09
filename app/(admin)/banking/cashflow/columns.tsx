@@ -1,7 +1,10 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import Badge, { BadgeColor } from "@/components/ui/badge/Badge";
+import { CheckCircle2, Edit2, Eye, Trash2, XCircle } from "lucide-react";
+
+import Badge, { type BadgeColor } from "@/components/ui/badge/Badge";
+
 import type {
   CashBook,
   CashBookStatus,
@@ -29,6 +32,15 @@ const formatDateTime = (value: string) => {
   return date.toLocaleString();
 };
 
+const actionButtonClasses =
+  "rounded-md border border-transparent p-1.5 text-gray-500 transition hover:bg-gray-100 hover:text-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-brand-300";
+
+const destructiveButtonClasses =
+  "rounded-md border border-transparent p-1.5 text-red-500 transition hover:bg-red-100 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 dark:text-red-400 dark:hover:bg-red-900/30";
+
+const approveButtonClasses =
+  "rounded-md border border-transparent p-1.5 text-emerald-500 transition hover:bg-emerald-100 hover:text-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-emerald-400 dark:hover:bg-emerald-900/30";
+
 // CashBooks Columns
 const cashBookStatusColors: Record<CashBookStatus, { color: BadgeColor; label: string }> = {
   Open: { color: "info", label: "Open" },
@@ -37,7 +49,13 @@ const cashBookStatusColors: Record<CashBookStatus, { color: BadgeColor; label: s
   Approved: { color: "success", label: "Approved" },
 };
 
-export const cashbooksColumns: ColumnDef<CashBook>[] = [
+type CashBookActionHandlers = {
+  onView: (row: CashBook) => void;
+};
+
+export const createCashbooksColumns = (
+  handlers: CashBookActionHandlers
+): ColumnDef<CashBook>[] => [
   {
     accessorKey: "date",
     header: "Date",
@@ -101,7 +119,8 @@ export const cashbooksColumns: ColumnDef<CashBook>[] = [
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => {
-      const { color, label } = cashBookStatusColors[row.original.status] || cashBookStatusColors["Pending"];
+      const { color, label } =
+        cashBookStatusColors[row.original.status] || cashBookStatusColors["Pending"];
       return (
         <Badge color={color} variant="light" size="sm">
           {label}
@@ -112,9 +131,17 @@ export const cashbooksColumns: ColumnDef<CashBook>[] = [
   {
     id: "action",
     header: "Action",
-    cell: () => (
-      <button className="text-sm text-brand-500 hover:text-brand-600 dark:text-brand-400">
-        View
+    cell: ({ row }) => (
+      <button
+        type="button"
+        className={actionButtonClasses}
+        onClick={(event) => {
+          event.stopPropagation();
+          handlers.onView(row.original);
+        }}
+      >
+        <Eye className="h-4 w-4" />
+        <span className="sr-only">View cashbook</span>
       </button>
     ),
   },
@@ -127,7 +154,14 @@ const cashInStatusColors: Record<CashInStatus, { color: BadgeColor; label: strin
   Rejected: { color: "error", label: "Rejected" },
 };
 
-export const cashinColumns: ColumnDef<CashIn>[] = [
+type CashInActionHandlers = {
+  onEdit: (row: CashIn) => void;
+  onDelete: (row: CashIn) => void;
+};
+
+export const createCashinColumns = (
+  handlers: CashInActionHandlers
+): ColumnDef<CashIn>[] => [
   {
     accessorKey: "date",
     header: "Date",
@@ -164,7 +198,8 @@ export const cashinColumns: ColumnDef<CashIn>[] = [
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => {
-      const { color, label } = cashInStatusColors[row.original.status] || cashInStatusColors["Pending"];
+      const { color, label } =
+        cashInStatusColors[row.original.status] || cashInStatusColors["Pending"];
       return (
         <Badge color={color} variant="light" size="sm">
           {label}
@@ -175,13 +210,29 @@ export const cashinColumns: ColumnDef<CashIn>[] = [
   {
     id: "action",
     header: "Action",
-    cell: () => (
-      <div className="flex gap-2">
-        <button className="text-sm text-brand-500 hover:text-brand-600 dark:text-brand-400">
-          Edit
+    cell: ({ row }) => (
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          className={actionButtonClasses}
+          onClick={(event) => {
+            event.stopPropagation();
+            handlers.onEdit(row.original);
+          }}
+        >
+          <Edit2 className="h-4 w-4" />
+          <span className="sr-only">Edit cash in</span>
         </button>
-        <button className="text-sm text-red-500 hover:text-red-600 dark:text-red-400">
-          Delete
+        <button
+          type="button"
+          className={destructiveButtonClasses}
+          onClick={(event) => {
+            event.stopPropagation();
+            handlers.onDelete(row.original);
+          }}
+        >
+          <Trash2 className="h-4 w-4" />
+          <span className="sr-only">Delete cash in</span>
         </button>
       </div>
     ),
@@ -195,7 +246,14 @@ const cashOutStatusColors: Record<CashOutStatus, { color: BadgeColor; label: str
   Rejected: { color: "error", label: "Rejected" },
 };
 
-export const cashoutColumns: ColumnDef<CashOut>[] = [
+type CashOutActionHandlers = {
+  onEdit: (row: CashOut) => void;
+  onDelete: (row: CashOut) => void;
+};
+
+export const createCashoutColumns = (
+  handlers: CashOutActionHandlers
+): ColumnDef<CashOut>[] => [
   {
     accessorKey: "date",
     header: "Date",
@@ -232,7 +290,8 @@ export const cashoutColumns: ColumnDef<CashOut>[] = [
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => {
-      const { color, label } = cashOutStatusColors[row.original.status] || cashOutStatusColors["Pending"];
+      const { color, label } =
+        cashOutStatusColors[row.original.status] || cashOutStatusColors["Pending"];
       return (
         <Badge color={color} variant="light" size="sm">
           {label}
@@ -243,13 +302,29 @@ export const cashoutColumns: ColumnDef<CashOut>[] = [
   {
     id: "action",
     header: "Action",
-    cell: () => (
-      <div className="flex gap-2">
-        <button className="text-sm text-brand-500 hover:text-brand-600 dark:text-brand-400">
-          Edit
+    cell: ({ row }) => (
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          className={actionButtonClasses}
+          onClick={(event) => {
+            event.stopPropagation();
+            handlers.onEdit(row.original);
+          }}
+        >
+          <Edit2 className="h-4 w-4" />
+          <span className="sr-only">Edit cash out</span>
         </button>
-        <button className="text-sm text-red-500 hover:text-red-600 dark:text-red-400">
-          Delete
+        <button
+          type="button"
+          className={destructiveButtonClasses}
+          onClick={(event) => {
+            event.stopPropagation();
+            handlers.onDelete(row.original);
+          }}
+        >
+          <Trash2 className="h-4 w-4" />
+          <span className="sr-only">Delete cash out</span>
         </button>
       </div>
     ),
@@ -263,7 +338,14 @@ const expenseStatusColors: Record<ExpenseStatus, { color: BadgeColor; label: str
   Rejected: { color: "error", label: "Rejected" },
 };
 
-export const expensesColumns: ColumnDef<Expense>[] = [
+type ExpenseActionHandlers = {
+  onApprove: (row: Expense) => void;
+  onReject: (row: Expense) => void;
+};
+
+export const createExpensesColumns = (
+  handlers: ExpenseActionHandlers
+): ColumnDef<Expense>[] => [
   {
     accessorKey: "expense",
     header: "Expense",
@@ -298,7 +380,8 @@ export const expensesColumns: ColumnDef<Expense>[] = [
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => {
-      const { color, label } = expenseStatusColors[row.original.status] || expenseStatusColors["Pending"];
+      const { color, label } =
+        expenseStatusColors[row.original.status] || expenseStatusColors["Pending"];
       return (
         <Badge color={color} variant="light" size="sm">
           {label}
@@ -327,13 +410,29 @@ export const expensesColumns: ColumnDef<Expense>[] = [
   {
     id: "action",
     header: "Action",
-    cell: () => (
-      <div className="flex gap-2">
-        <button className="text-sm text-brand-500 hover:text-brand-600 dark:text-brand-400">
-          Approve
+    cell: ({ row }) => (
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          className={approveButtonClasses}
+          onClick={(event) => {
+            event.stopPropagation();
+            handlers.onApprove(row.original);
+          }}
+        >
+          <CheckCircle2 className="h-4 w-4" />
+          <span className="sr-only">Approve expense</span>
         </button>
-        <button className="text-sm text-red-500 hover:text-red-600 dark:text-red-400">
-          Reject
+        <button
+          type="button"
+          className={destructiveButtonClasses}
+          onClick={(event) => {
+            event.stopPropagation();
+            handlers.onReject(row.original);
+          }}
+        >
+          <XCircle className="h-4 w-4" />
+          <span className="sr-only">Reject expense</span>
         </button>
       </div>
     ),
@@ -341,7 +440,14 @@ export const expensesColumns: ColumnDef<Expense>[] = [
 ];
 
 // Expense Type Columns
-export const expenseTypeColumns: ColumnDef<ExpenseType>[] = [
+type ExpenseTypeActionHandlers = {
+  onEdit: (row: ExpenseType) => void;
+  onDelete: (row: ExpenseType) => void;
+};
+
+export const createExpenseTypeColumns = (
+  handlers: ExpenseTypeActionHandlers
+): ColumnDef<ExpenseType>[] => [
   {
     accessorKey: "title",
     header: "Title",
@@ -368,13 +474,29 @@ export const expenseTypeColumns: ColumnDef<ExpenseType>[] = [
   {
     id: "action",
     header: "Action",
-    cell: () => (
-      <div className="flex gap-2">
-        <button className="text-sm text-brand-500 hover:text-brand-600 dark:text-brand-400">
-          Edit
+    cell: ({ row }) => (
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          className={actionButtonClasses}
+          onClick={(event) => {
+            event.stopPropagation();
+            handlers.onEdit(row.original);
+          }}
+        >
+          <Edit2 className="h-4 w-4" />
+          <span className="sr-only">Edit expense type</span>
         </button>
-        <button className="text-sm text-red-500 hover:text-red-600 dark:text-red-400">
-          Delete
+        <button
+          type="button"
+          className={destructiveButtonClasses}
+          onClick={(event) => {
+            event.stopPropagation();
+            handlers.onDelete(row.original);
+          }}
+        >
+          <Trash2 className="h-4 w-4" />
+          <span className="sr-only">Delete expense type</span>
         </button>
       </div>
     ),
@@ -382,7 +504,14 @@ export const expenseTypeColumns: ColumnDef<ExpenseType>[] = [
 ];
 
 // Expense Category Columns
-export const expenseCategoryColumns: ColumnDef<ExpenseCategory>[] = [
+type ExpenseCategoryActionHandlers = {
+  onEdit: (row: ExpenseCategory) => void;
+  onDelete: (row: ExpenseCategory) => void;
+};
+
+export const createExpenseCategoryColumns = (
+  handlers: ExpenseCategoryActionHandlers
+): ColumnDef<ExpenseCategory>[] => [
   {
     accessorKey: "title",
     header: "Title",
@@ -400,13 +529,29 @@ export const expenseCategoryColumns: ColumnDef<ExpenseCategory>[] = [
   {
     id: "action",
     header: "Action",
-    cell: () => (
-      <div className="flex gap-2">
-        <button className="text-sm text-brand-500 hover:text-brand-600 dark:text-brand-400">
-          Edit
+    cell: ({ row }) => (
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          className={actionButtonClasses}
+          onClick={(event) => {
+            event.stopPropagation();
+            handlers.onEdit(row.original);
+          }}
+        >
+          <Edit2 className="h-4 w-4" />
+          <span className="sr-only">Edit expense category</span>
         </button>
-        <button className="text-sm text-red-500 hover:text-red-600 dark:text-red-400">
-          Delete
+        <button
+          type="button"
+          className={destructiveButtonClasses}
+          onClick={(event) => {
+            event.stopPropagation();
+            handlers.onDelete(row.original);
+          }}
+        >
+          <Trash2 className="h-4 w-4" />
+          <span className="sr-only">Delete expense category</span>
         </button>
       </div>
     ),

@@ -1,0 +1,1173 @@
+{
+ "categories": [
+     {
+         "categoryID": 4,
+         "categoryName": "International",
+         "sportID": 1,
+         "code": "eu",
+         "status": 1
+     },
+     {
+         "categoryID": 1,
+         "categoryName": "England",
+         "sportID": 1,
+         "code": "gb-eng",
+         "status": 1
+     },
+     {
+         "categoryID": 34,
+         "categoryName": "Australia",
+         "sportID": 1,
+         "code": "au",
+         "status": 1
+     },
+     {
+         "categoryID": 393,
+         "categoryName": "International Clubs",
+         "sportID": 1,
+         "code": "eu",
+         "status": 1
+     },
+     {
+         "categoryID": 392,
+         "categoryName": "International Youth",
+         "sportID": 1,
+         "code": "eu",
+         "status": 1
+     },
+     {
+         "categoryID": 32,
+         "categoryName": "Spain",
+         "sportID": 1,
+         "code": "es",
+         "status": 1
+     },
+     {
+         "categoryID": 31,
+         "categoryName": "Italy",
+         "sportID": 1,
+         "code": "it",
+         "status": 1
+     },
+     {
+         "categoryID": 30,
+         "categoryName": "Germany",
+         "sportID": 1,
+         "code": "de",
+         "status": 1
+     },
+     {
+         "categoryID": 257,
+         "categoryName": "Albania",
+         "sportID": 1,
+         "code": "al",
+         "status": 1
+     },
+     {
+         "categoryID": 7,
+         "categoryName": "France",
+         "sportID": 1,
+         "code": "fr",
+         "status": 1
+     },
+     {
+         "categoryID": 304,
+         "categoryName": "Algeria",
+         "sportID": 1,
+         "code": "dz",
+         "status": 1
+     },
+     {
+         "categoryID": 35,
+         "categoryName": "Netherlands",
+         "sportID": 1,
+         "code": "nl",
+         "status": 1
+     },
+     {
+         "categoryID": 376,
+         "categoryName": "Andorra",
+         "sportID": 1,
+         "code": "ad",
+         "status": 1
+     },
+     {
+         "categoryID": 44,
+         "categoryName": "Portugal",
+         "sportID": 1,
+         "code": "pt",
+         "status": 1
+     },
+     {
+         "categoryID": 48,
+         "categoryName": "Argentina",
+         "sportID": 1,
+         "code": "ar",
+         "status": 1
+     },
+     {
+         "categoryID": 33,
+         "categoryName": "Belgium",
+         "sportID": 1,
+         "code": "bf",
+         "status": 1
+     },
+     {
+         "categoryID": 296,
+         "categoryName": "Armenia",
+         "sportID": 1,
+         "code": "am",
+         "status": 1
+     },
+     {
+         "categoryID": 22,
+         "categoryName": "Scotland",
+         "sportID": 1,
+         "code": "gb-sct",
+         "status": 1
+     },
+     {
+         "categoryID": 46,
+         "categoryName": "Turkiye",
+         "sportID": 1,
+         "code": "tr",
+         "status": 1
+     },
+     {
+         "categoryID": 17,
+         "categoryName": "Austria",
+         "sportID": 1,
+         "code": "at",
+         "status": 1
+     },
+     {
+         "categoryID": 97,
+         "categoryName": "Austria Amateur",
+         "sportID": 1,
+         "code": "at",
+         "status": 1
+     },
+     {
+         "categoryID": 297,
+         "categoryName": "Azerbaijan",
+         "sportID": 1,
+         "code": "az",
+         "status": 1
+     },
+     {
+         "categoryID": 351,
+         "categoryName": "Bahrain",
+         "sportID": 1,
+         "code": "bh",
+         "status": 1
+     },
+     {
+         "categoryID": 91,
+         "categoryName": "Belarus",
+         "sportID": 1,
+         "code": "by",
+         "status": 1
+     },
+     {
+         "categoryID": 379,
+         "categoryName": "Bolivia",
+         "sportID": 1,
+         "code": "bo",
+         "status": 1
+     },
+     {
+         "categoryID": 158,
+         "categoryName": "Bosnia & Herzegovina",
+         "sportID": 1,
+         "code": "ba",
+         "status": 1
+     },
+     {
+         "categoryID": 804,
+         "categoryName": "Botswana",
+         "sportID": 1,
+         "code": "bw",
+         "status": 1
+     },
+     {
+         "categoryID": 13,
+         "categoryName": "Brazil",
+         "sportID": 1,
+         "code": "br",
+         "status": 1
+     },
+     {
+         "categoryID": 78,
+         "categoryName": "Bulgaria",
+         "sportID": 1,
+         "code": "bg",
+         "status": 1
+     },
+     {
+         "categoryID": 956,
+         "categoryName": "Burundi",
+         "sportID": 1,
+         "code": "bi",
+         "status": 1
+     },
+     {
+         "categoryID": 852,
+         "categoryName": "Cambodia",
+         "sportID": 1,
+         "code": "kh",
+         "status": 1
+     },
+     {
+         "categoryID": 388,
+         "categoryName": "Canada",
+         "sportID": 1,
+         "code": "ca",
+         "status": 1
+     },
+     {
+         "categoryID": 49,
+         "categoryName": "Chile",
+         "sportID": 1,
+         "code": "cl",
+         "status": 1
+     },
+     {
+         "categoryID": 99,
+         "categoryName": "China",
+         "sportID": 1,
+         "code": "cn",
+         "status": 1
+     },
+     {
+         "categoryID": 274,
+         "categoryName": "Colombia",
+         "sportID": 1,
+         "code": "co",
+         "status": 1
+     },
+     {
+         "categoryID": 289,
+         "categoryName": "Costa Rica",
+         "sportID": 1,
+         "code": "cr",
+         "status": 1
+     },
+     {
+         "categoryID": 14,
+         "categoryName": "Croatia",
+         "sportID": 1,
+         "code": "hr",
+         "status": 1
+     },
+     {
+         "categoryID": 102,
+         "categoryName": "Cyprus",
+         "sportID": 1,
+         "code": "cy",
+         "status": 1
+     },
+     {
+         "categoryID": 18,
+         "categoryName": "Czech Republic",
+         "sportID": 1,
+         "code": "cz",
+         "status": 1
+     },
+     {
+         "categoryID": 8,
+         "categoryName": "Denmark",
+         "sportID": 1,
+         "code": "dk",
+         "status": 1
+     },
+     {
+         "categoryID": 95,
+         "categoryName": "Denmark Amateur",
+         "sportID": 1,
+         "code": "dk",
+         "status": 1
+     },
+     {
+         "categoryID": 165,
+         "categoryName": "Ecuador",
+         "sportID": 1,
+         "code": "ec",
+         "status": 1
+     },
+     {
+         "categoryID": 367,
+         "categoryName": "El Salvador",
+         "sportID": 1,
+         "code": "sv",
+         "status": 1
+     },
+     {
+         "categoryID": 252,
+         "categoryName": "England Amateur",
+         "sportID": 1,
+         "code": "gb-eng",
+         "status": 1
+     },
+     {
+         "categoryID": 92,
+         "categoryName": "Estonia",
+         "sportID": 1,
+         "code": "ee",
+         "status": 1
+     },
+     {
+         "categoryID": 201,
+         "categoryName": "Faroe Islands",
+         "sportID": 1,
+         "code": "fo",
+         "status": 1
+     },
+     {
+         "categoryID": 19,
+         "categoryName": "Finland",
+         "sportID": 1,
+         "code": "fi",
+         "status": 1
+     },
+     {
+         "categoryID": 270,
+         "categoryName": "Georgia",
+         "sportID": 1,
+         "code": "ge",
+         "status": 1
+     },
+     {
+         "categoryID": 122,
+         "categoryName": "Germany Amateur",
+         "sportID": 1,
+         "code": "de",
+         "status": 1
+     },
+     {
+         "categoryID": 542,
+         "categoryName": "Ghana",
+         "sportID": 1,
+         "code": "gh",
+         "status": 1
+     },
+     {
+         "categoryID": 938,
+         "categoryName": "Gibraltar",
+         "sportID": 1,
+         "code": "gi",
+         "status": 1
+     },
+     {
+         "categoryID": 67,
+         "categoryName": "Greece",
+         "sportID": 1,
+         "code": "gr",
+         "status": 1
+     },
+     {
+         "categoryID": 365,
+         "categoryName": "Guatemala",
+         "sportID": 1,
+         "code": "gt",
+         "status": 1
+     },
+     {
+         "categoryID": 437,
+         "categoryName": "Honduras",
+         "sportID": 1,
+         "code": "hn",
+         "status": 1
+     },
+     {
+         "categoryID": 339,
+         "categoryName": "Hong Kong, China",
+         "sportID": 1,
+         "code": "hk",
+         "status": 1
+     },
+     {
+         "categoryID": 11,
+         "categoryName": "Hungary",
+         "sportID": 1,
+         "code": "hu",
+         "status": 1
+     },
+     {
+         "categoryID": 10,
+         "categoryName": "Iceland",
+         "sportID": 1,
+         "code": "is",
+         "status": 1
+     },
+     {
+         "categoryID": 352,
+         "categoryName": "India",
+         "sportID": 1,
+         "code": "in",
+         "status": 1
+     },
+     {
+         "categoryID": 368,
+         "categoryName": "Indonesia",
+         "sportID": 1,
+         "code": "id",
+         "status": 1
+     },
+     {
+         "categoryID": 301,
+         "categoryName": "Iran",
+         "sportID": 1,
+         "code": "ir",
+         "status": 1
+     },
+     {
+         "categoryID": 51,
+         "categoryName": "Ireland",
+         "sportID": 1,
+         "code": "ie",
+         "status": 1
+     },
+     {
+         "categoryID": 66,
+         "categoryName": "Israel",
+         "sportID": 1,
+         "code": "il",
+         "status": 1
+     },
+     {
+         "categoryID": 52,
+         "categoryName": "Japan",
+         "sportID": 1,
+         "code": "jp",
+         "status": 1
+     },
+     {
+         "categoryID": 329,
+         "categoryName": "Jordan",
+         "sportID": 1,
+         "code": "jo",
+         "status": 1
+     },
+     {
+         "categoryID": 278,
+         "categoryName": "Kazakhstan",
+         "sportID": 1,
+         "code": "kz",
+         "status": 1
+     },
+     {
+         "categoryID": 805,
+         "categoryName": "Kenya",
+         "sportID": 1,
+         "code": "ke",
+         "status": 1
+     },
+     {
+         "categoryID": 565,
+         "categoryName": "Kosovo",
+         "sportID": 1,
+         "code": "xk",
+         "status": 1
+     },
+     {
+         "categoryID": 331,
+         "categoryName": "Kuwait",
+         "sportID": 1,
+         "code": "kw",
+         "status": 1
+     },
+     {
+         "categoryID": 163,
+         "categoryName": "Latvia",
+         "sportID": 1,
+         "code": "lv",
+         "status": 1
+     },
+     {
+         "categoryID": 428,
+         "categoryName": "Lebanon",
+         "sportID": 1,
+         "code": "lb",
+         "status": 1
+     },
+     {
+         "categoryID": 160,
+         "categoryName": "Lithuania",
+         "sportID": 1,
+         "code": "lt",
+         "status": 1
+     },
+     {
+         "categoryID": 197,
+         "categoryName": "Luxembourg",
+         "sportID": 1,
+         "code": "lu",
+         "status": 1
+     },
+     {
+         "categoryID": 85,
+         "categoryName": "Malaysia",
+         "sportID": 1,
+         "code": "my",
+         "status": 1
+     },
+     {
+         "categoryID": 134,
+         "categoryName": "Malta",
+         "sportID": 1,
+         "code": "mt",
+         "status": 1
+     },
+     {
+         "categoryID": 12,
+         "categoryName": "Mexico",
+         "sportID": 1,
+         "code": "mx",
+         "status": 1
+     },
+     {
+         "categoryID": 279,
+         "categoryName": "Moldova",
+         "sportID": 1,
+         "code": "md",
+         "status": 1
+     },
+     {
+         "categoryID": 386,
+         "categoryName": "Montenegro",
+         "sportID": 1,
+         "code": "me",
+         "status": 1
+     },
+     {
+         "categoryID": 303,
+         "categoryName": "Morocco",
+         "sportID": 1,
+         "code": "ma",
+         "status": 1
+     },
+     {
+         "categoryID": 790,
+         "categoryName": "Myanmar",
+         "sportID": 1,
+         "code": "mm",
+         "status": 1
+     },
+     {
+         "categoryID": 148,
+         "categoryName": "New Zealand",
+         "sportID": 1,
+         "code": "nz",
+         "status": 1
+     },
+     {
+         "categoryID": 389,
+         "categoryName": "Nicaragua",
+         "sportID": 1,
+         "code": "ni",
+         "status": 1
+     },
+     {
+         "categoryID": 159,
+         "categoryName": "North Macedonia",
+         "sportID": 1,
+         "code": "mk",
+         "status": 1
+     },
+     {
+         "categoryID": 130,
+         "categoryName": "Northern Ireland",
+         "sportID": 1,
+         "code": "gb-nir",
+         "status": 1
+     },
+     {
+         "categoryID": 5,
+         "categoryName": "Norway",
+         "sportID": 1,
+         "code": "no",
+         "status": 1
+     },
+     {
+         "categoryID": 415,
+         "categoryName": "Oman",
+         "sportID": 1,
+         "code": "om",
+         "status": 1
+     },
+     {
+         "categoryID": 540,
+         "categoryName": "Palestine",
+         "sportID": 1,
+         "code": "ps",
+         "status": 1
+     },
+     {
+         "categoryID": 526,
+         "categoryName": "Panama",
+         "sportID": 1,
+         "code": "pa",
+         "status": 1
+     },
+     {
+         "categoryID": 280,
+         "categoryName": "Paraguay",
+         "sportID": 1,
+         "code": "py",
+         "status": 1
+     },
+     {
+         "categoryID": 20,
+         "categoryName": "Peru",
+         "sportID": 1,
+         "code": "pe",
+         "status": 1
+     },
+     {
+         "categoryID": 47,
+         "categoryName": "Poland",
+         "sportID": 1,
+         "code": "pl",
+         "status": 1
+     },
+     {
+         "categoryID": 353,
+         "categoryName": "Qatar",
+         "sportID": 1,
+         "code": "qa",
+         "status": 1
+     },
+     {
+         "categoryID": 291,
+         "categoryName": "Republic of Korea",
+         "sportID": 1,
+         "code": "kr",
+         "status": 1
+     },
+     {
+         "categoryID": 77,
+         "categoryName": "Romania",
+         "sportID": 1,
+         "code": "ro",
+         "status": 1
+     },
+     {
+         "categoryID": 21,
+         "categoryName": "Russia",
+         "sportID": 1,
+         "code": "ru",
+         "status": 1
+     },
+     {
+         "categoryID": 951,
+         "categoryName": "Rwanda",
+         "sportID": 1,
+         "code": "rw",
+         "status": 1
+     },
+     {
+         "categoryID": 387,
+         "categoryName": "San Marino",
+         "sportID": 1,
+         "code": "sm",
+         "status": 1
+     },
+     {
+         "categoryID": 310,
+         "categoryName": "Saudi Arabia",
+         "sportID": 1,
+         "code": "sa",
+         "status": 1
+     },
+     {
+         "categoryID": 152,
+         "categoryName": "Serbia",
+         "sportID": 1,
+         "code": "cs",
+         "status": 1
+     },
+     {
+         "categoryID": 45,
+         "categoryName": "Singapore",
+         "sportID": 1,
+         "code": "sg",
+         "status": 1
+     },
+     {
+         "categoryID": 23,
+         "categoryName": "Slovakia",
+         "sportID": 1,
+         "code": "sk",
+         "status": 1
+     },
+     {
+         "categoryID": 24,
+         "categoryName": "Slovenia",
+         "sportID": 1,
+         "code": "si",
+         "status": 1
+     },
+     {
+         "categoryID": 322,
+         "categoryName": "South Africa",
+         "sportID": 1,
+         "code": "za",
+         "status": 1
+     },
+     {
+         "categoryID": 421,
+         "categoryName": "Spain Amateur",
+         "sportID": 1,
+         "code": "es",
+         "status": 1
+     },
+     {
+         "categoryID": 9,
+         "categoryName": "Sweden",
+         "sportID": 1,
+         "code": "se",
+         "status": 1
+     },
+     {
+         "categoryID": 155,
+         "categoryName": "Sweden Amateur",
+         "sportID": 1,
+         "code": "se",
+         "status": 1
+     },
+     {
+         "categoryID": 25,
+         "categoryName": "Switzerland",
+         "sportID": 1,
+         "code": "ch",
+         "status": 1
+     },
+     {
+         "categoryID": 380,
+         "categoryName": "Syria",
+         "sportID": 1,
+         "code": "sy",
+         "status": 1
+     },
+     {
+         "categoryID": 803,
+         "categoryName": "Tanzania",
+         "sportID": 1,
+         "code": "tz",
+         "status": 1
+     },
+     {
+         "categoryID": 485,
+         "categoryName": "Thailand",
+         "sportID": 1,
+         "code": "th",
+         "status": 1
+     },
+     {
+         "categoryID": 378,
+         "categoryName": "Tunisia",
+         "sportID": 1,
+         "code": "tn",
+         "status": 1
+     },
+     {
+         "categoryID": 254,
+         "categoryName": "Turkiye Amateur",
+         "sportID": 1,
+         "code": "tr",
+         "status": 1
+     },
+     {
+         "categoryID": 824,
+         "categoryName": "Uganda",
+         "sportID": 1,
+         "code": "ug",
+         "status": 1
+     },
+     {
+         "categoryID": 86,
+         "categoryName": "Ukraine",
+         "sportID": 1,
+         "code": "ua",
+         "status": 1
+     },
+     {
+         "categoryID": 299,
+         "categoryName": "United Arab Emirates",
+         "sportID": 1,
+         "code": "ae",
+         "status": 1
+     },
+     {
+         "categoryID": 57,
+         "categoryName": "Uruguay",
+         "sportID": 1,
+         "code": "uy",
+         "status": 1
+     },
+     {
+         "categoryID": 26,
+         "categoryName": "USA",
+         "sportID": 1,
+         "code": "us",
+         "status": 1
+     },
+     {
+         "categoryID": 385,
+         "categoryName": "Uzbekistan",
+         "sportID": 1,
+         "code": "uz",
+         "status": 1
+     },
+     {
+         "categoryID": 281,
+         "categoryName": "Venezuela",
+         "sportID": 1,
+         "code": "ve",
+         "status": 1
+     },
+     {
+         "categoryID": 366,
+         "categoryName": "Vietnam",
+         "sportID": 1,
+         "code": "vn",
+         "status": 1
+     },
+     {
+         "categoryID": 131,
+         "categoryName": "Wales",
+         "sportID": 1,
+         "code": "gb-wls",
+         "status": 1
+     },
+     {
+         "categoryID": 812,
+         "categoryName": "Zambia",
+         "sportID": 1,
+         "code": "zm",
+         "status": 1
+     },
+     {
+         "categoryID": 815,
+         "categoryName": "Zimbabwe",
+         "sportID": 1,
+         "code": "zw",
+         "status": 1
+     },
+     {
+         "categoryID": 791,
+         "categoryName": "Burkina Faso",
+         "sportID": 1,
+         "code": "bf",
+         "status": 1
+     },
+     {
+         "categoryID": 305,
+         "categoryName": "Egypt",
+         "sportID": 1,
+         "code": "eg",
+         "status": 1
+     },
+     {
+         "categoryID": 207,
+         "categoryName": "Finland Amateur",
+         "sportID": 1,
+         "code": "fi",
+         "status": 1
+     },
+     {
+         "categoryID": 787,
+         "categoryName": "Kyrgyzstan",
+         "sportID": 1,
+         "code": "kg",
+         "status": 1
+     },
+     {
+         "categoryID": 953,
+         "categoryName": "Liberia",
+         "sportID": 1,
+         "code": "lr",
+         "status": 1
+     },
+     {
+         "categoryID": 829,
+         "categoryName": "Malawi",
+         "sportID": 1,
+         "code": "mw",
+         "status": 1
+     },
+     {
+         "categoryID": 567,
+         "categoryName": "Mauritania",
+         "sportID": 1,
+         "code": "mr",
+         "status": 1
+     },
+     {
+         "categoryID": 1042,
+         "categoryName": "Mongolia",
+         "sportID": 1,
+         "code": "mn",
+         "status": 1
+     },
+     {
+         "categoryID": 806,
+         "categoryName": "Mozambique",
+         "sportID": 1,
+         "code": "mz",
+         "status": 1
+     },
+     {
+         "categoryID": 847,
+         "categoryName": "Philippines",
+         "sportID": 1,
+         "code": "ph",
+         "status": 1
+     },
+     {
+         "categoryID": 500,
+         "categoryName": "Angola",
+         "sportID": 1,
+         "code": "",
+         "status": 1
+     },
+     {
+         "categoryID": 608,
+         "categoryName": "Aruba",
+         "sportID": 1,
+         "code": "",
+         "status": 1
+     },
+     {
+         "categoryID": 608,
+         "categoryName": "Aruba",
+         "sportID": 1,
+         "code": "",
+         "status": 1
+     },
+     {
+         "categoryID": 469,
+         "categoryName": "Bangladesh",
+         "sportID": 1,
+         "code": "",
+         "status": 1
+     },
+     {
+         "categoryID": 469,
+         "categoryName": "Bangladesh",
+         "sportID": 1,
+         "code": "",
+         "status": 1
+     },
+     {
+         "categoryID": 391,
+         "categoryName": "Cameroon",
+         "sportID": 1,
+         "code": "",
+         "status": 1
+     },
+     {
+         "categoryID": 793,
+         "categoryName": "Chinese Taipei",
+         "sportID": 1,
+         "code": "",
+         "status": 1
+     },
+     {
+         "categoryID": 793,
+         "categoryName": "Chinese Taipei",
+         "sportID": 1,
+         "code": "",
+         "status": 1
+     },
+     {
+         "categoryID": 914,
+         "categoryName": "Ethiopia",
+         "sportID": 1,
+         "code": "",
+         "status": 1
+     },
+     {
+         "categoryID": 957,
+         "categoryName": "Gambia",
+         "sportID": 1,
+         "code": "",
+         "status": 1
+     },
+     {
+         "categoryID": 1435,
+         "categoryName": "Grenada",
+         "sportID": 1,
+         "code": "",
+         "status": 1
+     },
+     {
+         "categoryID": 490,
+         "categoryName": "Iraq",
+         "sportID": 1,
+         "code": "",
+         "status": 1
+     },
+     {
+         "categoryID": 490,
+         "categoryName": "Iraq",
+         "sportID": 1,
+         "code": "",
+         "status": 1
+     },
+     {
+         "categoryID": 490,
+         "categoryName": "Iraq",
+         "sportID": 1,
+         "code": "",
+         "status": 1
+     },
+     {
+         "categoryID": 490,
+         "categoryName": "Iraq",
+         "sportID": 1,
+         "code": "",
+         "status": 1
+     },
+     {
+         "categoryID": 490,
+         "categoryName": "Iraq",
+         "sportID": 1,
+         "code": "",
+         "status": 1
+     },
+     {
+         "categoryID": 490,
+         "categoryName": "Iraq",
+         "sportID": 1,
+         "code": "",
+         "status": 1
+     },
+     {
+         "categoryID": 390,
+         "categoryName": "Ivory Coast",
+         "sportID": 1,
+         "code": "",
+         "status": 1
+     },
+     {
+         "categoryID": 502,
+         "categoryName": "Jamaica",
+         "sportID": 1,
+         "code": "",
+         "status": 1
+     },
+     {
+         "categoryID": 832,
+         "categoryName": "Mali",
+         "sportID": 1,
+         "code": "",
+         "status": 1
+     },
+     {
+         "categoryID": 832,
+         "categoryName": "Mali",
+         "sportID": 1,
+         "code": "",
+         "status": 1
+     },
+     {
+         "categoryID": 832,
+         "categoryName": "Mali",
+         "sportID": 1,
+         "code": "",
+         "status": 1
+     },
+     {
+         "categoryID": 832,
+         "categoryName": "Mali",
+         "sportID": 1,
+         "code": "",
+         "status": 1
+     },
+     {
+         "categoryID": 532,
+         "categoryName": "Nigeria",
+         "sportID": 1,
+         "code": "",
+         "status": 1
+     },
+     {
+         "categoryID": 532,
+         "categoryName": "Nigeria",
+         "sportID": 1,
+         "code": "",
+         "status": 1
+     },
+     {
+         "categoryID": 94,
+         "categoryName": "Norway Amateur",
+         "sportID": 1,
+         "code": "",
+         "status": 1
+     },
+     {
+         "categoryID": 94,
+         "categoryName": "Norway Amateur",
+         "sportID": 1,
+         "code": "",
+         "status": 1
+     },
+     {
+         "categoryID": 886,
+         "categoryName": "Senegal",
+         "sportID": 1,
+         "code": "",
+         "status": 1
+     },
+     {
+         "categoryID": 959,
+         "categoryName": "Seychelles",
+         "sportID": 1,
+         "code": "",
+         "status": 1
+     },
+     {
+         "categoryID": 959,
+         "categoryName": "Seychelles",
+         "sportID": 1,
+         "code": "",
+         "status": 1
+     },
+     {
+         "categoryID": 2123,
+         "categoryName": "Simulated Reality League",
+         "sportID": 1,
+         "code": "",
+         "status": 1
+     },
+     {
+         "categoryID": 866,
+         "categoryName": "Togo",
+         "sportID": 1,
+         "code": "",
+         "status": 1
+     },
+     {
+         "categoryID": 866,
+         "categoryName": "Togo",
+         "sportID": 1,
+         "code": "",
+         "status": 1
+     },
+     {
+         "categoryID": 527,
+         "categoryName": "Trinidad and Tobago",
+         "sportID": 1,
+         "code": "",
+         "status": 1
+     },
+     {
+         "categoryID": 955,
+         "categoryName": "Zanzibar",
+         "sportID": 1,
+         "code": "",
+         "status": 1
+     }
+ ]
+}

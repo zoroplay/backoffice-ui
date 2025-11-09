@@ -1,14 +1,15 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X } from "lucide-react";
 import Select from "react-select";
 
-import { Modal } from "@/components/ui/modal";
+import { Modal, ModalHeader, ModalBody, ModalFooter } from "@/components/ui/modal";
 import Form from "@/components/form/Form";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import Button from "@/components/ui/button/Button";
+import { reactSelectStyles } from "@/utils/reactSelectStyles";
+import { useTheme } from "@/context/ThemeContext";
 import { PlayerBonus } from "./columns";
 
 interface BonusFormModalProps {
@@ -18,7 +19,6 @@ interface BonusFormModalProps {
   editData?: PlayerBonus | null;
 }
 
-type ProductType = "Sport" | "Casino" | "Virtual" | "Games";
 type BonusTypeOption = { value: string; label: string };
 
 const productOptions: BonusTypeOption[] = [
@@ -78,6 +78,7 @@ const BonusFormModal: React.FC<BonusFormModalProps> = ({
   onSave,
   editData,
 }) => {
+  const { theme } = useTheme();
   // Form state
   const [name, setName] = useState("");
   const [product, setProduct] = useState<BonusTypeOption | null>(null);
@@ -188,27 +189,12 @@ const BonusFormModal: React.FC<BonusFormModalProps> = ({
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 lg:left-[90px] z-[9999] flex items-center justify-center backdrop-blur-sm p-4 overflow-y-auto">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-3xl my-8 relative">
-        {/* Header */}
-        <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex justify-between items-center rounded-t-2xl">
-          <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">
-            {editData ? "Edit Bonus" : "Bonus Form"}
-          </h2>
-          <button
-            onClick={handleCancel}
-            className="text-gray-500 hover:text-gray-700 dark:hover:text-white"
-          >
-            <X className="h-6 w-6" />
-          </button>
-        </div>
+    <Modal isOpen={isOpen} onClose={handleCancel} size="3xl">
+      <ModalHeader>{editData ? "Edit Bonus" : "Bonus Form"}</ModalHeader>
 
-        {/* Form - Scrollable Content */}
-        <div className="p-6 max-h-[calc(90vh-120px)] overflow-y-auto">
-          <Form onSubmit={handleSubmit}>
+      <ModalBody>
+        <Form onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
               {/* Name */}
               <div>
@@ -227,7 +213,7 @@ const BonusFormModal: React.FC<BonusFormModalProps> = ({
                 <Label htmlFor="product">Product</Label>
                 <Select
                   id="product"
-                  className="dark:text-black"
+                  styles={reactSelectStyles(theme)}
                   options={productOptions}
                   placeholder="Select Product"
                   value={product}
@@ -243,7 +229,7 @@ const BonusFormModal: React.FC<BonusFormModalProps> = ({
                 <Label htmlFor="bonusType">Bonus Type</Label>
                 <Select
                   id="bonusType"
-                  className="dark:text-black"
+                  styles={reactSelectStyles(theme)}
                   options={getBonusTypeOptions()}
                   placeholder="Select Bonus Type"
                   value={bonusType}
@@ -260,7 +246,7 @@ const BonusFormModal: React.FC<BonusFormModalProps> = ({
                     <Label htmlFor="betType">Applicable Bet Type</Label>
                     <Select
                       id="betType"
-                      className="dark:text-black"
+                      styles={reactSelectStyles(theme)}
                       options={betTypeOptions}
                       placeholder="Select Bet Type"
                       value={betType}
@@ -351,7 +337,7 @@ const BonusFormModal: React.FC<BonusFormModalProps> = ({
                     <Label htmlFor="casinoProvider">Casino Provider</Label>
                     <Select
                       id="casinoProvider"
-                      className="dark:text-black"
+                      styles={reactSelectStyles(theme)}
                       options={casinoProviderOptions}
                       placeholder="Select Provider"
                       value={casinoProvider}
@@ -364,7 +350,7 @@ const BonusFormModal: React.FC<BonusFormModalProps> = ({
                     <Label htmlFor="casinoGames">Casino Games</Label>
                     <Select
                       id="casinoGames"
-                      className="dark:text-black"
+                      styles={reactSelectStyles(theme)}
                       options={[
                         { value: "slots", label: "Slots" },
                         { value: "roulette", label: "Roulette" },
@@ -383,7 +369,7 @@ const BonusFormModal: React.FC<BonusFormModalProps> = ({
                     <Label htmlFor="spinCount">Spin Count</Label>
                     <Select
                       id="spinCount"
-                      className="dark:text-black"
+                      styles={reactSelectStyles(theme)}
                       options={spinCountOptions}
                       placeholder="Select Count"
                       value={spinCount}
@@ -432,7 +418,7 @@ const BonusFormModal: React.FC<BonusFormModalProps> = ({
                 <Label htmlFor="status">Status</Label>
                 <Select
                   id="status"
-                  className="dark:text-black"
+                  styles={reactSelectStyles(theme)}
                   options={statusOptions}
                   value={status}
                   onChange={(val) => setStatus(val!)}
@@ -441,18 +427,17 @@ const BonusFormModal: React.FC<BonusFormModalProps> = ({
             </div>
 
             {/* Actions */}
-            <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <ModalFooter className="mt-6">
               <Button variant="outline" onClick={handleCancel} type="button">
                 Cancel
               </Button>
               <Button type="submit" className="bg-green-500 hover:bg-green-600 text-white">
                 {editData ? "Update Bonus" : "Save Bonus"}
               </Button>
-            </div>
+            </ModalFooter>
           </Form>
-        </div>
-      </div>
-    </div>
+      </ModalBody>
+    </Modal>
   );
 };
 

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import Select from "react-select";
+import Select, { GroupBase, StylesConfig } from "react-select";
 import makeAnimated from "react-select/animated";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { DataTable } from "@/components/tables/DataTable";
@@ -11,6 +11,8 @@ import {ticketsOnHold} from './data'
 
 
 import { withAuth } from "@/utils/withAuth";
+import { reactSelectStyles } from "@/utils/reactSelectStyles";
+import { useTheme } from "@/context/ThemeContext";
 
 // ----------------------
 // Filter Options
@@ -44,7 +46,8 @@ const filterOptions = [
 
 const animatedComponents = makeAnimated();
 
-function TicketOnHoldPage() {  
+function TicketOnHoldPage() {
+  const { theme } = useTheme();  
   const [selectedFilters, setSelectedFilters] = useState<any[]>([]);
   const [filteredData, setFilteredData] = useState<TicketOnHold[]>(ticketsOnHold);
 
@@ -144,7 +147,7 @@ function TicketOnHoldPage() {
           {/* Combined Select */}
           <div className="w-[20rem]">
             <Select
-              className="dark:text-black"
+              styles={reactSelectStyles(theme) as StylesConfig<unknown, true, GroupBase<unknown>>}
               options={filterOptions}
               components={animatedComponents}
               isMulti

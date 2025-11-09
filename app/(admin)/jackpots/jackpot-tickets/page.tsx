@@ -8,6 +8,8 @@ import { DateRangeFilter } from "@/components/common/DateRangeFilter";
 import { FilterActions } from "@/components/common/FilterActions";
 import { DataTable } from "@/components/tables/DataTable";
 import { withAuth } from "@/utils/withAuth";
+import { reactSelectStyles } from "@/utils/reactSelectStyles";
+import { useTheme } from "@/context/ThemeContext";
 import { Range } from "react-date-range";
 
 import { columns, JackpotTicket } from "./columns";
@@ -54,6 +56,7 @@ const filterOptions = [
 ];
 
 function JackpotTicketsPage() {
+  const { theme } = useTheme();
   const [filteredData, setFilteredData] = useState<JackpotTicket[]>(jackpotTicketsData);
   const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
   const [appliedDateRange, setAppliedDateRange] = useState<Range | null>(null);
@@ -148,7 +151,7 @@ function JackpotTicketsPage() {
           {/* Multi-Filter (Jackpot, Status & Stake) */}
           <div className="w-[18rem]">
             <Select
-              className="dark:text-black"
+              styles={reactSelectStyles(theme)}
               options={filterOptions}
               placeholder="Filter Options"
               value={selectedFilter}

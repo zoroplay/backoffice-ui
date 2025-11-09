@@ -13,6 +13,8 @@ import {
 import { columns } from "./columns";
 import { registrations, Registration } from "./data";
 import { withAuth } from "@/utils/withAuth";
+import { reactSelectStyles } from "@/utils/reactSelectStyles";
+import { useTheme } from "@/context/ThemeContext";
 
 // ----------------------
 // Select Options
@@ -23,11 +25,14 @@ const clientTypeOptions = [
   { value: "retail", label: "Retail" },
 ];
 
+type ClientTypeOption = { value: string; label: string };
+
 // ----------------------
 // Component
 // ----------------------
 function RegistrationReport() {
-  const [selectedClientType, setSelectedClientType] = useState<any[]>([]);
+  const { theme } = useTheme();
+  const [selectedClientType, setSelectedClientType] = useState<ClientTypeOption[]>([]);
   const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
   const [filteredData, setFilteredData] = useState<Registration[]>(registrations);
 
@@ -47,9 +52,7 @@ function RegistrationReport() {
   const start = dateRange.startDate ?? new Date("1900-01-01");
   const end = dateRange.endDate ?? new Date("2100-12-31");
 
-  const selectedTypes = Array.isArray(selectedClientType)
-    ? selectedClientType.map((f) => f.value.toLowerCase())
-    : [];
+  const selectedTypes = selectedClientType.map((f) => f.value.toLowerCase());
 
   const filtered = registrations.filter((item) => {
     const regDate = new Date(item.registered.replace(/-/g, "/"));
@@ -76,13 +79,13 @@ function RegistrationReport() {
         <div className="flex flex-col md:flex-row gap-4">
           {/* Client Type Multi-Select */}
           <div className="w-[20rem]">
-            <Select
-              className="dark:text-black"
+            <Select<ClientTypeOption, true>
+              styles={reactSelectStyles(theme)}
               options={clientTypeOptions}
               placeholder="Filter by Client Type"
               isMulti
               value={selectedClientType}
-              onChange={(val) => setSelectedClientType(val as any[])}
+              onChange={(val) => setSelectedClientType(val ?? [])}
             />
           </div>
 

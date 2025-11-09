@@ -9,6 +9,8 @@ import { DataTable } from "@/components/tables/DataTable";
 import { DateRangeFilter, defaultDateRange } from "@/components/common/DateRangeFilter";
 import { FilterActions } from "@/components/common/FilterActions";
 import { withAuth } from "@/utils/withAuth";
+import { reactSelectStyles } from "@/utils/reactSelectStyles";
+import { useTheme } from "@/context/ThemeContext";
 
 import { columns, PlayerBonusReport } from "./columns";
 import { playerBonusReportData } from "./data";
@@ -54,6 +56,7 @@ const filterOptions = [
 ];
 
 function PlayerBonusesReportPage() {
+  const { theme } = useTheme();
   const [filteredData, setFilteredData] = useState<PlayerBonusReport[]>(playerBonusReportData);
   const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
   const [appliedDateRange, setAppliedDateRange] = useState<Range | null>(null);
@@ -147,7 +150,7 @@ function PlayerBonusesReportPage() {
           {/* Multi-Select Filter */}
           <div className="w-[18rem]">
             <Select
-              className="dark:text-black"
+              styles={reactSelectStyles(theme)}
               options={filterOptions}
               placeholder="Filter Options"
               value={selectedFilter}

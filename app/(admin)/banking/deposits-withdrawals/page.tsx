@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import Select from "react-select";
 import makeAnimated from "react-select/animated";
 import type { Range } from "react-date-range";
@@ -15,6 +15,8 @@ import { FilterActions } from "@/components/common/FilterActions";
 import { DataTable } from "@/components/tables/DataTable";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { withAuth } from "@/utils/withAuth";
+import { reactSelectStyles } from "@/utils/reactSelectStyles";
+import { useTheme } from "@/context/ThemeContext";
 import { useSearch } from "@/context/SearchContext";
 
 import { withdrawalColumns } from "./withdrawals-columns";
@@ -72,12 +74,6 @@ const filterOptions: Array<{ label: string; options: FilterOption[] }> = [
   },
 ];
 
-const cloneRange = (range: Range): Range => ({
-  startDate: range.startDate,
-  endDate: range.endDate,
-  key: range.key,
-});
-
 const searchableWithdrawalFields: Array<keyof Withdrawal> = [
   "username",
   "transactionId",
@@ -92,12 +88,12 @@ const searchableDepositFields: Array<keyof Deposit> = [
 ];
 
 function DepositsWithdrawalsPage() {
+  const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState("withdrawals");
 
   // Filters state
   const [selectedFilters, setSelectedFilters] = useState<FilterOption[]>([]);
   const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
-  const [enablePaging, setEnablePaging] = useState(false);
   const [filteredData, setFilteredData] = useState<(Withdrawal | Deposit)[]>(
     withdrawals
   );
@@ -360,7 +356,7 @@ function DepositsWithdrawalsPage() {
 
             <div className="w-[26rem]">
               <Select
-                className="dark:text-black"
+                styles={reactSelectStyles(theme)}
                 options={filterOptions}
                 placeholder="Filter by Status, Payment Method, Location, Bank"
                 components={animatedComponents}

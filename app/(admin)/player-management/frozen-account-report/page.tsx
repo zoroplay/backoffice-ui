@@ -10,6 +10,8 @@ import { DataTable } from "@/components/tables/DataTable";
 import { DateRangeFilter, defaultDateRange } from "@/components/common/DateRangeFilter";
 import { FilterActions } from "@/components/common/FilterActions";
 import { withAuth } from "@/utils/withAuth";
+import { reactSelectStyles } from "@/utils/reactSelectStyles";
+import { useTheme } from "@/context/ThemeContext";
 import { useSearch } from "@/context/SearchContext";
 
 import { columns } from "./columns";
@@ -56,6 +58,7 @@ const searchableFields: Array<keyof FrozenAccount> = [
 ];
 
 function FrozenAccountReportPage() {
+  const { theme } = useTheme();
   const [filteredData, setFilteredData] = useState<FrozenAccount[]>(frozenAccounts);
   const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
   const [selectedFilters, setSelectedFilters] = useState<FilterOption[]>([]);
@@ -176,7 +179,7 @@ function FrozenAccountReportPage() {
 
           <div className="w-[22rem]">
             <Select
-              className="dark:text-black"
+              styles={reactSelectStyles(theme)}
               options={filterOptions}
               placeholder="Filter by Freeze Type, Player Status, Process Status"
               components={animatedComponents}

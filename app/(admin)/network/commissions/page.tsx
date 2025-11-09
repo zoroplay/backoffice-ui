@@ -12,6 +12,8 @@ import { DataTable } from "@/components/tables/DataTable";
 import Button from "@/components/ui/button/Button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { withAuth } from "@/utils/withAuth";
+import { reactSelectStyles } from "@/utils/reactSelectStyles";
+import { useTheme } from "@/context/ThemeContext";
 
 import { columns, Commission } from "./columns";
 import {
@@ -28,6 +30,7 @@ const cloneRange = (range: Range) => ({
 }) satisfies Range;
 
 function CommissionsPage() {
+  const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState("weekly");
 
   const [selectedSport, setSelectedSport] = useState<string>("");
@@ -39,6 +42,8 @@ function CommissionsPage() {
   const [weeklyData, setWeeklyData] = useState<Commission[]>(weeklyCommissions);
   const [paidData, setPaidData] = useState<Commission[]>(paidCommissions);
   const [bonusData, setBonusData] = useState<Commission[]>(bonusCommissions);
+  
+  const [rowSelection, setRowSelection] = useState({});
 
   const filterCommissions = useCallback(
     (dataset: Commission[], sportValue: string, range: Range) => {
@@ -149,7 +154,7 @@ function CommissionsPage() {
           <div className="flex flex-wrap items-center gap-4">
             <div className="w-[16rem]">
               <Select
-                className="dark:text-black"
+                styles={reactSelectStyles(theme)}
                 options={sportOptions}
                 placeholder="Sport"
                 value={sportValue}
@@ -176,7 +181,12 @@ function CommissionsPage() {
                 Pay All Agents
               </Button>
             </div>
-            <DataTable columns={columns} data={getTableData()} />
+            <DataTable 
+              columns={columns} 
+              data={getTableData()} 
+              rowSelection={rowSelection}
+              onRowSelectionChange={setRowSelection}
+            />
           </div>
         </TabsContent>
 
@@ -192,7 +202,12 @@ function CommissionsPage() {
                 Pay All Agents
               </Button>
             </div>
-            <DataTable columns={columns} data={getTableData()} />
+            <DataTable 
+              columns={columns} 
+              data={getTableData()} 
+              rowSelection={rowSelection}
+              onRowSelectionChange={setRowSelection}
+            />
           </div>
         </TabsContent>
 
@@ -208,7 +223,12 @@ function CommissionsPage() {
                 Pay All Agents
               </Button>
             </div>
-            <DataTable columns={columns} data={getTableData()} />
+            <DataTable 
+              columns={columns} 
+              data={getTableData()} 
+              rowSelection={rowSelection}
+              onRowSelectionChange={setRowSelection}
+            />
           </div>
         </TabsContent>
       </Tabs>

@@ -2,12 +2,15 @@
 
 import React, { useState } from "react";
 import Select from "react-select";
+import type { MultiValue, SingleValue } from "react-select";
 
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import { withAuth } from "@/utils/withAuth";
+import { reactSelectStyles } from "@/utils/reactSelectStyles";
+import { useTheme } from "@/context/ThemeContext";
 import { useModal } from "@/hooks/useModal";
 
 import { TicketJackpot } from "./types";
@@ -67,7 +70,7 @@ function TicketJackpotsPage() {
       </div>
 
       {/* Jackpot Settings Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {jackpots.map((jackpot, index) => (
           <JackpotSettingCard
             key={jackpot.id}
@@ -94,14 +97,23 @@ interface JackpotSettingCardProps {
   onSave: (id: string, updatedJackpot: TicketJackpot) => void;
 }
 
+type SelectOption = {
+  value: string;
+  label: string;
+};
+
 const JackpotSettingCard: React.FC<JackpotSettingCardProps> = ({
   jackpot,
   index,
   onSave,
 }) => {
+  const { theme } = useTheme();
   const [formData, setFormData] = useState<TicketJackpot>(jackpot);
 
-  const handleChange = (field: keyof TicketJackpot, value: any) => {
+  const handleChange = <K extends keyof TicketJackpot>(
+    field: K,
+    value: TicketJackpot[K]
+  ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -132,12 +144,14 @@ const JackpotSettingCard: React.FC<JackpotSettingCardProps> = ({
 
           <div>
             <Label htmlFor={`currency-${jackpot.id}`}>Currency</Label>
-            <Select
+            <Select<SelectOption>
               id={`currency-${jackpot.id}`}
-              className="dark:text-black"
+              styles={reactSelectStyles(theme)}
               options={currencyOptions}
               value={currencyOptions.find((opt) => opt.value === formData.currency)}
-              onChange={(val) => handleChange("currency", val?.value || "NGN")}
+              onChange={(option: SingleValue<SelectOption>) =>
+                handleChange("currency", option?.value ?? "NGN")
+              }
               placeholder="Select currency"
             />
           </div>
@@ -234,12 +248,17 @@ const JackpotSettingCard: React.FC<JackpotSettingCardProps> = ({
         {/* Allowed Games */}
         <div>
           <Label htmlFor={`allowedGames-${jackpot.id}`}>Allowed Games</Label>
-          <Select
+          <Select<SelectOption, true>
             id={`allowedGames-${jackpot.id}`}
-            className="dark:text-black"
+            styles={reactSelectStyles(theme)}
             options={gameOptions}
             value={gameOptions.filter((opt) => formData.allowedGames.includes(opt.value))}
-            onChange={(val) => handleChange("allowedGames", val.map((v) => v.value))}
+            onChange={(options: MultiValue<SelectOption>) =>
+              handleChange(
+                "allowedGames",
+                options.map((option) => option.value)
+              )
+            }
             placeholder="Select games"
             isMulti
           />
