@@ -100,30 +100,30 @@ function GamingActivities() {
     <div className="space-y-6 p-4">
       {/* Breadcrumb */}
       <PageBreadcrumb pageTitle="Gaming Activities" />
+      <div className="text-sm text-gray-500 dark:text-gray-400">        
+        <p>Use the global search to filter by Group, or use the filters below to narrow down the results.</p>
+      </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-4">
-        {/* Date Range Picker */}
+      <div className="flex flex-wrap justify-between items-center gap-4">      
        <DateRangeFilter
           range={dateRange}
           onChange={(range) => setDateRange(range)}
 />
-        {/* Grouped Multi-Select */}
-        <div className="w-[28rem]">
+        
+        <div className="max-w-[24rem]">
           <Select<FilterSelection, true>
             styles={reactSelectStyles(theme)}
             options={groupedOptions}
             isMulti
             placeholder="Filter by Game, Match, Ticket, Bet, Client..."
             value={filters}
-            onChange={(val) => setFilters(val ?? [])}
+            onChange={(val) => setFilters(val ? [...val] : [])}
           />
-        </div>
-
-     
+        </div>   
 
       </div>
-      {/* Table */}
+      
       <DataTable columns={columns} data={filteredData} />
     </div>
   );

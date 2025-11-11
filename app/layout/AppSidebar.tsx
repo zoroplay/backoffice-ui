@@ -211,10 +211,10 @@ const navItems: NavItem[] = [
     name: "Configurations",
     subItems: [
       { name: "General", path: "/configurations/general", pro: false },
-      { name: "Commision Setting", path: "/configurations/commission-setting", pro: false },
-      { name: "Commision Bonus Group", path: "/configurations/commission-bonus-group", pro: false },
-      { name: "Payment Methods", path: "/configurations/payment-methods", pro: false },
-      { name: "Game Keys", path: "/configurations/game-keys", pro: false },
+      // { name: "Commision Setting", path: "/configurations/commission-setting", pro: false },
+      // { name: "Commision Bonus Group", path: "/configurations/commission-bonus-group", pro: false },
+      // { name: "Payment Methods", path: "/configurations/payment-methods", pro: false },
+      // { name: "Game Keys", path: "/configurations/game-keys", pro: false },
       { name: "Tipster Settings", path: "/configurations/tipster-settings", pro: false },
       { name: "Exposure Monitor Settings", path: "/configurations/exposure-monitor-settings", pro: false },
     ]
