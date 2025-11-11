@@ -4,12 +4,11 @@ import React, { useState } from "react";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { DataTable } from "@/components/tables/DataTable";
 import type { Range } from "react-date-range";
-import { DateRangeFilter, defaultDateRange } from "@/components/common/DateRangeFilter";
+import { defaultDateRange } from "@/components/common/DateRangeFilter";
 import { columns } from "./columns";
 import { retailCashData, RetailCashRecord } from "./data";
 import { withAuth } from "@/utils/withAuth";
-import { FilterActions } from "@/components/common/FilterActions";
-
+import { ReportFilterToolbar } from "@/components/common/ReportFilterToolbar";
 
 
 function RetailCashReport() {
@@ -44,13 +43,14 @@ function RetailCashReport() {
       {/* Breadcrumb */}
       <PageBreadcrumb pageTitle="Retail Cash Report" />
 
-      {/* Filters */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        {/* Date Range Picker */}
-        <DateRangeFilter range={dateRange} onChange={(range) => setDateRange(range)} />
-
-        <FilterActions onSearch={handleSearch} onClear={handleClear} />
-      </div>
+      <ReportFilterToolbar
+        dateRange={dateRange}
+        onDateRangeChange={setDateRange}
+        actions={{
+          onSearch: handleSearch,
+          onClear: handleClear,
+        }}
+      />
 
       {/* Table */}
       <DataTable columns={columns} data={filteredData} />

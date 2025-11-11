@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
-import Select from "react-select";
+import type { GroupBase } from "react-select";
 import makeAnimated from "react-select/animated";
 import type { Range } from "react-date-range";
+import type { MultiValue } from "react-select";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { DataTable } from "@/components/tables/DataTable";
-import { DateRangeFilter, defaultDateRange } from "@/components/common/DateRangeFilter";
-import { FilterActions } from "@/components/common/FilterActions";
+import { defaultDateRange } from "@/components/common/DateRangeFilter";
 import { summaryColumns, groupColumns } from "./columns";
 import {
   netCashSummaryData,
@@ -16,8 +16,7 @@ import {
   NetCashGroup,
 } from "./data";
 import { withAuth } from "@/utils/withAuth";
-import { reactSelectStyles } from "@/utils/reactSelectStyles";
-import { useTheme } from "@/context/ThemeContext";
+import { ReportFilterToolbar } from "@/components/common/ReportFilterToolbar";
 
 // ----------------------
 // Filter Options
@@ -43,12 +42,48 @@ const filterOptions = [
 
 const animatedComponents = makeAnimated();
 
+const filterOptionGroupMap = filterOptions.reduce<Map<string, string>>(
+  (map, group) => {
+    group.options.forEach((option) => {
+      map.set(option.value, group.label);
+    });
+    return map;
+  },
+  new Map()
+);
+
 type FilterSelection = { value: string; label: string };
 
 function NetCashReport() {
-  const { theme } = useTheme();
   const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
   const [selectedFilters, setSelectedFilters] = useState<FilterSelection[]>([]);
+
+  const handleFilterChange = (value: MultiValue<FilterSelection>) => {
+    const latestSelections = new Map<string, FilterSelection>();
+
+    value.forEach((option) => {
+      const groupKey = filterOptionGroupMap.get(option.value) ?? option.value;
+      latestSelections.set(groupKey, option);
+    });
+
+    const uniqueSelections: FilterSelection[] = [];
+    const seenGroups = new Set<string>();
+
+    value.forEach((option) => {
+      const groupKey = filterOptionGroupMap.get(option.value) ?? option.value;
+      if (seenGroups.has(groupKey)) {
+        return;
+      }
+
+      const latestOption = latestSelections.get(groupKey);
+      if (latestOption?.value === option.value) {
+        uniqueSelections.push(option);
+        seenGroups.add(groupKey);
+      }
+    });
+
+    setSelectedFilters(uniqueSelections);
+  };
 
   // state for filtered data
   const [filteredSummary, setFilteredSummary] =
@@ -118,32 +153,23 @@ function NetCashReport() {
       <PageBreadcrumb pageTitle="Net Cash Report" />
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-4 justify-between">
-        <div className="flex flex-col md:flex-row gap-4">
-          {/* Date Range */}
-          <DateRangeFilter
-            range={dateRange}
-            onChange={(range) => setDateRange(range)}
-          />
-
-
-          {/* Combined Select */}
-          <div className="w-[20rem]">
-            <Select<FilterSelection, true>
-              styles={reactSelectStyles(theme)}
-              options={filterOptions}
-              components={animatedComponents}
-              isMulti
-              placeholder="Filter by Payment / Client Type"
-              value={selectedFilters}
-              onChange={(val) => setSelectedFilters(val ?? [])}
-            />
-          </div>
-        </div>
-
-        {/* Search & Clear */}
-        <FilterActions onSearch={handleSearch} onClear={handleClear} />
-      </div>
+      <ReportFilterToolbar<FilterSelection, true, GroupBase<FilterSelection>>
+        dateRange={dateRange}
+        onDateRangeChange={setDateRange}
+        actions={{
+          onSearch: handleSearch,
+          onClear: handleClear,
+        }}
+        selectProps={{
+          containerClassName: "w-[22rem]",
+          options: filterOptions,
+          components: animatedComponents,
+          isMulti: true,
+          placeholder: "Filter by Payment or Client Type",
+          value: selectedFilters,
+          onChange: (val: MultiValue<FilterSelection>) => handleFilterChange(val),
+        }}
+      />
 
       {/* First Table */}
       <div>

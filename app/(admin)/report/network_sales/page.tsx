@@ -1,18 +1,16 @@
 "use client";
 
 import React, { useState } from "react";
-import Select from "react-select";
+import type { SingleValue } from "react-select";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { DataTable } from "@/components/tables/DataTable";
-import { FilterActions } from "@/components/common/FilterActions";
 import type { Range } from "react-date-range";
-import { DateRangeFilter, defaultDateRange } from "@/components/common/DateRangeFilter";
+import { defaultDateRange } from "@/components/common/DateRangeFilter";
 import { networkSalesColumns } from "../network_sales/columns";
 import { NetworkSalesTypes } from "./columns";
 import { networkSalesData } from "../network_sales/data";
 import { withAuth } from "@/utils/withAuth";
-import { reactSelectStyles } from "@/utils/reactSelectStyles";
-import { useTheme } from "@/context/ThemeContext";
+import { ReportFilterToolbar } from "@/components/common/ReportFilterToolbar";
 
 // ----------------------
 // Select Options
@@ -33,7 +31,6 @@ const productTypeOptions: FilterOption[] = [
 // Component
 // ----------------------
 function NetworkSales() {
-  const { theme } = useTheme();
   const [selectedFilter, setSelectedFilter] = useState<FilterOption | null>(null);
   const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
 
@@ -88,30 +85,23 @@ function NetworkSales() {
       {/* Breadcrumb */}
       <PageBreadcrumb pageTitle="Network Sales" />
 
-      {/* Filters */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-4">
-          {/* Date Range Picker */}
-          <DateRangeFilter
-            range={dateRange}
-            onChange={(range) => setDateRange(range)}
-          />
-
-          {/* Single Select */}
-          <div className="w-[20rem]">
-            <Select
-              styles={reactSelectStyles(theme)}
-              options={productTypeOptions}
-              placeholder="Filter by Product Type"
-              value={selectedFilter}
-              onChange={(val) => setSelectedFilter(val as FilterOption | null)}
-              isClearable
-            />
-          </div>
-        </div>
-
-        <FilterActions onSearch={handleSearch} onClear={handleClear} />
-      </div>
+      <ReportFilterToolbar<FilterOption>
+        dateRange={dateRange}
+        onDateRangeChange={setDateRange}
+        actions={{
+          onSearch: handleSearch,
+          onClear: handleClear,
+        }}
+        selectProps={{
+          containerClassName: "w-[22rem]",
+          options: productTypeOptions,
+          placeholder: "Filter by Product Type",
+          value: selectedFilter,
+          onChange: (selected: SingleValue<FilterOption>) =>
+            setSelectedFilter(selected ?? null),
+          isClearable: true,
+        }}
+      />
 
       {/* Table */}
       <DataTable columns={networkSalesColumns} data={filteredData} />

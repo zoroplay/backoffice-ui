@@ -1,18 +1,15 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
-import Select from "react-select";
+import type { SingleValue } from "react-select";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { DataTable } from "@/components/tables/DataTable";
 import type { Range } from "react-date-range";
-import { DateRangeFilter } from "@/components/common/DateRangeFilter";
-import { FilterActions } from "@/components/common/FilterActions";
 import { columns, Transaction } from "./columns";
 import { transactions } from "./data";
 import { withAuth } from "@/utils/withAuth";
-import { reactSelectStyles } from "@/utils/reactSelectStyles";
-import { useTheme } from "@/context/ThemeContext";
 import { useSearch } from "@/context/SearchContext";
+import { ReportFilterToolbar } from "@/components/common/ReportFilterToolbar";
 
 const defaultDateRange: Range = {
   startDate: new Date(new Date().setDate(new Date().getDate() - 30)), 
@@ -20,7 +17,12 @@ const defaultDateRange: Range = {
   key: "selection",
 };
 
-const operationOptions = [
+type OperationOption = { value: string; label: string };
+
+const operationOptions: Array<{
+  label: string;
+  options: OperationOption[];
+}> = [
   {
     label: "Operation Type",
     options: [
@@ -43,18 +45,24 @@ const searchableFields: Array<keyof Transaction> = [
 ];
 
 function MoneyTransactions() {
-  const { theme } = useTheme();
-  const [operationFilter, setOperationFilter] = useState<
-    { value: string; label: string } | null
-  >(null);
+  const [operationFilter, setOperationFilter] = useState<OperationOption | null>(
+    null
+  );
 
   const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
   const [filteredData, setFilteredData] = useState<Transaction[]>(transactions);
   const [appliedOperationFilter, setAppliedOperationFilter] = useState<
-    { value: string; label: string } | null
+    OperationOption | null
   >(null);
   const [appliedDateRange, setAppliedDateRange] = useState<Range | null>(null);
   const { query, setPlaceholder, resetPlaceholder, resetQuery } = useSearch();
+
+  const handleOperationChange = useCallback(
+    (option: SingleValue<OperationOption>) => {
+      setOperationFilter(option ?? null);
+    },
+    []
+  );
 
   useEffect(() => {
     setPlaceholder("Search by Transaction ID, Keyword, or Username");
@@ -136,32 +144,22 @@ function MoneyTransactions() {
       {/* Breadcrumb */}
       <PageBreadcrumb pageTitle="Money Transactions" />
 
-      {/* Filters */}
-      <div className="flex flex-wrap items-center justify-between gap-4 flex-col md:flex-row">
-        <div className="flex flex-col md:flex-row gap-4">
-           {/* Operation Type */}
-          <div className="w-[15rem]">
-            <Select
-              styles={reactSelectStyles(theme)}
-              options={operationOptions}
-              placeholder="Operation Type"
-              value={operationFilter}
-              onChange={(val) => setOperationFilter(val)}
-            />
-          </div>
+      <ReportFilterToolbar<OperationOption>
+        dateRange={dateRange}
+        onDateRangeChange={(range) => setDateRange(range)}
+        actions={{
+          onSearch: applyFilters,
+          onClear: clearFilters,
+        }}
+        selectProps={{
+          containerClassName: "w-[15rem]",
+          options: operationOptions,
+          placeholder: "Operation Type",
+          value: operationFilter,
+          onChange: handleOperationChange,
+        }}
+      />
 
-          {/* Date Range Picker */}
-          <DateRangeFilter
-            range={dateRange}
-            onChange={(range) => setDateRange(range)}
-          />
-        </div>       
-
-       
-        <FilterActions onSearch={applyFilters} onClear={clearFilters} />
-      </div>
-
-      {/* Table */}
       <DataTable columns={columns} data={filteredData} />
     </div>
   );

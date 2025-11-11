@@ -1,17 +1,17 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import Select from "react-select";
+import type { GroupBase } from "react-select";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { DataTable } from "@/components/tables/DataTable";
 import type { Range } from "react-date-range";
-import { DateRangeFilter, defaultDateRange } from "@/components/common/DateRangeFilter";
+import { defaultDateRange } from "@/components/common/DateRangeFilter";
 import { columns } from "./column";
 import { tableData } from "./data";
 import { withAuth } from "@/utils/withAuth";
-import { reactSelectStyles } from "@/utils/reactSelectStyles";
-import { useTheme } from "@/context/ThemeContext";
 import { useSearch } from "@/context/SearchContext";
+import type { MultiValue } from "react-select";
+import { ReportFilterToolbar } from "@/components/common/ReportFilterToolbar";
 
 
 // ----------------------
@@ -61,12 +61,21 @@ const groupedOptions = [
 
 type FilterSelection = { value: string; label: string };
 
+const filterOptionGroupMap = groupedOptions.reduce<Map<string, string>>(
+  (map, group) => {
+    group.options.forEach((option) => {
+      map.set(option.value, group.label);
+    });
+    return map;
+  },
+  new Map()
+);
+
 
 // ----------------------
 // Component
 // ----------------------
 function GamingActivities() {
-  const { theme } = useTheme();
   const [filters, setFilters] = useState<FilterSelection[]>([]);
   const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
   const { query, setPlaceholder, resetPlaceholder } = useSearch();
@@ -96,33 +105,53 @@ function GamingActivities() {
     );
   }, [query]);
 
+  const handleFilterChange = (value: MultiValue<FilterSelection>) => {
+    const latestSelections = new Map<string, FilterSelection>();
+
+    value.forEach((option) => {
+      const groupKey = filterOptionGroupMap.get(option.value) ?? option.value;
+      latestSelections.set(groupKey, option);
+    });
+
+    const uniqueSelections: FilterSelection[] = [];
+    const seenGroups = new Set<string>();
+
+    value.forEach((option) => {
+      const groupKey = filterOptionGroupMap.get(option.value) ?? option.value;
+      if (seenGroups.has(groupKey)) {
+        return;
+      }
+
+      const latestOption = latestSelections.get(groupKey);
+      if (latestOption?.value === option.value) {
+        uniqueSelections.push(option);
+        seenGroups.add(groupKey);
+      }
+    });
+
+    setFilters(uniqueSelections);
+  };
+
   return (
     <div className="space-y-6 p-4">
       {/* Breadcrumb */}
       <PageBreadcrumb pageTitle="Gaming Activities" />
-      <div className="text-sm text-gray-500 dark:text-gray-400">        
+      <div className="text-sm text-gray-500 dark:text-gray-400 ">        
         <p>Use the global search to filter by Group, or use the filters below to narrow down the results.</p>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap justify-between items-center gap-4">      
-       <DateRangeFilter
-          range={dateRange}
-          onChange={(range) => setDateRange(range)}
-/>
-        
-        <div className="max-w-[24rem]">
-          <Select<FilterSelection, true>
-            styles={reactSelectStyles(theme)}
-            options={groupedOptions}
-            isMulti
-            placeholder="Filter by Game, Match, Ticket, Bet, Client..."
-            value={filters}
-            onChange={(val) => setFilters(val ? [...val] : [])}
-          />
-        </div>   
-
-      </div>
+      <ReportFilterToolbar<FilterSelection, true, GroupBase<FilterSelection>>
+        dateRange={dateRange}
+        onDateRangeChange={setDateRange}
+        selectProps={{
+          containerClassName: "max-w-[26rem]",
+          options: groupedOptions,
+          isMulti: true,
+          placeholder: "Filter by Game, Match, Ticket, Bet, Client...",
+          value: filters,
+          onChange: (val: MultiValue<FilterSelection>) => handleFilterChange(val),
+        }}
+      />
       
       <DataTable columns={columns} data={filteredData} />
     </div>
