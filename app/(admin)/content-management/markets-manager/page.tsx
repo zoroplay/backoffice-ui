@@ -183,7 +183,20 @@ const MarketsManagerPage: React.FC = () => {
 
   const handleMarketSelectionsChange = useCallback(
     (options: MultiValue<SelectOption>) => {
-      setMarketSelections(options as SelectOption[]);
+      if (!options || options.length === 0) {
+        setMarketSelections([]);
+        return;
+      }
+
+      // Ensure only one entry per group (by prefix before colon)
+      const filterMap = new Map<string, SelectOption>();
+      
+      Array.from(options).forEach((option) => {
+        const [groupType] = option.value.split(":");
+        filterMap.set(groupType, option);
+      });
+      
+      setMarketSelections(Array.from(filterMap.values()));
     },
     []
   );

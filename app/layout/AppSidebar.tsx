@@ -31,7 +31,7 @@ import {
   CasinoSlotIcon,
   GiftBoxIcon
 } from "../icons/index";
-import SidebarWidget from "./SidebarWidget";
+import { Gift } from "lucide-react";
 
 type NavItem = {
   name: string;
@@ -124,7 +124,7 @@ const navItems: NavItem[] = [
   },
 
   {
-    icon: <BoltIcon />,
+    icon: <Gift />,
     name: "Bonus Management",
     subItems: [
       { name: "Player Bonuses", path: "/bonus-management/player-bonuses", pro: false },
@@ -207,6 +207,18 @@ const navItems: NavItem[] = [
   },
 
   {
+    icon: <UserIcon />,
+    name: "User Management",
+    subItems: [
+      { name: "Users", path: "/user-management/users", pro: false },
+      { name: "Roles & Permissions", path: "/user-management/roles-permissions", pro: false },
+      { name: "Activity Logs", path: "/user-management/activity-logs", pro: false },  
+    ]
+  },
+];
+
+const othersItems: NavItem[] = [
+  {
     icon: <PlugInIcon />,
     name: "Configurations",
     subItems: [
@@ -219,53 +231,39 @@ const navItems: NavItem[] = [
       { name: "Exposure Monitor Settings", path: "/configurations/exposure-monitor-settings", pro: false },
     ]
   },
-
-  {
-    icon: <UserIcon />,
-    name: "User Management",
-    subItems: [
-      { name: "Users", path: "/user-management/users", pro: false },
-      { name: "Roles & Permissions", path: "/user-management/roles-permissions", pro: false },
-      { name: "Activity Logs", path: "/user-management/activity-logs", pro: false },  
-    ]
-  },
-
   {
     icon: <LockIcon />,
     name: "Change Password",
     path: "/change-password",
   },
-];
-
-const othersItems: NavItem[] = [
-  {
-    icon: <PieChartIcon />,
-    name: "Charts",
-    subItems: [
-      { name: "Line Chart", path: "/line-chart", pro: false },
-      { name: "Bar Chart", path: "/bar-chart", pro: false },
-    ],
-  },
-  {
-    icon: <BoxCubeIcon />,
-    name: "UI Elements",
-    subItems: [
-      { name: "Alerts", path: "/alerts", pro: false },
-      { name: "Avatar", path: "/avatars", pro: false },
-      { name: "Badge", path: "/badge", pro: false },
-      { name: "Buttons", path: "/buttons", pro: false },
-      { name: "Images", path: "/images", pro: false },
-      { name: "Videos", path: "/videos", pro: false },
-    ],
-  },
-  {
-    icon: <PlugInIcon />,
-    name: "Authentication",
-    subItems: [
-      { name: "Sign In", path: "/signin", pro: false },
-      { name: "Sign Up", path: "/signup", pro: false },
-    ],
-  },
+  // {
+  //   icon: <PieChartIcon />,
+  //   name: "Charts",
+  //   subItems: [
+  //     { name: "Line Chart", path: "/line-chart", pro: false },
+  //     { name: "Bar Chart", path: "/bar-chart", pro: false },
+  //   ],
+  // },
+  // {
+  //   icon: <BoxCubeIcon />,
+  //   name: "UI Elements",
+  //   subItems: [
+  //     { name: "Alerts", path: "/alerts", pro: false },
+  //     { name: "Avatar", path: "/avatars", pro: false },
+  //     { name: "Badge", path: "/badge", pro: false },
+  //     { name: "Buttons", path: "/buttons", pro: false },
+  //     { name: "Images", path: "/images", pro: false },
+  //     { name: "Videos", path: "/videos", pro: false },
+  //   ],
+  // },
+  // {
+  //   icon: <PlugInIcon />,
+  //   name: "Authentication",
+  //   subItems: [
+  //     { name: "Sign In", path: "/signin", pro: false },
+  //     { name: "Sign Up", path: "/signup", pro: false },
+  //   ],
+  // },
 ];
 
 const AppSidebar: React.FC = () => {
@@ -540,7 +538,7 @@ const AppSidebar: React.FC = () => {
                   <HorizontaLDots />
                 )}
               </h2>
-              {/* {renderMenuItems(othersItems, "others")} */}
+              {renderMenuItems(othersItems, "others")}
             </div>
           </div>
         </nav>

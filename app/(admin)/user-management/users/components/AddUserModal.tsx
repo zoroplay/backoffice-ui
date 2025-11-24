@@ -5,7 +5,7 @@ import { Search, User } from "lucide-react";
 
 import Button from "@/components/ui/button/Button";
 import {
-  Modal,
+  Modal, 
   ModalBody,
   ModalFooter,
   ModalHeader,

@@ -12,6 +12,7 @@ import { useSearch } from "@/context/SearchContext";
 
 import { columns } from "./columns";
 import { networkSalesData, NetworkSalesReport } from "./data";
+import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
 
 const searchableFields: Array<keyof NetworkSalesReport> = ["name"];
 
@@ -74,13 +75,14 @@ function NetworkSalesReportPage() {
     <div className="space-y-6 p-4">
       <PageBreadcrumb pageTitle="Network Sales Report" />
 
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-4">
-          <DateRangeFilter range={dateRange} onChange={(range) => setDateRange(range)} />
-        </div>
-
-        <FilterActions onSearch={applyFilters} onClear={clearFilters} />
-      </div>
+      <TableFilterToolbar
+        dateRange={dateRange}
+        onDateRangeChange={setDateRange}
+        actions={{
+          onSearch: applyFilters,
+          onClear: clearFilters,
+        }}          
+      />
 
       <DataTable columns={columns} data={filteredData} />
     </div>

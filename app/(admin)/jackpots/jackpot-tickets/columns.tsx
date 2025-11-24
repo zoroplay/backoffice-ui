@@ -37,7 +37,7 @@ export const columns: ColumnDef<JackpotTicket>[] = [
         Pending: "text-yellow-600 dark:text-yellow-400",
       };
       return (
-        <span className={statusColors[status] || "text-gray-600 dark:text-gray-400"}>
+        <span className={statusColors[status] || "text-gray-600 text-sm dark:text-gray-400"}>
           {status}
         </span>
       );

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useMemo, useState } from "react";
-import Select, { type SingleValue } from "react-select";
+import Select, { type SingleValue, type MultiValue } from "react-select";
 import type { Range } from "react-date-range";
 
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
@@ -14,6 +14,7 @@ import { withAuth } from "@/utils/withAuth";
 
 import { columns, ProfitabilityRow } from "./columns";
 import { profitabilityData, ProfitabilityRecord } from "./data";
+import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
 
 type FilterOption = { value: string; label: string };
 
@@ -77,12 +78,28 @@ const recordToRow = (record: ProfitabilityRecord): ProfitabilityRow => {
 };
 
 function ProfitabilityPage() {
-  const { theme } = useTheme();
   const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
-  const [selectedFilter, setSelectedFilter] = useState<FilterOption | null>(null);
+  const [selectedFilter, setSelectedFilter] = useState<FilterOption[]>([]);
   const [appliedFilter, setAppliedFilter] = useState<FilterOption | null>(null);
   const [appliedDateRange, setAppliedDateRange] = useState<Range | null>(null);
   const [rows, setRows] = useState<ProfitabilityRow[]>(profitabilityData.map(recordToRow));
+
+  const handleFilterChange = (newValue: MultiValue<FilterOption>) => {
+    if (!newValue || newValue.length === 0) {
+      setSelectedFilter([]);
+      return;
+    }
+
+    // Ensure only one entry per group (by prefix before colon)
+    const filterMap = new Map<string, FilterOption>();
+    
+    Array.from(newValue).forEach((filter) => {
+      const [groupType] = filter.value.split(":");
+      filterMap.set(groupType, filter);
+    });
+    
+    setSelectedFilter(Array.from(filterMap.values()));
+  };
 
   const filterData = useCallback(
     (
@@ -131,7 +148,7 @@ function ProfitabilityPage() {
   );
 
   const handleSearch = () => {
-    const nextFilter = selectedFilter;
+    const nextFilter: FilterOption | null = selectedFilter.length > 0 ? selectedFilter[0] ?? null : null;
     const nextRange = dateRange;
     setAppliedFilter(nextFilter);
     setAppliedDateRange(nextRange);
@@ -139,7 +156,7 @@ function ProfitabilityPage() {
   };
 
   const handleClear = () => {
-    setSelectedFilter(null);
+    setSelectedFilter([]);
     setAppliedFilter(null);
     setDateRange(defaultDateRange);
     setAppliedDateRange(null);
@@ -182,24 +199,23 @@ function ProfitabilityPage() {
     <div className="space-y-6 p-4">
       <PageBreadcrumb pageTitle="Profitability" />
 
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-4">
-          <DateRangeFilter range={dateRange} onChange={(range) => setDateRange(range)} />
-
-          <div className="w-[18rem]">
-            <Select<FilterOption, false>
-              styles={reactSelectStyles(theme)}
-              options={filterOptions}
-              placeholder="Filter Options"
-              value={selectedFilter}
-              onChange={(value: SingleValue<FilterOption>) => setSelectedFilter(value ?? null)}
-              isClearable
-            />
-          </div>
-        </div>
-
-        <FilterActions onSearch={handleSearch} onClear={handleClear} />
-      </div>
+     <TableFilterToolbar<FilterOption, true>
+        dateRange={dateRange}
+        onDateRangeChange={setDateRange}
+        actions={{
+          onSearch: handleSearch,
+          onClear: handleClear,
+        }}
+        selectProps={{
+          containerClassName: "max-w-[22rem]",
+          options: filterOptions,
+          placeholder: "Filter Options",
+          value: selectedFilter,
+          onChange: handleFilterChange,
+          isMulti: true,
+          isClearable: true,
+        }}
+      />
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">

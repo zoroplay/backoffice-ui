@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useMemo, useState, useEffect, useCallback } from "react";
-import { ColumnDef } from "@tanstack/react-table";
-import { Plus, Pencil, Users2, Trash2, Upload, Gift } from "lucide-react";
+import { Plus, Upload, Gift, Info } from "lucide-react";
 
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { DataTable } from "@/components/tables/DataTable";
@@ -16,6 +15,7 @@ import {
   SegmentPlayer,
   playerSegments as initialSegments,
 } from "./data";
+import { createColumns } from "./columns";
 
 interface SegmentFormState {
   id?: string;
@@ -115,60 +115,13 @@ function PlayerSegmentationPage() {
     );
   }, [query, segments]);
 
-  const columns = useMemo<ColumnDef<PlayerSegment>[]>(
-    () => [
-      {
-        accessorKey: "name",
-        header: "Name",
-        cell: ({ row }) => (
-          <span className="font-medium text-gray-900 dark:text-gray-100">
-            {row.original.name}
-          </span>
-        ),
-      },
-      {
-        accessorKey: "minOdd",
-        header: "Min. Odd",
-        cell: ({ row }) => row.original.minOdd.toFixed(2),
-      },
-      {
-        accessorKey: "minSelection",
-        header: "Min. Selection",
-      },
-      {
-        accessorKey: "createdBy",
-        header: "Created By",
-      },
-      {
-        id: "actions",
-        header: "Actions",
-        cell: ({ row }) => (
-          <div className="flex items-center justify-center gap-2 ">
-            <button
-              aria-label="Edit segment"
-              className="rounded-md border border-gray-200 p-2 text-gray-600 transition hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
-              onClick={() => handleEditSegment(row.original)}
-            >
-              <Pencil className="h-4 w-4" />
-            </button>
-            <button
-              aria-label="Manage players"
-              className="rounded-md border border-gray-200 p-2 text-gray-600 transition hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
-              onClick={() => handleManagePlayers(row.original)}
-            >
-              <Users2 className="h-4 w-4" />
-            </button>
-            <button
-              aria-label="Remove segment"
-              className="rounded-md border border-gray-200 p-2 text-error-500 transition hover:bg-error-100 dark:border-gray-700 dark:hover:bg-error-500/10"
-              onClick={() => handleDeleteSegment(row.original.id)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
-          </div>
-        ),
-      },
-    ],
+  const columns = useMemo(
+    () =>
+      createColumns({
+        onEdit: handleEditSegment,
+        onManagePlayers: handleManagePlayers,
+        onDelete: handleDeleteSegment,
+      }),
     [handleDeleteSegment, handleEditSegment, handleManagePlayers]
   );
 
@@ -249,6 +202,9 @@ function PlayerSegmentationPage() {
         </Button>
       </div>
 
+       <span className="flex items-center gap-1 mb-2 text-gray-500 dark:text-gray-400">  <Info className="h-4 w-4" />
+        <p className="text-sm text-gray-500 dark:text-gray-400">Use the global search to filter by Name or Created By. </p>
+      </span>      
       <DataTable columns={columns} data={filteredSegments} />
 
       {/* Add / Edit Segment */}
@@ -337,7 +293,7 @@ function PlayerSegmentationPage() {
                 Save Segment
               </Button>
             </div>
-          </form>
+          </form> 
         </div>
       </Modal>
 

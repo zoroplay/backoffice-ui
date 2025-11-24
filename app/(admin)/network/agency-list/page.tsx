@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
-import Select from "react-select";
+import Select, { type SingleValue } from "react-select";
 
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { DataTable } from "@/components/tables/DataTable";
@@ -12,7 +12,8 @@ import { useSearch } from "@/context/SearchContext";
 
 import { columns, Agency } from "./columns";
 import { agencies } from "./data";
-
+import { Info } from "lucide-react";
+    
 type FilterOption = {
   value: string;
   label: string;
@@ -41,7 +42,7 @@ function AgencyListPage() {
   const { query, setPlaceholder, resetPlaceholder } = useSearch();
 
   useEffect(() => {
-    setPlaceholder("Search by first name or last name");
+    setPlaceholder("Search by Name or Username");
 
     return () => {
       resetPlaceholder();
@@ -90,14 +91,24 @@ function AgencyListPage() {
     <div className="space-y-6 p-4">
       <PageBreadcrumb pageTitle="Agency List" />
 
+      <span className="flex items-center gap-1 mb-2 text-gray-500 dark:text-gray-400">  <Info className="h-4 w-4" />    
+        <p className="text-sm text-gray-500 dark:text-gray-400">Use the global search to filter by Name or  Username</p>
+      </span>
+
       <div className="flex flex-wrap items-center gap-4">
         <div className="w-full sm:w-[200px]">
-          <Select
+          <Select<FilterOption>
             styles={reactSelectStyles(theme)}
             options={agentTypeOptions}
             placeholder="All"
             value={selectedAgentType}
-            onChange={(val) => setSelectedAgentType(val || agentTypeOptions[0])}
+            onChange={(val: SingleValue<FilterOption>) => {
+              if (val) {
+                setSelectedAgentType(val);
+              } else {
+                setSelectedAgentType(agentTypeOptions[0]);
+              }
+            }}
           />
         </div>
       </div>

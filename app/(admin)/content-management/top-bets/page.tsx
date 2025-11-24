@@ -206,7 +206,7 @@ function TopBetsPage() {
             </div>
             <Button
               onClick={() => setIsFormModalOpen(true)}
-              className="bg-emerald-500 text-white hover:bg-emerald-600"
+              className="bg-brand-500 text-white hover:bg-brand-600 dark:bg-brand-500 dark:text-white dark:hover:bg-brand-600"
               
             >
               Add Tournament

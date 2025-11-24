@@ -1,21 +1,14 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React from "react";
 import Image from "next/image";
-import Select, {
-  type ActionMeta,
-  type GroupBase,
-  type MultiValue,
-  type StylesConfig,
-} from "react-select";
+import { type ActionMeta, type GroupBase, type MultiValue, type StylesConfig } from "react-select";
 import type { ColumnDef } from "@tanstack/react-table";
 import { PencilLine, Plus, Sparkles, Trash2, Wand2 } from "lucide-react";
 
-import { FilterActions } from "@/components/common/FilterActions";
 import { DataTable } from "@/components/tables/DataTable";
 import Button from "@/components/ui/button/Button";
-import { cn } from "@/lib/utils";
-import { reactSelectStyles } from "@/utils/reactSelectStyles";
+import Badge from "@/components/ui/badge/Badge";
 
 import type {
   CasinoGame,
@@ -24,7 +17,9 @@ import type {
   GameCategory,
   GameProvider,
 } from "../types";
-
+import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
+import { reactSelectStyles } from "@/utils/reactSelectStyles";
+import { useMemo } from "react";
 type CasinoGamesTabProps = {
   theme: string | null;
   games: CasinoGame[];
@@ -42,15 +37,6 @@ type CasinoGamesTabProps = {
   onCreateGame: () => void;
   onEditGame: (game: CasinoGame) => void;
   onDeleteGame: (game: CasinoGame) => void;
-};
-
-const statusBadgeClasses: Record<CasinoGame["status"], string> = {
-  active:
-    "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200",
-  inactive:
-    "bg-gray-100 text-gray-600 dark:bg-gray-700/50 dark:text-gray-300",
-  preview:
-    "bg-brand-100 text-brand-700 dark:bg-brand-500/15 dark:text-brand-200",
 };
 
 export function CasinoGamesTab({
@@ -141,9 +127,13 @@ export function CasinoGamesTab({
                 {provider?.name ?? "Unknown"}
               </span>
               {provider?.isActive === false && (
-                <span className="mt-0.5 inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:bg-amber-500/15 dark:text-amber-200">
+                <Badge
+                  color="warning"
+                  variant="light"
+                  className="mt-0.5 text-[10px] uppercase tracking-wide"
+                >
                   Inactive Provider
-                </span>
+                </Badge>
               )}
             </div>
           );
@@ -156,12 +146,13 @@ export function CasinoGamesTab({
         cell: ({ row }) => (
           <div className="flex flex-wrap items-center gap-2">
             {row.original.categories.map((categoryId) => (
-              <span
+              <Badge
                 key={categoryId}
-                className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-600 dark:bg-gray-800 dark:text-gray-300"
+                color="neutral"
+                variant="light"
               >
                 {categoryLookup[categoryId]?.name ?? "Unknown"}
-              </span>
+              </Badge>
             ))}
           </div>
         ),
@@ -179,28 +170,39 @@ export function CasinoGamesTab({
         accessorKey: "volatility",
         header: "Volatility",
         cell: ({ row }) => (
-          <span className="inline-flex rounded-full bg-brand-500/10 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-brand-600 dark:bg-brand-500/20 dark:text-brand-200">
+          <Badge
+            color="primary"
+            variant="light"
+            className="uppercase tracking-wide"
+          >
             {row.original.volatility}
-          </span>
+          </Badge>
         ),
       },
       {
         accessorKey: "status",
         header: "Status",
-        cell: ({ row }) => (
-          <span
-            className={cn(
-              "inline-flex rounded-full px-2.5 py-1 text-xs font-semibold",
-              statusBadgeClasses[row.original.status]
-            )}
-          >
-            {row.original.status === "active"
+        cell: ({ row }) => {
+          const status = row.original.status;
+          const statusColor =
+            status === "active"
+              ? "success"
+              : status === "preview"
+              ? "primary"
+              : "neutral";
+          const statusLabel =
+            status === "active"
               ? "Active"
-              : row.original.status === "preview"
+              : status === "preview"
               ? "Preview"
-              : "Inactive"}
-          </span>
-        ),
+              : "Inactive";
+
+          return (
+            <Badge color={statusColor} variant="light" >
+              {statusLabel}
+            </Badge>
+          );
+        },
       },
       {
         id: "feature-tags",
@@ -209,24 +211,34 @@ export function CasinoGamesTab({
         cell: ({ row }) => (
           <div className="flex flex-wrap items-center gap-1.5">
             {row.original.isFeatured && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-purple-500/10 px-2 py-1 text-[11px] font-semibold text-purple-600 dark:bg-purple-500/20 dark:text-purple-200">
-                <Sparkles size={12} />
+              <Badge
+                color="primary"
+                variant="light"
+                startIcon={<Sparkles size={12} />}
+                className="text-[11px]"
+              >
                 Featured
-              </span>
+              </Badge>
             )}
             {row.original.hasBonusBuy && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-1 text-[11px] font-semibold text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-200">
-                <Wand2 size={12} />
+              <Badge
+                color="success"
+                variant="light"                
+                startIcon={<Wand2 size={12} />}
+                className="text-[11px]"
+              >
                 Bonus Buy
-              </span>
+              </Badge>
             )}
             {row.original.tags.map((tag) => (
-              <span
+              <Badge
                 key={tag}
-                className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-gray-500 dark:bg-gray-800 dark:text-gray-300"
+                color="neutral"
+                variant="light"
+                className="text-[11px] uppercase tracking-wide"
               >
                 {tag}
-              </span>
+              </Badge>
             ))}
           </div>
         ),
@@ -292,7 +304,7 @@ export function CasinoGamesTab({
           </Button>
         </div>
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-4">
           <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900/60">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
               Total Games
@@ -339,27 +351,19 @@ export function CasinoGamesTab({
           </div>
         </div>
 
-        <div className="mt-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="w-full lg:max-w-md">
-            <Select<CasinoFilterOption, true>
-              isMulti
-              closeMenuOnSelect={false}
-              hideSelectedOptions={false}
-              options={filterGroups}
-              value={selectedFilters}
-              styles={selectStyles}
-              placeholder="Filter by Category, Provider, Status or Feature"
-              onChange={onFilterChange}
-            />
-          </div>
-
-          <div className="flex w-full justify-start lg:w-auto">
-            <FilterActions
-              onSearch={onApplyFilters}
-              onClear={onClearFilters}
-            />
-          </div>
-        </div>
+        <TableFilterToolbar<CasinoFilterOption, true, GroupBase<CasinoFilterOption>>
+          selectProps={{
+            options: filterGroups,
+            value: selectedFilters,
+            onChange: onFilterChange,
+            isMulti: true,
+            placeholder: "Filter games...",
+          }}
+          actions={{
+            onSearch: onApplyFilters,
+            onClear: onClearFilters,
+          }}
+        />
       </div>
 
       <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950">

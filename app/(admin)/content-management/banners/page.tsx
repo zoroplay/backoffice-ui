@@ -1,11 +1,13 @@
 "use client";
 
 import React, { useCallback, useMemo, useRef, useState } from "react";
-import Select, { type SingleValue } from "react-select";
+import Select, { type SingleValue, type MultiValue } from "react-select";
 import Image from "next/image";
+import type { Range } from "react-date-range";
 
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import { FilterActions } from "@/components/common/FilterActions";
+import { defaultDateRange } from "@/components/common/DateRangeFilter";
+import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
 import { DataTable } from "@/components/tables/DataTable";
 import Button from "@/components/ui/button/Button";
 import { Modal, ModalBody, ModalFooter, ModalHeader } from "@/components/ui/modal";
@@ -80,75 +82,71 @@ import { BannerItem, bannerItems } from "./data";
    lastUpdated: banner.lastUpdated,
  });
 
- const applyFilter = (rows: BannerRow[], filter: FilterOption | null) => {
-   if (!filter) {
-     return rows;
-   }
+const applyFilter = (rows: BannerRow[], filters: FilterOption[]) => {
+  if (filters.length === 0) {
+    return rows;
+  }
 
-   const [type, value] = filter.value.split(":");
+  let filtered = rows.slice();
 
-   if (type === "type") {
-     return rows.filter((row) => row.type === value);
-   }
+  filters.forEach((filter) => {
+    const [type, value] = filter.value.split(":");
 
-   if (type === "target") {
-     return rows.filter((row) => row.target === value);
-   }
+    if (type === "type") {
+      filtered = filtered.filter((row) => row.type === value);
+    } else if (type === "target") {
+      filtered = filtered.filter((row) => row.target === value);
+    } else if (type === "status") {
+      const isActive = value === "Active";
+      filtered = filtered.filter((row) => row.isActive === isActive);
+    }
+  });
 
-   if (type === "status") {
-     const isActive = value === "Active";
-     return rows.filter((row) => row.isActive === isActive);
-   }
+  return filtered;
+};
 
-   return rows;
- };
+function BannersPage() {
+  const { theme } = useTheme();
 
- function BannersPage() {
-   const { theme } = useTheme();
+  const [banners, setBanners] = useState<BannerRow[]>(() => bannerItems.map(mapBannerToRow));
+  const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
+  const [selectedFilters, setSelectedFilters] = useState<FilterOption[]>([]);
+  const [filteredRows, setFilteredRows] = useState<BannerRow[]>(() => bannerItems.map(mapBannerToRow));
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingBanner, setEditingBanner] = useState<BannerRow | null>(null);
+  const [typeSelection, setTypeSelection] = useState<SelectOption<BannerItem["type"]> | null>(
+    bannerTypeOptions[0]
+  );
+  const [targetSelection, setTargetSelection] = useState<SelectOption<BannerItem["target"]> | null>(
+    bannerTargetOptions[0]
+  );
+  const [positionSelection, setPositionSelection] = useState<
+    SelectOption<BannerItem["position"]> | null
+  >(bannerPositionOptions[0] ?? null);
+  const [formValues, setFormValues] = useState({
+    title: "",
+    link: "",
+    content: "",
+    imageUrl: "",
+    isActive: true,
+  });
+  const [formKey, setFormKey] = useState(0);
+  const [imageSource, setImageSource] = useState<ImageSource>("url");
+  const [imagePreview, setImagePreview] = useState<string>("");
+  const [uploadedFileName, setUploadedFileName] = useState<string>("");
+  const uploadInputRef = useRef<HTMLInputElement | null>(null);
 
-   const [banners, setBanners] = useState<BannerRow[]>(() => bannerItems.map(mapBannerToRow));
-   const [activeFilter, setActiveFilter] = useState<FilterOption | null>(null);
-   const [selectedFilter, setSelectedFilter] = useState<FilterOption | null>(null);
-   const [isModalOpen, setIsModalOpen] = useState(false);
-   const [editingBanner, setEditingBanner] = useState<BannerRow | null>(null);
-   const [typeSelection, setTypeSelection] = useState<SelectOption<BannerItem["type"]> | null>(
-     bannerTypeOptions[0]
-   );
-   const [targetSelection, setTargetSelection] = useState<SelectOption<BannerItem["target"]> | null>(
-     bannerTargetOptions[0]
-   );
-   const [positionSelection, setPositionSelection] = useState<
-     SelectOption<BannerItem["position"]> | null
-   >(bannerPositionOptions[0] ?? null);
-   const [formValues, setFormValues] = useState({
-     title: "",
-     link: "",
-     content: "",
-     imageUrl: "",
-     isActive: true,
-   });
-   const [formKey, setFormKey] = useState(0);
-   const [imageSource, setImageSource] = useState<ImageSource>("url");
-   const [imagePreview, setImagePreview] = useState<string>("");
-   const [uploadedFileName, setUploadedFileName] = useState<string>("");
-   const uploadInputRef = useRef<HTMLInputElement | null>(null);
+  const cleanupPreview = useCallback(() => {
+    setImagePreview("");
+    setUploadedFileName("");
+    if (uploadInputRef.current) {
+      uploadInputRef.current.value = "";
+    }
+  }, []);
 
-   const cleanupPreview = useCallback(() => {
-     setImagePreview("");
-     setUploadedFileName("");
-     if (uploadInputRef.current) {
-       uploadInputRef.current.value = "";
-     }
-   }, []);
-
-   const applyPreview = useCallback((value: string) => {
-     setImagePreview(value);
-   }, []);
-
-   const filteredRows = useMemo(
-     () => applyFilter(banners, activeFilter),
-     [banners, activeFilter]
-   );
+  const applyPreview = useCallback((value: string) => {
+    setImagePreview(value);
+  }, []);
 
    const summary = useMemo(() => {
      const total = filteredRows.length;
@@ -214,19 +212,37 @@ import { BannerItem, bannerItems } from "./data";
      [banners]
    );
 
-   const closeModal = () => {
-     setIsModalOpen(false);
-     cleanupPreview();
-   };
+  const closeModal = () => {
+    setIsModalOpen(false);
+    cleanupPreview();
+  };
 
-   const handleSearch = () => {
-     setActiveFilter(selectedFilter);
-   };
+  const handleSearch = () => {
+    setFilteredRows(applyFilter(banners, selectedFilters));
+  };
 
-   const handleClear = () => {
-     setSelectedFilter(null);
-     setActiveFilter(null);
-   };
+  const handleClear = () => {
+    setSelectedFilters([]);
+    setDateRange(defaultDateRange);
+    setFilteredRows(banners);
+  };
+
+  const handleFilterChange = (newValue: MultiValue<FilterOption>) => {
+    if (!newValue || newValue.length === 0) {
+      setSelectedFilters([]);
+      return;
+    }
+
+    // Ensure only one entry per group (by prefix before colon)
+    const filterMap = new Map<string, FilterOption>();
+    
+    Array.from(newValue).forEach((filter) => {
+      const [groupType] = filter.value.split(":");
+      filterMap.set(groupType, filter);
+    });
+    
+    setSelectedFilters(Array.from(filterMap.values()));
+  };
 
    const handleFormSubmit = () => {
      if (!formValues.title.trim()) {
@@ -310,7 +326,7 @@ import { BannerItem, bannerItems } from "./data";
                Keep hero sliders, promotions, and popups in sync across channels.
              </p>
            </div>
-           <Button onClick={openCreateModal} className="bg-emerald-500 text-white hover:bg-emerald-600">
+           <Button onClick={openCreateModal} className="bg-brand-500 text-white hover:bg-brand-600 dark:bg-brand-500 dark:text-white dark:hover:bg-brand-600">
              Add New Banner
            </Button>
          </div>
@@ -331,33 +347,37 @@ import { BannerItem, bannerItems } from "./data";
          </div>
        </div>
 
-       <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-900">
-         <div className="flex flex-wrap items-center justify-between gap-4">
-           <div className="w-full max-w-[20rem]">
-             <Select<FilterOption, false>
-               styles={reactSelectStyles(theme)}
-               options={filterOptions}
-               placeholder="Filter by Type, Target, or Status"
-               value={selectedFilter}
-               onChange={(option: SingleValue<FilterOption>) => setSelectedFilter(option ?? null)}
-               isClearable
-             />
-           </div>
-           <FilterActions onSearch={handleSearch} onClear={handleClear} />
-         </div>
+      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+        <TableFilterToolbar<FilterOption, true>
+          dateRange={dateRange}
+          onDateRangeChange={setDateRange}
+          actions={{
+            onSearch: handleSearch,
+            onClear: handleClear,
+          }}
+          selectProps={{
+            containerClassName: "max-w-[22rem]",
+            options: filterOptions,
+            placeholder: "Filter Options",
+            value: selectedFilters,
+            onChange: handleFilterChange,
+            isClearable: true,
+            isMulti: true,
+          }}
+        />
 
-         <div className="mt-6 space-y-4">
-           <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-800/70">
-             <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100">List</h3>
-           </div>
+        <div className="mt-6 space-y-4">
+          <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-800/70">
+            <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100">List</h3>
+          </div>
 
-           <DataTable
-             columns={columnsWithActions}
-             data={filteredRows}
-             onRowClick={(row) => handleEdit(row.original)}
-           />
-         </div>
-       </div>
+          <DataTable
+            columns={columnsWithActions}
+            data={filteredRows}
+            onRowClick={(row) => handleEdit(row.original)}
+          />
+        </div>
+      </div>
 
        <Modal isOpen={isModalOpen} onClose={closeModal} size="lg">
          <ModalHeader>{editingBanner ? "Edit Banner" : "Add New Banner"}</ModalHeader>

@@ -43,7 +43,7 @@ const AddNoteCell: React.FC<{ player: FrozenAccount }> = ({ player }) => {
         isOpen={open}
         onClose={() => setOpen(false)}
         onSave={handleSave}
-        playerName={player.username}
+        playerName={player.fullName || player.username}
       />
     </>
   );
@@ -80,7 +80,7 @@ export const columns: ColumnDef<FrozenAccount>[] = [
         playerStatusColors[row.original.playerStatus] || playerStatusColors.Frozen;
 
       return (
-        <Badge color={color} variant="light" size="sm">
+        <Badge color={color} variant="light">
           {label}
         </Badge>
       );
@@ -112,7 +112,7 @@ export const columns: ColumnDef<FrozenAccount>[] = [
         processStatusColors[row.original.processStatus] || processStatusColors.Pending;
 
       return (
-        <Badge color={color} variant="light" size="sm">
+        <Badge color={color} variant="light">
           {label}
         </Badge>
       );

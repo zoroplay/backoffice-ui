@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import Select, { type SingleValue } from "react-select";
+import Select, { type SingleValue, type MultiValue } from "react-select";
 import type { Range } from "react-date-range";
 
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
@@ -19,6 +19,7 @@ import { withAuth } from "@/utils/withAuth";
 
 import { columns, CouponTicketRow } from "./columns";
 import { CouponTicket, couponTicketsData } from "./data";
+import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
 
 type FilterOption = { value: string; label: string };
 
@@ -68,24 +69,25 @@ const mapTicketToRow = (ticket: CouponTicket): CouponTicketRow => ({
 function CouponTicketsPage() {
   const { theme } = useTheme();
   const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
-  const [selectedFilter, setSelectedFilter] = useState<FilterOption | null>(null);
+  const [selectedFilters, setSelectedFilters] = useState<FilterOption[]>([]);
   const [filteredRows, setFilteredRows] = useState<CouponTicketRow[]>(couponTicketsData.map(mapTicketToRow));
   const [selectedRow, setSelectedRow] = useState<CouponTicketRow | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const filterData = (filter: FilterOption | null, range: Range | null) => {
+  const filterData = (filters: FilterOption[], range: Range | null) => {
     let data = couponTicketsData.slice();
 
-    if (filter) {
-      const [type, value] = filter.value.split(":");
-
-      if (type === "channel") {
-        data = data.filter((ticket) => ticket.channel === value);
-      } else if (type === "status") {
-        data = data.filter((ticket) => ticket.status === value);
-      } else if (type === "region") {
-        data = data.filter((ticket) => ticket.region === value);
-      }
+    if (filters.length > 0) {
+      filters.forEach((filter) => {
+        const [type, value] = filter.value.split(":");
+        if (type === "channel") {
+          data = data.filter((ticket) => ticket.channel === value);
+        } else if (type === "status") {
+          data = data.filter((ticket) => ticket.status === value);
+        } else if (type === "region") {
+          data = data.filter((ticket) => ticket.region === value);
+        }
+      });
     }
 
     if (range?.startDate && range.endDate) {
@@ -104,13 +106,27 @@ function CouponTicketsPage() {
   };
 
   const handleSearch = () => {
-    setFilteredRows(filterData(selectedFilter, dateRange));
+    setFilteredRows(filterData(selectedFilters, dateRange));
   };
 
   const handleClear = () => {
-    setSelectedFilter(null);
+    setSelectedFilters([]);
     setDateRange(defaultDateRange);
     setFilteredRows(couponTicketsData.map(mapTicketToRow));
+  };
+
+  const handleFilterChange = (newValue: MultiValue<FilterOption>) => {
+    const newFilters = Array.from(newValue ?? []);
+    
+    // Ensure only one entry per group (by prefix before colon)
+    const filterMap = new Map<string, FilterOption>();
+    
+    newFilters.forEach((filter) => {
+      const [groupType] = filter.value.split(":");
+      filterMap.set(groupType, filter);
+    });
+    
+    setSelectedFilters(Array.from(filterMap.values()));
   };
 
   const summary = useMemo(() => {
@@ -194,22 +210,23 @@ function CouponTicketsPage() {
       </div>
 
       <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-900">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-4">
-            <DateRangeFilter range={dateRange} onChange={(range) => setDateRange(range)} />
-            <div className="w-[20rem]">
-              <Select<FilterOption, false>
-                styles={reactSelectStyles(theme)}
-                options={filterOptions}
-                placeholder="Filter by Channel,Status or Region"
-                value={selectedFilter}
-                onChange={(value: SingleValue<FilterOption>) => setSelectedFilter(value ?? null)}
-                isClearable
-              />
-            </div>
-          </div>
-          <FilterActions onSearch={handleSearch} onClear={handleClear} />
-        </div>
+        <TableFilterToolbar<FilterOption, true>
+          dateRange={dateRange}
+          onDateRangeChange={setDateRange}
+          actions={{
+            onSearch: handleSearch,
+            onClear: handleClear,
+          }}
+          selectProps={{
+            containerClassName: "max-w-[22rem]",
+            options: filterOptions,
+            placeholder: "Filter Options",
+            value: selectedFilters,
+            onChange: handleFilterChange,
+            isClearable: true,
+            isMulti: true,
+          }}
+        />  
 
         <div className="mt-6 space-y-4">
           <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-800/70">

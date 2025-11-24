@@ -1,11 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
-import Select, { GroupBase, StylesConfig } from "react-select";
+import React, { useCallback, useState } from "react";
+import type { GroupBase, StylesConfig, MultiValue } from "react-select";
 import makeAnimated from "react-select/animated";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { DataTable } from "@/components/tables/DataTable";
-import { FilterActions } from "@/components/common/FilterActions";
 import { columns, TicketOnHold } from './columns'
 import {ticketsOnHold} from './data'  
 
@@ -13,11 +12,36 @@ import {ticketsOnHold} from './data'
 import { withAuth } from "@/utils/withAuth";
 import { reactSelectStyles } from "@/utils/reactSelectStyles";
 import { useTheme } from "@/context/ThemeContext";
+import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
+import type { Range } from "react-date-range";
 
 // ----------------------
 // Filter Options
 // ----------------------
-const filterOptions = [
+type FilterOption = { value: string; label: string };
+
+type FilterCategory = "betType" | "stake" | "return" | "other";
+
+const getFilterCategory = (value: string): FilterCategory => {
+  if (["Single", "Multiple", "System"].includes(value)) {
+    return "betType";
+  }
+
+  if (value.startsWith("stake_")) {
+    return "stake";
+  }
+
+  if (value.startsWith("return_")) {
+    return "return";
+  }
+
+  return "other";
+};
+
+const filterOptions: Array<{
+  label: string;
+  options: FilterOption[];
+}> = [
   {
     label: "Bet Type",
     options: [
@@ -46,10 +70,17 @@ const filterOptions = [
 
 const animatedComponents = makeAnimated();
 
+const createDefaultDateRange = (): Range => ({
+  startDate: new Date(new Date().setDate(new Date().getDate() - 30)),
+  endDate: new Date(),
+  key: "selection",
+});
+
 function TicketOnHoldPage() {
   const { theme } = useTheme();  
-  const [selectedFilters, setSelectedFilters] = useState<any[]>([]);
+  const [selectedFilters, setSelectedFilters] = useState<FilterOption[]>([]);
   const [filteredData, setFilteredData] = useState<TicketOnHold[]>(ticketsOnHold);
+  const [dateRange, setDateRange] = useState<Range>(createDefaultDateRange());
 
   
 
@@ -59,36 +90,35 @@ function TicketOnHoldPage() {
   const handleClear = () => {
      setSelectedFilters([]);  
      setFilteredData(ticketsOnHold);  
+     setDateRange(createDefaultDateRange());
   };
 
   // Handle select change with category constraint
-  const handleSelectChange = (val: readonly unknown[]) => {
-    if (!val || val.length === 0) {
-      handleClear();
-      return;
-    }
+  const handleSelectChange = useCallback(
+    (val: MultiValue<FilterOption>) => {
+      if (!val || val.length === 0) {
+        handleClear();
+        return;
+      }
 
-    const newSelection = [...val];
-    const lastSelected = newSelection[newSelection.length - 1] as { value: string; label: string };
+      const nextSelection = val.reduce<FilterOption[]>((acc, option) => {
+        const category = getFilterCategory(option.value);
+        const existingIndex = acc.findIndex(
+          (selected) => getFilterCategory(selected.value) === category
+        );
 
-    if (lastSelected) {
-      // Remove any previous selection from the same category
-      const otherSelections = selectedFilters.filter(filter => {
-        // Determine category of the filter
-        const isBetType = ["Single", "Multiple", "Combo"].includes(filter.value);
-        const isStakeOrReturn = filter.value.startsWith('stake_') || filter.value.startsWith('return_');
-        
-        // Determine category of new selection
-        const isNewBetType = ["Single", "Multiple", "Combo"].includes(lastSelected.value);
-        const isNewStakeOrReturn = lastSelected.value.startsWith('stake_') || lastSelected.value.startsWith('return_');
+        if (existingIndex !== -1) {
+          acc.splice(existingIndex, 1);
+        }
 
-        // Keep selections from different categories
-        return (isBetType && !isNewBetType) || (isStakeOrReturn && !isNewStakeOrReturn);
-      });
+        acc.push(option);
+        return acc;
+      }, []);
 
-      setSelectedFilters([...otherSelections, lastSelected]);
-    }
-  };
+      setSelectedFilters(nextSelection);
+    },
+    [handleClear]
+  );
 
   // Apply filters
   const handleSearch = () => {
@@ -141,27 +171,24 @@ function TicketOnHoldPage() {
       {/* Breadcrumb */}
       <PageBreadcrumb pageTitle="Tickets On Hold" />
 
-      {/* Filters */}
-      <div className="flex flex-wrap items-center gap-4 justify-between mb-6">
-        <div className="flex flex-col md:flex-row gap-4">
-          {/* Combined Select */}
-          <div className="w-[20rem]">
-            <Select
-              styles={reactSelectStyles(theme) as StylesConfig<unknown, true, GroupBase<unknown>>}
-              options={filterOptions}
-              components={animatedComponents}
-              isMulti
-              placeholder="Filter by Bet Type, Stake or Returns"
-              value={selectedFilters}
-              onChange={handleSelectChange}
-              // isClearable={true}
-            />
-          </div>
-        </div>
-
-        {/* Search & Clear */}
-        <FilterActions onSearch={handleSearch} onClear={handleClear} />
-      </div>
+      <TableFilterToolbar<FilterOption, true, GroupBase<FilterOption>>   
+        dateRange={dateRange}
+        onDateRangeChange={setDateRange}
+        actions={{
+          onSearch: handleSearch,
+          onClear: handleClear,
+        }}
+        selectProps={{
+          containerClassName: "max-w-[22rem]",
+          options: filterOptions,
+          components: animatedComponents,
+          isMulti: true,
+          placeholder: "Filter by Bet Type, Stake or Returns",
+          value: selectedFilters,
+          onChange: handleSelectChange,
+          styles: reactSelectStyles(theme) as StylesConfig<FilterOption, true, GroupBase<FilterOption>>,
+        }}
+      />
 
       {/* Table */}
       <div className="mt-6">

@@ -2,6 +2,7 @@ import { Agency } from "./columns";
 
 export const agencies: Agency[] = [
   {
+    id: "1",
     username: "SPA-NG-1001",
     name: "Super Agent01",
     agentType: "Super Agent",
@@ -15,6 +16,7 @@ export const agencies: Agency[] = [
     tempBlock: false,
   },
   {
+    id: "2",
     username: "SuperAgent1",
     name: "Super Agent",
     agentType: "Super Agent",
@@ -28,6 +30,7 @@ export const agencies: Agency[] = [
     tempBlock: false,
   },
   {
+    id: "18",
     username: "cashier-216585-3",
     name: "john mark",
     agentType: "Cashier",
@@ -41,6 +44,7 @@ export const agencies: Agency[] = [
     tempBlock: true,
   },
   {
+    id: "3",
     username: "okethedev",
     name: "Agent 47",
     agentType: "Agent",
@@ -54,6 +58,7 @@ export const agencies: Agency[] = [
     tempBlock: true,
   },
   {
+    id: "4",
     username: "agent-ng-1001",
     name: "Test Agent",
     agentType: "Agent",
@@ -67,6 +72,7 @@ export const agencies: Agency[] = [
     tempBlock: true,
   },
   {
+    id: "5",
     username: "FieldAgent09",
     name: "Test Agent",
     agentType: "Agent",
@@ -80,6 +86,7 @@ export const agencies: Agency[] = [
     tempBlock: false,
   },
   {
+    id: "6",
     username: "testagent1",
     name: "test agent",
     agentType: "Agent",
@@ -93,6 +100,7 @@ export const agencies: Agency[] = [
     tempBlock: false,
   },
   {
+    id: "7",
     username: "SPA-NG-2001",
     name: "Super Agent02",
     agentType: "Super Agent",
@@ -106,6 +114,7 @@ export const agencies: Agency[] = [
     tempBlock: false,
   },
   {
+    id: "8",
     username: "agent-lagos-01",
     name: "Lagos Agent",
     agentType: "Agent",
@@ -119,6 +128,7 @@ export const agencies: Agency[] = [
     tempBlock: false,
   },
   {
+    id: "9",
     username: "cashier-345678-1",
     name: "Mary Jane",
     agentType: "Cashier",
@@ -132,6 +142,7 @@ export const agencies: Agency[] = [
     tempBlock: false,
   },
   {
+    id: "10",
     username: "master-ng-001",
     name: "Master Agent Alpha",
     agentType: "Master Agent",
@@ -145,6 +156,7 @@ export const agencies: Agency[] = [
     tempBlock: false,
   },
   {
+    id: "11",
     username: "shop-lagos-12",
     name: "Lagos Shop 12",
     agentType: "Shop",
@@ -158,6 +170,7 @@ export const agencies: Agency[] = [
     tempBlock: true,
   },
   {
+    id: "12",
     username: "webaffiliate-001",
     name: "Web Affiliate Pro",
     agentType: "Web Affiliate",
@@ -171,6 +184,7 @@ export const agencies: Agency[] = [
     tempBlock: false,
   },
   {
+    id: "13",
     username: "pos-abuja-45",
     name: "POS Abuja 45",
     agentType: "POS",
@@ -184,6 +198,7 @@ export const agencies: Agency[] = [
     tempBlock: true,
   },
   {
+    id: "14",
     username: "shop-ikeja-07",
     name: "Ikeja Shop 07",
     agentType: "Shop",

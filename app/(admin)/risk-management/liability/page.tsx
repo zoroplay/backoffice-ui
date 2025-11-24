@@ -1,19 +1,17 @@
 "use client";
 
 import React, { useCallback, useMemo, useState } from "react";
-import Select, { type SingleValue } from "react-select";
+import { type MultiValue } from "react-select";
 import type { Range } from "react-date-range";
 
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import { DateRangeFilter, defaultDateRange } from "@/components/common/DateRangeFilter";
-import { FilterActions } from "@/components/common/FilterActions";
+import { defaultDateRange } from "@/components/common/DateRangeFilter";
 import { DataTable } from "@/components/tables/DataTable";
-import { useTheme } from "@/context/ThemeContext";
 import { withAuth } from "@/utils/withAuth";
-import { reactSelectStyles } from "@/utils/reactSelectStyles";
 
 import { columns, LiabilityRow } from "./columns";
 import { liabilityData, LiabilityRecord } from "./data";
+import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
 
 type FilterOption = { value: string; label: string };
 
@@ -68,21 +66,21 @@ const mapRecordToRow = (record: LiabilityRecord): LiabilityRow => ({
 });
 
 function LiabilityPage() {
-  const { theme } = useTheme();
   const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
-  const [selectedFilter, setSelectedFilter] = useState<FilterOption | null>(null);
-  const [appliedFilter, setAppliedFilter] = useState<FilterOption | null>(null);
+  const [selectedFilter, setSelectedFilter] = useState<FilterOption[]>([]);
+  const [appliedFilter, setAppliedFilter] = useState<FilterOption[]>([]);
   const [appliedDateRange, setAppliedDateRange] = useState<Range | null>(null);
   const [rows, setRows] = useState<LiabilityRow[]>(liabilityData.map(mapRecordToRow));
 
   const filterData = useCallback(
     (
-      filter: FilterOption | null = appliedFilter,
-      range: Range | null = appliedDateRange
+      filters: FilterOption[],
+      range: Range | null
     ) => {
       let filtered = liabilityData.slice();
 
-      if (filter) {
+      // Apply multiple filters (one per group)
+      filters.forEach((filter) => {
         const [filterType, filterValueRaw] = filter.value.split(":");
         const filterValue = filterValueRaw.toLowerCase();
 
@@ -105,7 +103,7 @@ function LiabilityPage() {
             return marketKey.includes(filterValue.replace(/[^a-z0-9_]/g, ""));
           });
         }
-      }
+      });
 
       if (range && range.startDate && range.endDate) {
         const start = new Date(range.startDate);
@@ -121,7 +119,7 @@ function LiabilityPage() {
 
       return filtered.map(mapRecordToRow);
     },
-    [appliedDateRange, appliedFilter]
+    []
   );
 
   const handleSearch = () => {
@@ -133,11 +131,28 @@ function LiabilityPage() {
   };
 
   const handleClear = () => {
-    setSelectedFilter(null);
-    setAppliedFilter(null);
+    setSelectedFilter([]);
+    setAppliedFilter([]);
     setDateRange(defaultDateRange);
     setAppliedDateRange(null);
     setRows(liabilityData.map(mapRecordToRow));
+  };
+
+  const handleFilterChange = (selected: MultiValue<FilterOption>) => {
+    const selectedArray = selected || [];
+    
+    // Group filters by their type (category, sport, market)
+    // If multiple items from the same group exist, keep only the last one
+    const groupedFilters: Record<string, FilterOption> = {};
+    
+    selectedArray.forEach((filter) => {
+      const [filterType] = filter.value.split(":");
+      // This will overwrite any previous selection from the same group
+      groupedFilters[filterType] = filter;
+    });
+    
+    // Convert back to array
+    setSelectedFilter(Object.values(groupedFilters));
   };
 
   const summary = useMemo(() => {
@@ -162,24 +177,22 @@ function LiabilityPage() {
     <div className="space-y-6 p-4">
       <PageBreadcrumb pageTitle="Liability" />
 
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-4">
-          <DateRangeFilter range={dateRange} onChange={(range) => setDateRange(range)} />
-
-          <div className="w-[18rem]">
-            <Select<FilterOption, false>
-              styles={reactSelectStyles(theme)}
-              options={filterOptions}
-              placeholder="Filter Options"
-              value={selectedFilter}
-              onChange={(value: SingleValue<FilterOption>) => setSelectedFilter(value ?? null)}
-              isClearable
-            />
-          </div>
-        </div>
-
-        <FilterActions onSearch={handleSearch} onClear={handleClear} />
-      </div>
+      <TableFilterToolbar<FilterOption, true>
+        dateRange={dateRange}
+        onDateRangeChange={setDateRange}
+        actions={{
+          onSearch: handleSearch,
+          onClear: handleClear,
+        }}
+        selectProps={{
+          options: filterOptions,
+          placeholder: "Filter Options",
+          value: selectedFilter,
+          onChange: handleFilterChange,
+          isMulti: true,
+          isClearable: true,
+        }}
+      />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">

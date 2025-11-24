@@ -1,18 +1,17 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, useMemo } from "react";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { DataTable } from "@/components/tables/DataTable";
-import { columns, BetHistory } from "./columns";
+import { createColumns, BetHistory } from "./columns";
 import { betHistory } from "./data";
-import Select from "react-select";
+import type { MultiValue, GroupBase } from "react-select";
 import type { Range } from "react-date-range";
-import { DateRangeFilter } from "@/components/common/DateRangeFilter";
-import { FilterActions } from "@/components/common/FilterActions";
 import { withAuth } from "@/utils/withAuth";
 import { useSearch } from "@/context/SearchContext";
-import { reactSelectStyles } from "@/utils/reactSelectStyles";
-import { useTheme } from "@/context/ThemeContext";
+import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
+import BetDetailsModal from "./components/BetDetailsModal";
+import { Info } from "lucide-react";
 
 //  Default last 30 days range
 const defaultDateRange: Range = {
@@ -40,7 +39,12 @@ const searchableFields: Array<keyof BetHistory> = [
   "league",
 ];
 
-const operationOptions = [
+type FilterOption = { value: string; label: string };
+
+const operationOptions: Array<{
+  label: string;
+  options: FilterOption[];
+}> = [
   {
     label: "Client Type",
     options: [
@@ -108,20 +112,73 @@ const operationOptions = [
   },
 ];
 
+const filterOptionGroupMap = operationOptions.reduce<Map<string, string>>(
+  (map, group) => {
+    group.options.forEach((option) => {
+      map.set(option.value, group.label);
+    });
+    return map;
+  },
+  new Map()
+);
+
 function BetsHistoryPage() {
-  const { theme } = useTheme();
   const [filteredData, setFilteredData] = useState<BetHistory[]>(betHistory);
-
-  const [operationFilter, setOperationFilter] = useState<
-    { value: string; label: string } | null
-  >(null);
-
+  const [operationFilters, setOperationFilters] = useState<FilterOption[]>([]);
   const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
-  const [appliedOperationFilter, setAppliedOperationFilter] = useState<
-    { value: string; label: string } | null
-  >(null);
+  const [appliedOperationFilters, setAppliedOperationFilters] =
+    useState<FilterOption[]>([]);
   const [appliedDateRange, setAppliedDateRange] = useState<Range | null>(null);
+  const [selectedBet, setSelectedBet] = useState<BetHistory | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const { query, setPlaceholder, resetPlaceholder, resetQuery } = useSearch();
+
+  const handleOperationChange = useCallback(
+    (value: MultiValue<FilterOption>) => {
+      if (!value || value.length === 0) {
+        setOperationFilters([]);
+        return;
+      }
+
+      const latestSelections = new Map<string, FilterOption>();
+
+      value.forEach((option) => {
+        const groupKey = filterOptionGroupMap.get(option.value) ?? option.value;
+        latestSelections.set(groupKey, option);
+      });
+
+      const uniqueSelections: FilterOption[] = [];
+      const seenGroups = new Set<string>();
+
+      value.forEach((option) => {
+        const groupKey = filterOptionGroupMap.get(option.value) ?? option.value;
+        if (seenGroups.has(groupKey)) {
+          return;
+        }
+
+        const latestOption = latestSelections.get(groupKey);
+        if (latestOption?.value === option.value) {
+          uniqueSelections.push(option);
+          seenGroups.add(groupKey);
+        }
+      });
+
+      setOperationFilters(uniqueSelections);
+    },
+    []
+  );
+
+  const handleViewBet = useCallback((bet: BetHistory) => {
+    setSelectedBet(bet);
+    setIsModalOpen(true);
+  }, []);
+
+  const handleCloseModal = useCallback(() => {
+    setIsModalOpen(false);
+    setSelectedBet(null);
+  }, []);
+
+  const columns = useMemo(() => createColumns(handleViewBet), [handleViewBet]);
 
   useEffect(() => {
     const placeholderText =
@@ -139,7 +196,7 @@ function BetsHistoryPage() {
   const filterBets = useCallback(
     (
       value: string,
-      operation: { value: string; label: string } | null = appliedOperationFilter,
+      operations: { value: string; label: string }[] = appliedOperationFilters,
       range: Range | null = appliedDateRange
     ) => {
       const searchTerm = value.trim().toLowerCase();
@@ -157,8 +214,9 @@ function BetsHistoryPage() {
           }
         }
 
-        if (operation) {
-          const val = operation.value.toLowerCase();
+        if (operations.length > 0) {
+          for (const operation of operations) {
+            const val = operation.value.toLowerCase();
 
           if (["website", "cashier", "mobile"].includes(val)) {
             match = match && row.clientType.toLowerCase() === val;
@@ -197,6 +255,7 @@ function BetsHistoryPage() {
             const paidStatus = row.winLoss.startsWith("+") ? "paid" : "unpaid";
             match = match && paidStatus === val;
           }
+          }
         }
 
         if (range && range.startDate && range.endDate) {
@@ -213,7 +272,7 @@ function BetsHistoryPage() {
         return match;
       });
     },
-    [appliedDateRange, appliedOperationFilter]
+    [appliedDateRange, appliedOperationFilters]
   );
 
   useEffect(() => {
@@ -221,18 +280,18 @@ function BetsHistoryPage() {
   }, [filterBets, query]);
 
   const applyFilters = () => {
-    const nextOperation = operationFilter;
+    const nextOperations = operationFilters;
     const nextDateRange = dateRange;
 
-    setAppliedOperationFilter(nextOperation);
+    setAppliedOperationFilters(nextOperations);
     setAppliedDateRange(nextDateRange);
-    setFilteredData(filterBets(query, nextOperation, nextDateRange));
+    setFilteredData(filterBets(query, nextOperations, nextDateRange));
   };
 
   const clearFilters = () => {
-    setOperationFilter(null);
+    setOperationFilters([]);
     setDateRange(defaultDateRange);
-    setAppliedOperationFilter(null);
+    setAppliedOperationFilters([]);
     setAppliedDateRange(null);
     setFilteredData(betHistory);
     resetQuery();
@@ -245,31 +304,37 @@ function BetsHistoryPage() {
     <div className="space-y-6 p-4">
       {/* Breadcrumb */}
       <PageBreadcrumb pageTitle="Bets History" />
-      
+      <span className="flex items-center gap-1 mb-2 text-gray-500 dark:text-gray-400">
+        <Info className="h-4 w-4" />
+        <p className="text-sm text-gray-500 dark:text-gray-400">Use the global search to filter by Betslip ID, Username, Sport, or League, or use the filters below to narrow down the results.</p>
+      </span>
       {/* Filters */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-4">
-          {/* Date Range Picker */}
-          <DateRangeFilter range={dateRange} onChange={(range) => setDateRange(range)} />
-          {/* Operation Filter */}
-          <div className="w-[18rem]">
-            <Select
-              styles={reactSelectStyles(theme)}
-              options={operationOptions}
-              placeholder="Filter Options"
-              value={operationFilter}
-              onChange={(val) => setOperationFilter(val)}
-            />
-          </div>
-        </div>
-        {/* Filter Actions */}
-        <FilterActions onSearch={applyFilters} onClear={clearFilters} />
-      </div>
-,...
-      
+      <TableFilterToolbar<FilterOption, true, GroupBase<FilterOption>>
+        dateRange={dateRange}
+        onDateRangeChange={setDateRange}
+        actions={{
+          onSearch: applyFilters,
+          onClear: clearFilters,
+        }}
+        selectProps={{
+          containerClassName: "max-w-[24rem]",
+          options: operationOptions,
+          placeholder: "Filter Options",
+          value: operationFilters,
+          onChange: handleOperationChange,
+          isMulti: true,
+        }}
+      />
 
       {/* Table */}
       <DataTable columns={columns} data={filteredData} />
+
+      {/* Bet Details Modal */}
+      <BetDetailsModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        bet={selectedBet}
+      />
     </div>
   );
 }

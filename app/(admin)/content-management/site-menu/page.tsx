@@ -1,10 +1,12 @@
 "use client";
 
 import React, { useId, useMemo, useState } from "react";
-import Select, { type SingleValue } from "react-select";
+import Select, { type SingleValue, type MultiValue } from "react-select";
+import type { Range } from "react-date-range";
 
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import { FilterActions } from "@/components/common/FilterActions";
+import { defaultDateRange } from "@/components/common/DateRangeFilter";
+import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
 import { DataTable } from "@/components/tables/DataTable";
 import Button from "@/components/ui/button/Button";
 import { Modal, ModalBody, ModalFooter, ModalHeader } from "@/components/ui/modal";
@@ -53,37 +55,57 @@ const mapItemToRow = (item: SiteMenuItem): SiteMenuRow => ({
 
 function SiteMenuPage() {
   const { theme } = useTheme();
-  const [selectedFilter, setSelectedFilter] = useState<FilterOption | null>(null);
+  const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
+  const [selectedFilters, setSelectedFilters] = useState<FilterOption[]>([]);
   const [filteredRows, setFilteredRows] = useState<SiteMenuRow[]>(siteMenuItems.map(mapItemToRow));
   const [selectedRow, setSelectedRow] = useState<SiteMenuRow | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const filterSelectId = useId();
   const placementSelectId = useId();
   const parentSelectId = useId();
 
-  const filterData = (filter: FilterOption | null) => {
+  const filterData = (filters: FilterOption[]) => {
     let data = siteMenuItems.slice();
 
-    if (filter) {
-      const [type, value] = filter.value.split(":");
-      if (type === "placement") {
-        data = data.filter((item) => item.placement === value);
-      } else if (type === "status") {
-        const isActive = value === "Active";
-        data = data.filter((item) => item.isActive === isActive);
-      }
+    if (filters.length > 0) {
+      filters.forEach((filter) => {
+        const [type, value] = filter.value.split(":");
+        if (type === "placement") {
+          data = data.filter((item) => item.placement === value);
+        } else if (type === "status") {
+          const isActive = value === "Active";
+          data = data.filter((item) => item.isActive === isActive);
+        }
+      });
     }
 
     return data.map(mapItemToRow);
   };
 
   const handleSearch = () => {
-    setFilteredRows(filterData(selectedFilter));
+    setFilteredRows(filterData(selectedFilters));
   };
 
   const handleClear = () => {
-    setSelectedFilter(null);
+    setSelectedFilters([]);
+    setDateRange(defaultDateRange);
     setFilteredRows(siteMenuItems.map(mapItemToRow));
+  };
+
+  const handleFilterChange = (newValue: MultiValue<FilterOption>) => {
+    if (!newValue || newValue.length === 0) {
+      setSelectedFilters([]);
+      return;
+    }
+
+    // Ensure only one entry per group (by prefix before colon)
+    const filterMap = new Map<string, FilterOption>();
+    
+    Array.from(newValue).forEach((filter) => {
+      const [groupType] = filter.value.split(":");
+      filterMap.set(groupType, filter);
+    });
+    
+    setSelectedFilters(Array.from(filterMap.values()));
   };
 
   const summary = useMemo(() => {
@@ -125,7 +147,7 @@ function SiteMenuPage() {
               Review menu entries, update hierarchy, and deploy consistent brand experiences.
             </p>
           </div>
-          <Button onClick={() => setIsModalOpen(true)} className="bg-emerald-500 text-white hover:bg-emerald-600">
+          <Button onClick={() => setIsModalOpen(true)} className="bg-brand-500 text-white hover:bg-brand-600">
             Add Menu Item
           </Button>
         </div>
@@ -147,21 +169,23 @@ function SiteMenuPage() {
       </div>
 
       <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-900">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="w-full max-w-[20rem]">
-            <Select<FilterOption, false>
-              styles={reactSelectStyles(theme)}
-              options={filterOptions}
-              placeholder="Filter by Placement or Status"
-              value={selectedFilter}
-              onChange={(option: SingleValue<FilterOption>) => setSelectedFilter(option ?? null)}
-              isClearable
-              instanceId={`site-menu-filter-${filterSelectId}`}
-            />
-          </div>
-
-          <FilterActions onSearch={handleSearch} onClear={handleClear} />
-        </div>
+        <TableFilterToolbar<FilterOption, true>
+          dateRange={dateRange}
+          onDateRangeChange={setDateRange}
+          actions={{
+            onSearch: handleSearch,
+            onClear: handleClear,
+          }}
+          selectProps={{
+            containerClassName: "max-w-[22rem]",
+            options: filterOptions,
+            placeholder: "Filter Options",
+            value: selectedFilters,
+            onChange: handleFilterChange,
+            isClearable: true,
+            isMulti: true,
+          }}
+        />
 
         <div className="mt-6 space-y-4">
           <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-800/70">

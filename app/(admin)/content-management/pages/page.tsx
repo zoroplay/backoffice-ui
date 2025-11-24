@@ -1,11 +1,13 @@
 "use client";
 
 import React, { useCallback, useMemo, useState } from "react";
-import Select, { type SingleValue } from "react-select";
+import Select, { type SingleValue, type MultiValue } from "react-select";
 import type { Row } from "@tanstack/react-table";
+import type { Range } from "react-date-range";
 
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import { FilterActions } from "@/components/common/FilterActions";
+import { defaultDateRange } from "@/components/common/DateRangeFilter";
+import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
 import { DataTable } from "@/components/tables/DataTable";
 import Button from "@/components/ui/button/Button";
 import { Modal, ModalBody, ModalFooter, ModalHeader } from "@/components/ui/modal";
@@ -58,29 +60,32 @@ const mapPageToRow = (page: ContentPage): ContentPageRow => ({
   lastUpdated: page.lastUpdated,
 });
 
-const applyFilter = (rows: ContentPageRow[], filter: FilterOption | null) => {
-  if (!filter) return rows;
+const applyFilter = (rows: ContentPageRow[], filters: FilterOption[]) => {
+  if (filters.length === 0) return rows;
 
-  const [type, value] = filter.value.split(":");
+  let filtered = rows.slice();
 
-  if (type === "target") {
-    return rows.filter((row) => row.target === value);
-  }
+  filters.forEach((filter) => {
+    const [type, value] = filter.value.split(":");
 
-  if (type === "status") {
-    const shouldBeActive = value === "Active";
-    return rows.filter((row) => row.isActive === shouldBeActive);
-  }
+    if (type === "target") {
+      filtered = filtered.filter((row) => row.target === value);
+    } else if (type === "status") {
+      const shouldBeActive = value === "Active";
+      filtered = filtered.filter((row) => row.isActive === shouldBeActive);
+    }
+  });
 
-  return rows;
+  return filtered;
 };
 
 function PagesPage() {
   const { theme } = useTheme();
 
   const [pages, setPages] = useState<ContentPageRow[]>(() => contentPages.map(mapPageToRow));
-  const [activeFilter, setActiveFilter] = useState<FilterOption | null>(null);
-  const [selectedFilter, setSelectedFilter] = useState<FilterOption | null>(null);
+  const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
+  const [selectedFilters, setSelectedFilters] = useState<FilterOption[]>([]);
+  const [filteredRows, setFilteredRows] = useState<ContentPageRow[]>(() => contentPages.map(mapPageToRow));
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPage, setEditingPage] = useState<ContentPageRow | null>(null);
   const [targetSelection, setTargetSelection] = useState<TargetOption | null>(targetOptions[0]);
@@ -91,8 +96,6 @@ function PagesPage() {
     isActive: true,
   });
   const [formKey, setFormKey] = useState(0);
-
-  const filteredRows = useMemo(() => applyFilter(pages, activeFilter), [pages, activeFilter]);
 
   const summary = useMemo(() => {
     const total = filteredRows.length;
@@ -150,12 +153,30 @@ function PagesPage() {
   };
 
   const handleSearch = () => {
-    setActiveFilter(selectedFilter);
+    setFilteredRows(applyFilter(pages, selectedFilters));
   };
 
   const handleClear = () => {
-    setSelectedFilter(null);
-    setActiveFilter(null);
+    setSelectedFilters([]);
+    setDateRange(defaultDateRange);
+    setFilteredRows(pages);
+  };
+
+  const handleFilterChange = (newValue: MultiValue<FilterOption>) => {
+    if (!newValue || newValue.length === 0) {
+      setSelectedFilters([]);
+      return;
+    }
+
+    // Ensure only one entry per group (by prefix before colon)
+    const filterMap = new Map<string, FilterOption>();
+    
+    Array.from(newValue).forEach((filter) => {
+      const [groupType] = filter.value.split(":");
+      filterMap.set(groupType, filter);
+    });
+    
+    setSelectedFilters(Array.from(filterMap.values()));
   };
 
   const handleFormSubmit = () => {
@@ -222,7 +243,7 @@ function PagesPage() {
               Publish compliance updates, onboarding content, and campaign landing pages in one place.
             </p>
           </div>
-          <Button onClick={openCreateModal} className="bg-emerald-500 text-white hover:bg-emerald-600">
+          <Button onClick={openCreateModal} className="bg-brand-500 text-white hover:bg-brand-600 dark:bg-brand-500 dark:text-white dark:hover:bg-brand-600">
             Add New Page
           </Button>
         </div>
@@ -244,19 +265,23 @@ function PagesPage() {
       </div>
 
       <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-900">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="w-full max-w-[20rem]">
-            <Select<FilterOption, false>
-              styles={reactSelectStyles(theme)}
-              options={filterOptions}
-              placeholder="Filter by Target or Status"
-              value={selectedFilter}
-              onChange={(option: SingleValue<FilterOption>) => setSelectedFilter(option ?? null)}
-              isClearable
-            />
-          </div>
-          <FilterActions onSearch={handleSearch} onClear={handleClear} />
-        </div>
+        <TableFilterToolbar<FilterOption, true>
+          dateRange={dateRange}
+          onDateRangeChange={setDateRange}
+          actions={{
+            onSearch: handleSearch,
+            onClear: handleClear,
+          }}
+          selectProps={{
+            containerClassName: "max-w-[22rem]",
+            options: filterOptions,
+            placeholder: "Filter Options",
+            value: selectedFilters,
+            onChange: handleFilterChange,
+            isClearable: true,
+            isMulti: true,
+          }}
+        />
 
         <div className="mt-6 space-y-4">
           <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-800/70">

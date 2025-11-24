@@ -60,7 +60,7 @@ function TicketJackpotsPage() {
       <PageBreadcrumb pageTitle="Ticket Jackpots" />
 
       {/* Add New Button */}
-      <div className="flex items-center justify-start">
+      <div className="flex items-center justify-end">
         <Button
           onClick={handleAddNewJackpot}
           className="bg-blue-500 hover:bg-blue-600 text-white"

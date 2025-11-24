@@ -122,7 +122,7 @@ export const createCashbooksColumns = (
       const { color, label } =
         cashBookStatusColors[row.original.status] || cashBookStatusColors["Pending"];
       return (
-        <Badge color={color} variant="light" size="sm">
+        <Badge color={color} variant="light">
           {label}
         </Badge>
       );
@@ -201,7 +201,7 @@ export const createCashinColumns = (
       const { color, label } =
         cashInStatusColors[row.original.status] || cashInStatusColors["Pending"];
       return (
-        <Badge color={color} variant="light" size="sm">
+        <Badge color={color} variant="light">
           {label}
         </Badge>
       );
@@ -211,7 +211,7 @@ export const createCashinColumns = (
     id: "action",
     header: "Action",
     cell: ({ row }) => (
-      <div className="flex items-center gap-2">
+      <div className="flex items-center justify-center gap-2">          
         <button
           type="button"
           className={actionButtonClasses}
@@ -293,7 +293,7 @@ export const createCashoutColumns = (
       const { color, label } =
         cashOutStatusColors[row.original.status] || cashOutStatusColors["Pending"];
       return (
-        <Badge color={color} variant="light" size="sm">
+        <Badge color={color} variant="light">
           {label}
         </Badge>
       );
@@ -303,7 +303,7 @@ export const createCashoutColumns = (
     id: "action",
     header: "Action",
     cell: ({ row }) => (
-      <div className="flex items-center gap-2">
+      <div className="flex items-center justify-center gap-2">
         <button
           type="button"
           className={actionButtonClasses}
@@ -383,7 +383,7 @@ export const createExpensesColumns = (
       const { color, label } =
         expenseStatusColors[row.original.status] || expenseStatusColors["Pending"];
       return (
-        <Badge color={color} variant="light" size="sm">
+        <Badge color={color} variant="light">
           {label}
         </Badge>
       );
@@ -411,7 +411,7 @@ export const createExpensesColumns = (
     id: "action",
     header: "Action",
     cell: ({ row }) => (
-      <div className="flex items-center gap-2">
+      <div className="flex items-center justify-center gap-2">
         <button
           type="button"
           className={approveButtonClasses}
@@ -475,7 +475,7 @@ export const createExpenseTypeColumns = (
     id: "action",
     header: "Action",
     cell: ({ row }) => (
-      <div className="flex items-center gap-2">
+      <div className="flex items-center justify-center gap-2">
         <button
           type="button"
           className={actionButtonClasses}
@@ -530,7 +530,7 @@ export const createExpenseCategoryColumns = (
     id: "action",
     header: "Action",
     cell: ({ row }) => (
-      <div className="flex items-center gap-2">
+      <div className="flex items-center justify-center gap-2">
         <button
           type="button"
           className={actionButtonClasses}

@@ -3,6 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table"
 import  Badge  from "@/components/ui/badge/Badge"
 import Button  from "@/components/ui/button/Button"
+import { EyeIcon } from "lucide-react"
 
 // Define your table data type
 export type BetHistory = {
@@ -25,7 +26,7 @@ export type BetHistory = {
   settledAt: string
 }
 
-export const columns: ColumnDef<BetHistory>[] = [
+export const createColumns = (onView?: (bet: BetHistory) => void): ColumnDef<BetHistory>[] => [
   {
     accessorKey: "betslipId",
     header: "Betslip ID",
@@ -114,10 +115,18 @@ export const columns: ColumnDef<BetHistory>[] = [
   {
     id: "actions",
     header: "Actions",
-    cell: () => (
-      <Button variant="outline" size="sm">
-        View
+    cell: ({ row }) => (
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => onView?.(row.original)}
+      >
+        <EyeIcon className="w-4 h-4" />
+        <span className="sr-only">View</span>
       </Button>
     ),
   },
 ]
+
+// Default columns export (for backward compatibility)
+export const columns = createColumns()

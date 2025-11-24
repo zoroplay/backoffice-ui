@@ -156,13 +156,9 @@ export const ModalHeader: React.FC<ModalHeaderProps> = ({
     <div
       className={`px-6 py-4 border-b border-gray-200 dark:border-gray-700 ${className}`}
     >
-      {typeof children === "string" ? (
-        <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">
-          {children}
-        </h2>
-      ) : (
-        children
-      )}
+      <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">
+        {children}
+      </h2>
     </div>
   );
 };

@@ -84,7 +84,7 @@ export const withdrawalColumns: ColumnDef<Withdrawal>[] = [
       const { color, label } =
         statusColors[row.original.status] || statusColors["Pending"];
       return (
-        <Badge color={color} variant="light" size="sm">
+        <Badge color={color} variant="light">
           {label}
         </Badge>
       );

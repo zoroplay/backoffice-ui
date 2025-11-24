@@ -1,20 +1,17 @@
 "use client";
 
 import React, { useState } from "react";
-import Select from "react-select";
+import { GroupBase } from "react-select";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { DataTable } from "@/components/tables/DataTable";
-import { FilterActions } from "@/components/common/FilterActions";
 import type { Range } from "react-date-range";
 import {
-  DateRangeFilter,
-  defaultDateRange,
+   defaultDateRange,
 } from "@/components/common/DateRangeFilter";
 import { columns } from "./columns";
 import { registrations, Registration } from "./data";
 import { withAuth } from "@/utils/withAuth";
-import { reactSelectStyles } from "@/utils/reactSelectStyles";
-import { useTheme } from "@/context/ThemeContext";
+import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
 
 // ----------------------
 // Select Options
@@ -31,7 +28,6 @@ type ClientTypeOption = { value: string; label: string };
 // Component
 // ----------------------
 function RegistrationReport() {
-  const { theme } = useTheme();
   const [selectedClientType, setSelectedClientType] = useState<ClientTypeOption[]>([]);
   const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
   const [filteredData, setFilteredData] = useState<Registration[]>(registrations);
@@ -75,29 +71,22 @@ function RegistrationReport() {
       <PageBreadcrumb pageTitle="Registration Report" />
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center justify-between">
-        <div className="flex flex-col md:flex-row gap-4">
-          {/* Client Type Multi-Select */}
-          <div className="w-[20rem]">
-            <Select<ClientTypeOption, true>
-              styles={reactSelectStyles(theme)}
-              options={clientTypeOptions}
-              placeholder="Filter by Client Type"
-              isMulti
-              value={selectedClientType}
-              onChange={(val) => setSelectedClientType(val ?? [])}
-            />
-          </div>
-
-          {/* Date Range Picker */}
-          <DateRangeFilter
-            range={dateRange}
-            onChange={(range) => setDateRange(range)}
-          />
-        </div>
-
-        <FilterActions onSearch={handleSearch} onClear={handleClear} />
-      </div>
+      <TableFilterToolbar<ClientTypeOption, true, GroupBase<ClientTypeOption>>   
+        dateRange={dateRange}
+        onDateRangeChange={setDateRange}
+        actions={{
+          onSearch: handleSearch,
+          onClear: handleClear,
+        }}
+        selectProps={{
+          containerClassName: "max-w-[20rem]",
+          options: clientTypeOptions,
+          placeholder: "Filter by Client Type",
+          value: selectedClientType,
+          onChange: (val) => setSelectedClientType(Array.isArray(val) ? [...val] : []),
+          isMulti: true,
+        }}
+      />  
 
       {/* Data Table */}
       <DataTable columns={columns} data={filteredData} />

@@ -129,7 +129,7 @@ function MultibetBonusPage() {
           <TabsContent value="Onliners" className="m-0 p-6 space-y-4">
             {/* Add New Button */}
             {!isAdding && (
-              <div className="flex justify-start">
+              <div className="flex justify-end">
                 <Button
                   onClick={handleAddNew}
                   startIcon={<Plus size={18} />}
@@ -196,7 +196,7 @@ function MultibetBonusPage() {
           <TabsContent value="Shop" className="m-0 p-6 space-y-4">
             {/* Add New Button */}
             {!isAdding && (
-              <div className="flex justify-start">
+              <div className="flex justify-end">
                 <Button
                   onClick={handleAddNew}
                   startIcon={<Plus size={18} />}

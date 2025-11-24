@@ -1,19 +1,17 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
-import Select from "react-select";
+import { MultiValue } from "react-select";
 
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import { DateRangeFilter } from "@/components/common/DateRangeFilter";
-import { FilterActions } from "@/components/common/FilterActions";
 import { DataTable } from "@/components/tables/DataTable";
 import { withAuth } from "@/utils/withAuth";
-import { reactSelectStyles } from "@/utils/reactSelectStyles";
-import { useTheme } from "@/context/ThemeContext";
 import { Range } from "react-date-range";
 
 import { columns, JackpotTicket } from "./columns";
 import { jackpotTicketsData } from "./data";
+import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
+import { FilterOption } from "../../network/pending-requests/data";
 
 const defaultDateRange: Range = {
   startDate: new Date(new Date().setHours(0, 0, 0, 0)),
@@ -21,7 +19,10 @@ const defaultDateRange: Range = {
   key: "selection",
 };
 
-const filterOptions = [
+const filterOptions: Array<{
+  label: string;
+  options: FilterOption[];
+}> = [
   {
     label: "Jackpot",
     options: [
@@ -56,26 +57,21 @@ const filterOptions = [
 ];
 
 function JackpotTicketsPage() {
-  const { theme } = useTheme();
   const [filteredData, setFilteredData] = useState<JackpotTicket[]>(jackpotTicketsData);
   const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
   const [appliedDateRange, setAppliedDateRange] = useState<Range | null>(null);
-  const [selectedFilter, setSelectedFilter] = useState<{ value: string; label: string } | null>(
-    null
-  );
-  const [appliedFilter, setAppliedFilter] = useState<{ value: string; label: string } | null>(
-    null
-  );
+  const [selectedFilter, setSelectedFilter] = useState<FilterOption[]>([]);
+  const [appliedFilter, setAppliedFilter] = useState<FilterOption[]>([]);
 
   const filterTickets = useCallback(
     (
-      filter: { value: string; label: string } | null = appliedFilter,
+      filters: FilterOption[] = appliedFilter,
       range: Range | null = appliedDateRange
     ) => {
       let filtered = [...jackpotTicketsData];
 
-      // Apply multi-filter
-      if (filter) {
+      // Apply multiple filters
+      filters.forEach((filter) => {
         const [filterType, filterValue] = filter.value.split(":");
 
         if (filterType === "jackpot") {
@@ -107,7 +103,7 @@ function JackpotTicketsPage() {
             filtered = filtered.filter((ticket) => ticket.stake > 500);
           }
         }
-      }
+      });
 
       // Apply date range filter
       if (range && range.startDate && range.endDate) {
@@ -122,19 +118,36 @@ function JackpotTicketsPage() {
     [appliedFilter, appliedDateRange]
   );
 
-  const handleSearch = () => {
+  const applyFilters = () => {
     setAppliedFilter(selectedFilter);
     setAppliedDateRange(dateRange);
     const filtered = filterTickets(selectedFilter, dateRange);
     setFilteredData(filtered);
   };
 
-  const handleClearFilters = () => {
+  const clearFilters = () => {
     setDateRange(defaultDateRange);
     setAppliedDateRange(null);
-    setSelectedFilter(null);
-    setAppliedFilter(null);
+    setSelectedFilter([]);
+    setAppliedFilter([]);
     setFilteredData(jackpotTicketsData);
+  };
+
+  const handleFilterChange = (selected: MultiValue<FilterOption>) => {
+    const selectedArray = selected || [];
+    
+    // Group filters by their type (jackpot, status, stake)
+    // If multiple items from the same group exist, keep only the last one
+    const groupedFilters: Record<string, FilterOption> = {};
+    
+    selectedArray.forEach((filter) => {
+      const [filterType] = filter.value.split(":");
+      // This will overwrite any previous selection from the same group
+      groupedFilters[filterType] = filter;
+    });
+    
+    // Convert back to array
+    setSelectedFilter(Object.values(groupedFilters));
   };
 
   return (
@@ -142,28 +155,23 @@ function JackpotTicketsPage() {
       {/* Breadcrumb */}
       <PageBreadcrumb pageTitle="Jackpot Tickets" />
 
-      {/* Filters */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-4">
-          {/* Date Range Filter */}
-          <DateRangeFilter range={dateRange} onChange={(range) => setDateRange(range)} />
-
-          {/* Multi-Filter (Jackpot, Status & Stake) */}
-          <div className="w-[18rem]">
-            <Select
-              styles={reactSelectStyles(theme)}
-              options={filterOptions}
-              placeholder="Filter Options"
-              value={selectedFilter}
-              onChange={(val) => setSelectedFilter(val)}
-              isClearable
-            />
-          </div>
-        </div>
-
-        {/* Search & Clear Buttons */}
-        <FilterActions onSearch={handleSearch} onClear={handleClearFilters} />
-      </div>
+      <TableFilterToolbar<FilterOption, true>
+        dateRange={dateRange}
+        onDateRangeChange={(range) => setDateRange(range)}
+        actions={{
+          onSearch: applyFilters,
+          onClear: clearFilters,
+        }}
+        selectProps={{
+          containerClassName: "max-w-[18rem]",
+          options: filterOptions,
+          placeholder: "Select Filter Options",
+          value: selectedFilter,
+          onChange: handleFilterChange,
+          isMulti: true,
+          isClearable: true,
+        }}
+      />        
 
       {/* Results */}
       <div className="space-y-4">

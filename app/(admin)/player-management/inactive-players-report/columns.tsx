@@ -83,7 +83,7 @@ export const columns: ColumnDef<InactivePlayer>[] = [
       const { color, label } =
         statusColors[row.original.processStatus] || statusColors["Pending"];
       return (
-        <Badge color={color} variant="light" size="sm">
+        <Badge color={color} variant="light">
           {label}
         </Badge>
       );

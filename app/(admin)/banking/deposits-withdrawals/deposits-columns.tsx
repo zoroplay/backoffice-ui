@@ -147,7 +147,7 @@ export const depositColumns: ColumnDef<Deposit>[] = [
         reviewStatusColors[row.original.reviewStatus] ||
         reviewStatusColors["Under Review"];
       return (
-        <Badge color={color} variant="light" size="sm">
+        <Badge color={color} variant="light">
           {label}
         </Badge>
       );

@@ -1,16 +1,15 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
-import Select from "react-select";
+import { GroupBase } from "react-select";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { DataTable } from "@/components/tables/DataTable";
-import { FilterActions } from "@/components/common/FilterActions";
 import { columns } from "./columns";
 import { inactivePlayersData, InactivePlayer } from "./data";
 import { withAuth } from "@/utils/withAuth";
-import { reactSelectStyles } from "@/utils/reactSelectStyles";
-import { useTheme } from "@/context/ThemeContext";
 import { useSearch } from "@/context/SearchContext";
+import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
+import { Info } from "lucide-react";
 
 // Client type options
 const clientTypeOptions = [
@@ -21,8 +20,7 @@ const clientTypeOptions = [
 
 type ClientTypeOption = { value: string; label: string };
 
-function InactivePlayersReport() {
-  const { theme } = useTheme();
+function InactivePlayersReport() {    
   const [selectedClientType, setSelectedClientType] = useState<ClientTypeOption[]>([]);
   const [filteredData, setFilteredData] = useState<InactivePlayer[]>(inactivePlayersData);
   const [appliedClientTypes, setAppliedClientTypes] = useState<ClientTypeOption[]>([]);
@@ -81,26 +79,25 @@ function InactivePlayersReport() {
       {/* Breadcrumb */}
       <PageBreadcrumb pageTitle="Inactive Players Report" />
 
-      {/* Filters */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-col md:flex-row gap-4">
-          {/* Username Input */}
-          {/* Client Type Multi-Select */}
-          <div className="w-[20rem]">
-            <Select<ClientTypeOption, true>
-              styles={reactSelectStyles(theme)}
-              options={clientTypeOptions}
-              isMulti
-              placeholder="Filter by Client Type"
-              value={selectedClientType}
-              onChange={(val) => setSelectedClientType(val ?? [])}
-            />
-          </div>
-        </div>
+      <span className="flex items-center gap-1 mb-2 text-gray-500 dark:text-gray-400">  <Info className="h-4 w-4" />    
+        <p className="text-sm text-gray-500 dark:text-gray-400">Use the global search to filter by Username</p>
+      </span>
 
-        {/* Filter Actions */}
-        <FilterActions onSearch={handleSearch} onClear={handleClear} />
-      </div>
+      <TableFilterToolbar<ClientTypeOption, true, GroupBase<ClientTypeOption>>   
+         
+        actions={{
+          onSearch: handleSearch,
+          onClear: handleClear,
+        }}
+        selectProps={{
+          containerClassName: "max-w-[20rem]",
+          options: clientTypeOptions,
+          placeholder: "Filter by Client Type",
+          value: selectedClientType,
+          onChange: (val) => setSelectedClientType(Array.isArray(val) ? [...val] : []),
+          isMulti: true,
+        }}
+      />  
 
       {/* Data Table */}
       <DataTable columns={columns} data={filteredData} />

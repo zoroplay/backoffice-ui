@@ -7,6 +7,7 @@ import { CalendarDays, PencilLine, Plus, Trash2 } from "lucide-react";
 
 import { DataTable } from "@/components/tables/DataTable";
 import Button from "@/components/ui/button/Button";
+import Badge from "@/components/ui/badge/Badge";
 
 import type { CasinoBanner } from "../types";
 
@@ -15,13 +16,6 @@ type BannersTabProps = {
   onCreateBanner: () => void;
   onEditBanner: (banner: CasinoBanner) => void;
   onDeleteBanner: (banner: CasinoBanner) => void;
-};
-
-const statusChip: Record<string, string> = {
-  active:
-    "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200",
-  inactive:
-    "bg-gray-100 text-gray-600 dark:bg-gray-700/60 dark:text-gray-300",
 };
 
 const BannersTab: React.FC<BannersTabProps> = ({
@@ -78,9 +72,14 @@ const BannersTab: React.FC<BannersTabProps> = ({
         accessorKey: "position",
         header: "Position",
         cell: ({ row }) => (
-          <span className="inline-flex rounded-full bg-brand-500/10 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-brand-600 dark:bg-brand-500/20 dark:text-brand-200">
+          <Badge
+            color="primary"
+            variant="light"
+            size="sm"
+            className="text-xs font-semibold uppercase tracking-wide"
+          >
             {row.original.position}
-          </span>
+          </Badge>
         ),
       },
       {
@@ -102,13 +101,14 @@ const BannersTab: React.FC<BannersTabProps> = ({
         accessorKey: "isActive",
         header: "Status",
         cell: ({ row }) => (
-          <span
-            className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
-              row.original.isActive ? statusChip.active : statusChip.inactive
-            }`}
+          <Badge
+            color={row.original.isActive ? "success" : "neutral"}
+            variant="light"
+            size="sm"
+            className="text-xs font-semibold"
           >
             {row.original.isActive ? "Active" : "Inactive"}
-          </span>
+          </Badge>
         ),
       },
       {

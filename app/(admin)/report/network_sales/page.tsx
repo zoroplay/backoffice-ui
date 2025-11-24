@@ -10,7 +10,7 @@ import { networkSalesColumns } from "../network_sales/columns";
 import { NetworkSalesTypes } from "./columns";
 import { networkSalesData } from "../network_sales/data";
 import { withAuth } from "@/utils/withAuth";
-import { ReportFilterToolbar } from "@/components/common/ReportFilterToolbar";
+import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
 
 // ----------------------
 // Select Options
@@ -85,7 +85,7 @@ function NetworkSales() {
       {/* Breadcrumb */}
       <PageBreadcrumb pageTitle="Network Sales" />
 
-      <ReportFilterToolbar<FilterOption>
+      <TableFilterToolbar<FilterOption>
         dateRange={dateRange}
         onDateRangeChange={setDateRange}
         actions={{

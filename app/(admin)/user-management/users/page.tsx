@@ -3,21 +3,14 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import Select, {
-  type ActionMeta,
-  type GroupBase,
-  type MultiValue,
-  type StylesConfig,
-} from "react-select";
+import type { ActionMeta, GroupBase, MultiValue } from "react-select";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
   CheckCircle2,
   Clock3,
   LockKeyhole,
-  MoreHorizontal,
   Shield,
   ShieldAlert,
-  ShieldCheck,
   Sparkles,
   Trash2,
   Plus,
@@ -25,14 +18,11 @@ import {
 } from "lucide-react";
 
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import { FilterActions } from "@/components/common/FilterActions";
+import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
 import { DataTable } from "@/components/tables/DataTable";
 import Badge from "@/components/ui/badge/Badge";
 import Button from "@/components/ui/button/Button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { cn } from "@/lib/utils";
-import { useTheme } from "@/context/ThemeContext";
-import { reactSelectStyles } from "@/utils/reactSelectStyles";
 import { withAuth } from "@/utils/withAuth";
 
 import ChangePasswordModal from "./components/ChangePasswordModal";
@@ -62,14 +52,22 @@ type FilterGroup = {
   options: UserFilterOption[];
 };
 
-const statusBadgeStyles: Record<string, string> = {
-  active:
-    "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200",
-  suspended:
-    "bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-200",
-  invited:
-    "bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-200",
-};
+function enforceSingleSelections(
+  options: MultiValue<UserFilterOption>
+): UserFilterOption[] {
+  const deduped: UserFilterOption[] = [];
+  for (const option of options) {
+    const existingIndex = deduped.findIndex(
+      (item) => item.group === option.group
+    );
+    if (existingIndex >= 0) {
+      deduped[existingIndex] = option;
+    } else {
+      deduped.push(option);
+    }
+  }
+  return deduped;
+}
 
 const USERS_STORAGE_KEY = "backoffice-users";
 
@@ -92,20 +90,7 @@ const actionItems = [
 ] as const;
 
 function UsersPage() {
-  const { theme } = useTheme();
   const router = useRouter();
-  const normalizedTheme =
-    theme === "light" || theme === "dark" ? theme : undefined;
-
-  const filterSelectStyles = useMemo<
-    StylesConfig<UserFilterOption, true, GroupBase<UserFilterOption>>
-  >(
-    () =>
-      reactSelectStyles<UserFilterOption, true, GroupBase<UserFilterOption>>(
-        normalizedTheme
-      ),
-    [normalizedTheme]
-  );
 
   const [users, setUsers] = useState<UserRecord[]>(usersSeed);
   const [isUsersHydrated, setIsUsersHydrated] = useState(false);
@@ -182,7 +167,8 @@ const filterGroups = useMemo<FilterGroup[]>(() => {
     options: MultiValue<UserFilterOption>,
     _meta: ActionMeta<UserFilterOption>
   ) => {
-    setSelectedFilters([...options]);
+    const deduped = enforceSingleSelections(options);
+    setSelectedFilters(deduped);
   };
 
   const handleApplyFilters = () => {
@@ -336,34 +322,52 @@ const filterGroups = useMemo<FilterGroup[]>(() => {
         accessorKey: "role",
         header: "Role",
         cell: ({ row }) => (
-          <span className="inline-flex items-center gap-2 rounded-full bg-brand-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-brand-600 dark:bg-brand-500/20 dark:text-brand-200">
-            <Shield className="h-3.5 w-3.5" />
+          <Badge
+            color="primary"
+            variant="light"
+            size="sm"
+            startIcon={<Shield size={14} />}
+            className="text-xs font-semibold uppercase tracking-wide"
+          >
             {row.original.role}
-          </span>
+          </Badge>
         ),
       },
       {
         accessorKey: "status",
         header: "Status",
-        cell: ({ row }) => (
-          <span
-            className={cn(
-              "inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold",
-              statusBadgeStyles[row.original.status] ?? statusBadgeStyles.active
-            )}
-          >
-            {row.original.status === "active" && (
-              <CheckCircle2 className="h-3.5 w-3.5" />
-            )}
-            {row.original.status === "suspended" && (
-              <ShieldAlert className="h-3.5 w-3.5" />
-            )}
-            {row.original.status === "invited" && (
-              <Sparkles className="h-3.5 w-3.5" />
-            )}
-            {row.original.status.toUpperCase()}
-          </span>
-        ),
+        cell: ({ row }) => {
+          const status = row.original.status;
+          const statusConfig: Record<
+            string,
+            { color: "success" | "error" | "primary"; icon: React.ReactNode }
+          > = {
+            active: {
+              color: "success",
+              icon: <CheckCircle2 size={14} />,
+            },
+            suspended: {
+              color: "error",
+              icon: <ShieldAlert size={14} />,
+            },
+            invited: {
+              color: "primary",
+              icon: <Sparkles size={14} />,
+            },
+          };
+          const config = statusConfig[status] ?? statusConfig.active;
+          return (
+            <Badge
+              color={config.color}
+              variant="light"
+              size="sm"
+              startIcon={config.icon}
+              className="text-xs font-semibold uppercase"
+            >
+              {status.toUpperCase()}
+            </Badge>
+          );
+        },
       },
       {
         accessorKey: "lastActive",
@@ -508,24 +512,22 @@ const filterGroups = useMemo<FilterGroup[]>(() => {
           </TabsList>
 
           <TabsContent value={activeTab} className="mt-6 space-y-6">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <div className="max-w-[20rem] flex w-full items-center gap-4 rounded-xl border border-dashed border-gray-200 bg-white px-3 py-2 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-                <Select<UserFilterOption, true>
-                  isMulti
-                  closeMenuOnSelect={false}
-                  hideSelectedOptions={false}
-                  options={filterGroups}
-                  value={selectedFilters}
-                  onChange={handleFilterChange}
-                  styles={filterSelectStyles}
-                  placeholder="Filter by Role"
-                />
-              </div>
-              <FilterActions
-                onSearch={handleApplyFilters}
-                onClear={handleClearFilters}
-              />
-            </div>
+            <TableFilterToolbar<UserFilterOption, true, GroupBase<UserFilterOption>>
+              selectProps={{
+                options: filterGroups,
+                value: selectedFilters,
+                onChange: handleFilterChange,
+                isMulti: true,
+                closeMenuOnSelect: false,
+                hideSelectedOptions: false,
+                placeholder: "Filter by Role",
+                containerClassName: "max-w-[18rem]",
+              }}
+              actions={{
+                onSearch: handleApplyFilters,
+                onClear: handleClearFilters,
+              }}
+            />
 
             <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950">
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3">

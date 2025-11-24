@@ -14,6 +14,7 @@ import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import Button from "@/components/ui/button/Button";
 import Form from "@/components/form/Form";
 import Input from "@/components/form/input/InputField";
+import FileInput from "@/components/form/input/FileInput";
 import Label from "@/components/form/Label";
 import Switch from "@/components/form/switch/Switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -442,26 +443,28 @@ const SportsMenuPage: React.FC = () => {
 
         <div className="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
           <Tabs defaultValue="sports" className="space-y-6">
-            <TabsList className="mb-6 h-auto w-full rounded-xl border border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 p-1.5 shadow-sm dark:border-gray-700 dark:from-gray-900/40 dark:to-gray-900/20">
+            <div className="px-6 pt-6 pb-0">
+              <TabsList className="mb-6 h-auto w-full rounded-xl border border-dashed border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 p-1.5 shadow-sm dark:border-gray-700 dark:from-gray-900/40 dark:to-gray-900/20">
               <TabsTrigger
                 value="sports"
-                className="inline-flex items-center gap-2 rounded-lg px-6 py-3 text-sm font-medium text-gray-600 transition-all duration-200 hover:bg-gray-50 hover:text-brand-500 data-[state=active]:border data-[state=active]:border-brand-200 data-[state=active]:bg-white data-[state=active]:text-brand-600 data-[state=active]:shadow-md dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-brand-300 dark:data-[state=active]:border-brand-700 dark:data-[state=active]:bg-gray-900 dark:data-[state=active]:text-brand-300"
+                className="inline-flex items-center gap-2 rounded-lg p-3 text-sm font-medium text-gray-600 transition-all duration-200 hover:bg-gray-50 hover:text-brand-500 data-[state=active]:ring-1 data-[state=active]:ring-brand-200 data-[state=active]:bg-white data-[state=active]:text-brand-600 data-[state=active]:shadow-sm dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-brand-300 dark:data-[state=active]:ring-brand-700 dark:data-[state=active]:bg-gray-900 dark:data-[state=active]:text-brand-300"
               >
                 Sports Mgmt.
               </TabsTrigger>
               <TabsTrigger
                 value="categories"
-                className="inline-flex items-center gap-2 rounded-lg px-6 py-3 text-sm font-medium text-gray-600 transition-all duration-200 hover:bg-gray-50 hover:text-indigo-500 data-[state=active]:border data-[state=active]:border-indigo-200 data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-md dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-indigo-300 dark:data-[state=active]:border-indigo-700 dark:data-[state=active]:bg-gray-900 dark:data-[state=active]:text-indigo-300"
+                className="inline-flex items-center gap-2 rounded-lg p-3 text-sm font-medium text-gray-600 transition-all duration-200 hover:bg-gray-50 hover:text-indigo-500 data-[state=active]:ring-1 data-[state=active]:ring-indigo-200 data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-indigo-300 dark:data-[state=active]:ring-indigo-700 dark:data-[state=active]:bg-gray-900 dark:data-[state=active]:text-indigo-300"
               >
                 Category Mgmt.
               </TabsTrigger>
               <TabsTrigger
                 value="tournaments"
-                className="inline-flex items-center gap-2 rounded-lg px-6 py-3 text-sm font-medium text-gray-600 transition-all duration-200 hover:bg-gray-50 hover:text-emerald-500 data-[state=active]:border data-[state=active]:border-emerald-200 data-[state=active]:bg-white data-[state=active]:text-emerald-600 data-[state=active]:shadow-md dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-emerald-300 dark:data-[state=active]:border-emerald-700 dark:data-[state=active]:bg-gray-900 dark:data-[state=active]:text-emerald-300"
+                className="inline-flex items-center gap-2 rounded-lg p-3 text-sm font-medium text-gray-600 transition-all duration-200 hover:bg-gray-50 hover:text-emerald-500 data-[state=active]:ring-1 data-[state=active]:ring-emerald-200 data-[state=active]:bg-white data-[state=active]:text-emerald-600 data-[state=active]:shadow-sm dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-emerald-300 dark:data-[state=active]:ring-emerald-700 dark:data-[state=active]:bg-gray-900 dark:data-[state=active]:text-emerald-300"
               >
                 Tournament Mgmt.
               </TabsTrigger>
-            </TabsList>
+              </TabsList>
+            </div>
 
             <TabsContent value="sports" className="px-6 pb-6">
               <Form
@@ -669,7 +672,7 @@ const SportsMenuPage: React.FC = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="tournamentImage">Select Image</Label>
-                  <Input id="tournamentImage" type="file" accept="image/*" onChange={handleImageUpload} />
+                  <FileInput id="tournamentImage" accept="image/*" onChange={handleImageUpload} />
                   {tournamentForm.imageSource && (
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                       Image selected (mock preview not rendered).

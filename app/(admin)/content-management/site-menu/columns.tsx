@@ -12,16 +12,7 @@ export interface SiteMenuRow {
   lastUpdated: string;
 }
 
-const badge = (label: string, variant: "success" | "warning" | "neutral") => {
-  const base = "inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold";
-  if (variant === "success") {
-    return `${base} bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300`;
-  }
-  if (variant === "warning") {
-    return `${base} bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-200`;
-  }
-  return `${base} bg-gray-100 text-gray-700 dark:bg-gray-700/60 dark:text-gray-200`;
-};
+import Badge from "@/components/ui/badge/Badge";
 
 export const columns: ColumnDef<SiteMenuRow>[] = [
   {
@@ -50,7 +41,7 @@ export const columns: ColumnDef<SiteMenuRow>[] = [
     header: "Status",
     cell: ({ row }) => {
       const isActive = row.getValue("isActive") as boolean;
-      return <span className={badge(isActive ? "Active" : "Inactive", isActive ? "success" : "neutral")}>{isActive ? "Active" : "Inactive"}</span>;
+      return <Badge variant="light" color={isActive ? "success" : "neutral"}>{isActive ? "Active" : "Inactive"}</Badge>;
     },
   },
   {
@@ -58,7 +49,7 @@ export const columns: ColumnDef<SiteMenuRow>[] = [
     header: "Open in New Tab",
     cell: ({ row }) => {
       const open = row.getValue("openInNewTab") as boolean;
-      return <span className={badge(open ? "Yes" : "No", open ? "warning" : "neutral")}>{open ? "Yes" : "No"}</span>;
+      return <Badge variant="light" color={open ? "success" : "error"}>{open ? "Yes" : "No"}</Badge>;
     },
   },
   {

@@ -94,7 +94,7 @@ export const columns: ColumnDef<Registration>[] = [
       const { color, label } = statusColors[status] || statusColors["Inactive"];
 
       return (
-        <Badge variant="light" color={color} size="sm">
+        <Badge variant="light" color={color}>
           {label}
         </Badge>
       );

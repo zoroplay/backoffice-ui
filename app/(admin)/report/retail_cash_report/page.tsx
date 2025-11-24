@@ -8,7 +8,7 @@ import { defaultDateRange } from "@/components/common/DateRangeFilter";
 import { columns } from "./columns";
 import { retailCashData, RetailCashRecord } from "./data";
 import { withAuth } from "@/utils/withAuth";
-import { ReportFilterToolbar } from "@/components/common/ReportFilterToolbar";
+import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
 
 
 function RetailCashReport() {
@@ -43,7 +43,7 @@ function RetailCashReport() {
       {/* Breadcrumb */}
       <PageBreadcrumb pageTitle="Retail Cash Report" />
 
-      <ReportFilterToolbar
+      <TableFilterToolbar
         dateRange={dateRange}
         onDateRangeChange={setDateRange}
         actions={{

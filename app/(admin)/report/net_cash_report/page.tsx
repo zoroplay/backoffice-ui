@@ -16,7 +16,7 @@ import {
   NetCashGroup,
 } from "./data";
 import { withAuth } from "@/utils/withAuth";
-import { ReportFilterToolbar } from "@/components/common/ReportFilterToolbar";
+import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
 
 // ----------------------
 // Filter Options
@@ -153,7 +153,7 @@ function NetCashReport() {
       <PageBreadcrumb pageTitle="Net Cash Report" />
 
       {/* Filters */}
-      <ReportFilterToolbar<FilterSelection, true, GroupBase<FilterSelection>>
+      <TableFilterToolbar<FilterSelection, true, GroupBase<FilterSelection>>
         dateRange={dateRange}
         onDateRangeChange={setDateRange}
         actions={{

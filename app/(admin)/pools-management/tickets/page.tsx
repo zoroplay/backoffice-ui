@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import Select, { type SingleValue } from "react-select";
+  import Select, { type SingleValue, type MultiValue } from "react-select";
 import type { Range } from "react-date-range";
 
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
@@ -19,6 +19,7 @@ import { withAuth } from "@/utils/withAuth";
 import { Plus } from "lucide-react";
 import { columns, PoolsTicketRow } from "./columns";
 import { PoolsTicket, poolsTicketsData } from "./data";
+import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
 
 type FilterOption = { value: string; label: string };
 
@@ -51,6 +52,15 @@ const filterOptions: { label: string; options: FilterOption[] }[] = [
   },
 ];
 
+const getOptionGroup = (option: FilterOption): string | null => {
+  for (const group of filterOptions) {
+    if (group.options.some((opt) => opt.value === option.value)) {
+      return group.label;
+    }
+  }
+  return null;
+};
+
 const mapTicketToRow = (ticket: PoolsTicket): PoolsTicketRow => ({
   id: ticket.id,
   ticketRef: ticket.ticketRef,
@@ -68,24 +78,26 @@ const mapTicketToRow = (ticket: PoolsTicket): PoolsTicketRow => ({
 function PoolsTicketsPage() {
   const { theme } = useTheme();
   const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
-  const [selectedFilter, setSelectedFilter] = useState<FilterOption | null>(null);
+  const [selectedFilters, setSelectedFilters] = useState<FilterOption[]>([]);
   const [filteredRows, setFilteredRows] = useState<PoolsTicketRow[]>(poolsTicketsData.map(mapTicketToRow));
   const [selectedRow, setSelectedRow] = useState<PoolsTicketRow | null>(null);
   const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
 
-  const filterData = (filter: FilterOption | null, range: Range | null) => {
+  const filterData = (filters: FilterOption[], range: Range | null) => {
     let data = poolsTicketsData.slice();
 
-    if (filter) {
-      const [filterType, filterValue] = filter.value.split(":");
+    if (filters.length > 0) {
+      filters.forEach((filter) => {
+        const [filterType, filterValue] = filter.value.split(":");
 
-      if (filterType === "channel") {
-        data = data.filter((ticket) => ticket.channel === filterValue);
-      } else if (filterType === "status") {
-        data = data.filter((ticket) => ticket.status === filterValue);
-      } else if (filterType === "division") {
-        data = data.filter((ticket) => ticket.division === filterValue);
-      }
+        if (filterType === "channel") {
+          data = data.filter((ticket) => ticket.channel === filterValue);
+        } else if (filterType === "status") {
+          data = data.filter((ticket) => ticket.status === filterValue);
+        } else if (filterType === "division") {
+          data = data.filter((ticket) => ticket.division === filterValue);
+        }
+      });
     }
 
     if (range && range.startDate && range.endDate) {
@@ -104,11 +116,11 @@ function PoolsTicketsPage() {
   };
 
   const handleSearch = () => {
-    setFilteredRows(filterData(selectedFilter, dateRange));
+    setFilteredRows(filterData(selectedFilters, dateRange));
   };
 
   const handleClear = () => {
-    setSelectedFilter(null);
+    setSelectedFilters([]);
     setDateRange(defaultDateRange);
     setFilteredRows(poolsTicketsData.map(mapTicketToRow));
   };
@@ -181,23 +193,38 @@ function PoolsTicketsPage() {
       </div>
 
       <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-900">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-4">
-            <DateRangeFilter range={dateRange} onChange={(range) => setDateRange(range)} />
-            <div className="w-[20rem]">
-              <Select<FilterOption, false>
-                styles={reactSelectStyles(theme)}
-                options={filterOptions}
-                placeholder="Filter by Channel,Status or Division"
-                value={selectedFilter}
-                onChange={(value: SingleValue<FilterOption>) => setSelectedFilter(value ?? null)}
-                isClearable
-              />
-            </div>
-          </div>
-
-          <FilterActions onSearch={handleSearch} onClear={handleClear} />
-        </div>
+        <TableFilterToolbar<FilterOption, true>
+          dateRange={dateRange}
+          onDateRangeChange={setDateRange}
+          actions={{
+            onSearch: handleSearch,
+            onClear: handleClear,
+          }}
+          selectProps={{
+            containerClassName: "max-w-[22rem]",
+            options: filterOptions,
+            placeholder: "Filter Options",
+            value: selectedFilters,
+            onChange: (newValue: MultiValue<FilterOption>) => {
+              const newFilters = Array.from(newValue);
+              // Enforce one selection per group
+              const groupMap = new Map<string, FilterOption>();
+              
+              newFilters.forEach((option) => {
+                const groupLabel = getOptionGroup(option);
+                if (groupLabel) {
+                  // If this group already has a selection, replace it with the new one
+                  groupMap.set(groupLabel, option);
+                }
+              });
+              
+              // Convert map back to array
+              setSelectedFilters(Array.from(groupMap.values()));
+            },
+            isClearable: true,
+            isMulti: true,
+          }}
+        />
 
         <div className="mt-6 space-y-4">
           <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-800/70">

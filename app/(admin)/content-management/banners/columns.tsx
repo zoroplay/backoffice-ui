@@ -1,8 +1,10 @@
+import React from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import Image from "next/image";
 import { Edit, Trash2 } from "lucide-react";
 
 import Button from "@/components/ui/button/Button";
+import Badge from "@/components/ui/badge/Badge";
 
 export interface BannerRow {
   id: string;
@@ -76,16 +78,20 @@ export const columns: ColumnDef<BannerRow>[] = [
     header: "Status",
     cell: ({ row }) => {
       const isActive = row.getValue("isActive") as boolean;
+      // Badge should be imported from your UI library
+      // Example: import Badge from "@/components/ui/badge/Badge";
       return (
-        <span
-          className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
+        <Badge
+          color={isActive ? "success" : "neutral"}
+          variant="light"
+          className={
             isActive
-              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300"
-              : "bg-gray-100 text-gray-600 dark:bg-gray-700/60 dark:text-gray-300"
-          }`}
+              ? "text-emerald-700 dark:text-emerald-300"
+              : "text-gray-600 dark:text-gray-300"
+          }
         >
           {isActive ? "Active" : "Inactive"}
-        </span>
+        </Badge>
       );
     },
   },
@@ -109,7 +115,7 @@ export const createActionColumn = (
       <Button
         variant="outline"
         size="sm"
-        onClick={(event) => {
+        onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
           event.stopPropagation();
           callbacks.onEdit(row.original);
         }}
@@ -120,7 +126,7 @@ export const createActionColumn = (
       <Button
         variant="outline"
         size="sm"
-        onClick={(event) => {
+        onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
           event.stopPropagation();
           callbacks.onDelete(row.original.id);
         }}

@@ -12,12 +12,12 @@ import { FilterActions } from "@/components/common/FilterActions";
 import { useTheme } from "@/context/ThemeContext";
 import { reactSelectStyles } from "@/utils/reactSelectStyles";
 
-type ReportFilterToolbarActions = {
+type TableFilterToolbarActions = {
   onSearch: () => void;
   onClear: () => void;
 };
 
-type ReportFilterToolbarSelectProps<
+type TableFilterToolbarSelectProps<
   Option,
   IsMulti extends boolean,
   Group extends GroupBase<Option>,
@@ -26,20 +26,20 @@ type ReportFilterToolbarSelectProps<
   hideIcon?: boolean;
 };
 
-type ReportFilterToolbarProps<
+type TableFilterToolbarProps<
   Option,
   IsMulti extends boolean = false,
   Group extends GroupBase<Option> = GroupBase<Option>,
 > = {
-  dateRange: Range;
-  onDateRangeChange: (range: Range) => void;
-  actions?: ReportFilterToolbarActions;
-  selectProps?: ReportFilterToolbarSelectProps<Option, IsMulti, Group> | null;
+  dateRange?: Range;
+  onDateRangeChange?: (range: Range) => void;
+  actions?: TableFilterToolbarActions;
+  selectProps?: TableFilterToolbarSelectProps<Option, IsMulti, Group> | null;
   className?: string;
   children?: React.ReactNode;
 };
 
-function ReportFilterToolbar<
+function TableFilterToolbar<
   Option,
   IsMulti extends boolean = false,
   Group extends GroupBase<Option> = GroupBase<Option>,
@@ -50,7 +50,7 @@ function ReportFilterToolbar<
   selectProps,
   className,
   children,
-}: ReportFilterToolbarProps<Option, IsMulti, Group>) {
+}: TableFilterToolbarProps<Option, IsMulti, Group>) {
   const { theme } = useTheme();
 
   const mergedContainerClassName = [
@@ -61,32 +61,51 @@ function ReportFilterToolbar<
     .trim();
 
   const shouldRenderSelect = Boolean(selectProps);
-  const selectContainerClassName =
-    selectProps?.containerClassName ?? "max-w-[22rem]";
-  const selectStyles = selectProps?.styles ?? reactSelectStyles(theme);
-  const { containerClassName, hideIcon, styles, ...restSelectProps } =
-    selectProps ?? ({} as ReportFilterToolbarSelectProps<Option, IsMulti, Group>);
+  const {
+    containerClassName,
+    hideIcon,
+    styles: providedStyles,
+    className: selectClassNameProp,
+    ...restSelectProps
+  } = selectProps ?? ({} as TableFilterToolbarSelectProps<Option, IsMulti, Group>);
+
+  const selectContainerClassName = [
+    "w-full",
+    containerClassName ?? "max-w-[22rem]",
+  ]
+    .join(" ")
+    .trim();
+  const selectStyles = providedStyles ?? reactSelectStyles(theme);
+  const selectClassName = ["w-full", "min-w-0", selectClassNameProp ?? ""]
+    .join(" ")
+    .trim();
 
   return (
     <div className={mergedContainerClassName}>
-      <div>
-        <span className="flex items-center gap-2">
-          <Calendar className="h-6 w-6 text-gray-500 dark:text-gray-400" />
-          <DateRangeFilter range={dateRange} onChange={onDateRangeChange} />
-        </span>
-      </div>
+      {dateRange && onDateRangeChange && (
+        <div>
+          <span className="flex items-center gap-2">
+            <Calendar className="h-6 w-6 text-gray-500 dark:text-gray-400" />
+            <DateRangeFilter
+              range={dateRange}
+              onChange={onDateRangeChange}
+            />
+          </span>
+        </div>
+      )}
 
       {shouldRenderSelect ? (
         <div className={selectContainerClassName}>
-          <span className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full">
             {!hideIcon && (
               <Filter className="h-6 w-6 text-gray-500 dark:text-gray-400" />
             )}
             <Select<Option, IsMulti, Group>
+              className={selectClassName}
               styles={selectStyles}
               {...(restSelectProps as SelectProps<Option, IsMulti, Group>)}
             />
-          </span>
+          </div>
         </div>
       ) : null}
 
@@ -99,5 +118,5 @@ function ReportFilterToolbar<
   );
 }
 
-export { ReportFilterToolbar };
+export { TableFilterToolbar };
 

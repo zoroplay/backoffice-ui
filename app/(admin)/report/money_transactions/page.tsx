@@ -9,7 +9,8 @@ import { columns, Transaction } from "./columns";
 import { transactions } from "./data";
 import { withAuth } from "@/utils/withAuth";
 import { useSearch } from "@/context/SearchContext";
-import { ReportFilterToolbar } from "@/components/common/ReportFilterToolbar";
+import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
+import { Info } from "lucide-react";
 
 const defaultDateRange: Range = {
   startDate: new Date(new Date().setDate(new Date().getDate() - 30)), 
@@ -144,7 +145,12 @@ function MoneyTransactions() {
       {/* Breadcrumb */}
       <PageBreadcrumb pageTitle="Money Transactions" />
 
-      <ReportFilterToolbar<OperationOption>
+      <span className="flex items-center gap-1 mb-2 text-gray-500 dark:text-gray-400">
+        <Info className="h-4 w-4" />
+        <p className="text-sm text-gray-500 dark:text-gray-400">Use the global search to filter by Transaction ID, Keyword, or Username, or use the filters below to narrow down the results.</p>
+      </span>
+
+      <TableFilterToolbar<OperationOption>
         dateRange={dateRange}
         onDateRangeChange={(range) => setDateRange(range)}
         actions={{

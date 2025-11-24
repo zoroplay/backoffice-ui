@@ -1,19 +1,14 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
-import Select from "react-select";
 import type { Range } from "react-date-range";
-
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { DataTable } from "@/components/tables/DataTable";
-import { DateRangeFilter, defaultDateRange } from "@/components/common/DateRangeFilter";
-import { FilterActions } from "@/components/common/FilterActions";
+import { defaultDateRange } from "@/components/common/DateRangeFilter";
 import { withAuth } from "@/utils/withAuth";
-import { reactSelectStyles } from "@/utils/reactSelectStyles";
-import { useTheme } from "@/context/ThemeContext";
-
 import { columns, PlayerBonusReport } from "./columns";
 import { playerBonusReportData } from "./data";
+import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
 
 const filterOptions = [
   {
@@ -56,7 +51,6 @@ const filterOptions = [
 ];
 
 function PlayerBonusesReportPage() {
-  const { theme } = useTheme();
   const [filteredData, setFilteredData] = useState<PlayerBonusReport[]>(playerBonusReportData);
   const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
   const [appliedDateRange, setAppliedDateRange] = useState<Range | null>(null);
@@ -138,31 +132,21 @@ function PlayerBonusesReportPage() {
       {/* Breadcrumb */}
       <PageBreadcrumb pageTitle="Player Bonus Report" />
 
-      {/* Filters */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-4">
-          {/* Date Range Picker */}
-          <DateRangeFilter
-            range={dateRange}
-            onChange={(range) => setDateRange(range)}
-          />
-
-          {/* Multi-Select Filter */}
-          <div className="w-[18rem]">
-            <Select
-              styles={reactSelectStyles(theme)}
-              options={filterOptions}
-              placeholder="Filter Options"
-              value={selectedFilter}
-              onChange={(val) => setSelectedFilter(val)}
-              isClearable
-            />
-          </div>
-        </div>
-
-        <FilterActions onSearch={handleSearch} onClear={handleClearFilters} />
-      </div>
-
+      <TableFilterToolbar
+        dateRange={dateRange}
+        onDateRangeChange={setDateRange}
+        actions={{
+          onSearch: handleSearch,
+          onClear: handleClearFilters,
+        }}
+        selectProps={{
+          options: filterOptions,
+          placeholder: "Filter Options",
+          value: selectedFilter,
+          onChange: (val) => setSelectedFilter(val ?? null),
+          isClearable: true,
+        }}
+      />
       {/* Table */}
       <DataTable columns={columns} data={filteredData} />
     </div>

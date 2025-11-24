@@ -10,7 +10,7 @@ import { defaultDateRange } from "@/components/common/DateRangeFilter";
 import { summaryColumns, detailColumns } from "./columns";
 import { taxSummary, taxDetails } from "./data";
 import { withAuth } from "@/utils/withAuth";
-import { ReportFilterToolbar } from "@/components/common/ReportFilterToolbar";
+import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
 import type { SingleValue } from "react-select";
 
 
@@ -75,7 +75,7 @@ function TaxReport() {
       {/* Breadcrumb */}
       <PageBreadcrumb pageTitle="Tax Report" />
 
-      <ReportFilterToolbar<ClientTypeOption>
+      <TableFilterToolbar<ClientTypeOption>
         dateRange={dateRange}
         onDateRangeChange={setDateRange}
         actions={{

@@ -63,7 +63,7 @@ function PlayerBonusesPage() {
       <PageBreadcrumb pageTitle="Bonus Manager" />
 
       {/* Add New Button */}
-      <div className="flex items-center justify-start">
+      <div className="flex items-center justify-end">
         <Button
           onClick={handleAddNew}
           startIcon={<Plus size={18} />}

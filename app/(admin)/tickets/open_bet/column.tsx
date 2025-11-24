@@ -13,7 +13,8 @@ export type OpenBet = {
   market: string;
   selection: string;  
   ret: number; 
-  clientType: string; 
+  clientType: string;
+  ticketType: string;
 };
 
 export const columns: ColumnDef<OpenBet>[] = [

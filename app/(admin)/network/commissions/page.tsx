@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import Select from "react-select";
+import React, { useCallback, useEffect, useState } from "react";
 import type { Range } from "react-date-range";
+import type { SingleValue } from "react-select";
 import { DollarSign, Calendar, CheckCircle2, Gift } from "lucide-react";
 
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
@@ -22,6 +22,7 @@ import {
   bonusCommissions,
   sportOptions,
 } from "./data";
+import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
 
 const cloneRange = (range: Range) => ({
   startDate: range.startDate ? new Date(range.startDate) : undefined,
@@ -29,11 +30,16 @@ const cloneRange = (range: Range) => ({
   key: "selection",
 }) satisfies Range;
 
+type SportOption = {
+  value: string;
+  label: string;
+};
+
 function CommissionsPage() {
   const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState("weekly");
 
-  const [selectedSport, setSelectedSport] = useState<string>("");
+  const [selectedSport, setSelectedSport] = useState<SportOption | null>(null);
   const [appliedSport, setAppliedSport] = useState<string>("");
 
   const [selectedRange, setSelectedRange] = useState<Range>(() => cloneRange(defaultDateRange));
@@ -87,23 +93,18 @@ function CommissionsPage() {
         ? cloneRange(selectedRange)
         : cloneRange(defaultDateRange);
 
-    setAppliedSport(selectedSport);
+    setAppliedSport(selectedSport?.value ?? "");
     setAppliedRange(normalizedRange);
   };
 
   const clearFilters = () => {
     const resetSelectedRange = cloneRange(defaultDateRange);
     const resetAppliedRange = cloneRange(defaultDateRange);
-    setSelectedSport("");
+    setSelectedSport(null);
     setAppliedSport("");
     setSelectedRange(resetSelectedRange);
     setAppliedRange(resetAppliedRange);
   };
-
-  const sportValue = useMemo(
-    () => sportOptions.find((option) => option.value === selectedSport) ?? null,
-    [selectedSport]
-  );
 
   const getTableData = () => {
     switch (activeTab) {
@@ -145,33 +146,31 @@ function CommissionsPage() {
             value="bonus" 
             className="data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:border data-[state=active]:border-purple-200 dark:data-[state=active]:bg-gray-900 dark:data-[state=active]:border-purple-700 data-[state=active]:text-purple-600 dark:data-[state=active]:text-purple-400 hover:bg-gray-50 dark:hover:bg-gray-800 px-6 py-3 text-sm font-medium transition-all duration-200 inline-flex items-center gap-2 rounded-lg"
           >
-            <Gift className="h-4 w-4" />
+            <Gift className="h-4 w-4" /> 
             Bonus Commissions
           </TabsTrigger>
         </TabsList>
 
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="w-[16rem]">
-              <Select
-                styles={reactSelectStyles(theme)}
-                options={sportOptions}
-                placeholder="Sport"
-                value={sportValue}
-                onChange={(option) => setSelectedSport(option?.value ?? "")}
-                isClearable
-              />
-            </div>
+         
 
-            <DateRangeFilter range={selectedRange} onChange={(range) => setSelectedRange(cloneRange(range))} />
-          </div>
-
-          <FilterActions onSearch={applyFilters} onClear={clearFilters} />
-        </div>
-
-        <TabsContent value="weekly" className="mt-0">
-          <div className="space-y-4">
-            <div className="flex justify-end">
+        <TableFilterToolbar<SportOption>
+          dateRange={selectedRange}
+          onDateRangeChange={setSelectedRange}
+          actions={{
+            onSearch: applyFilters,
+            onClear: clearFilters,
+          }}
+          selectProps={{
+            options: sportOptions,
+            placeholder: "Sport",
+            value: selectedSport,
+            onChange: (option: SingleValue<SportOption>) => setSelectedSport(option ?? null),
+            isClearable: true,
+            containerClassName: "max-w-[22rem]",
+          }}
+        />
+            
+        <div className="flex justify-end my-4">
               <Button
                 variant="primary"
                 className="inline-flex items-center gap-2 bg-green-500 hover:bg-green-600"
@@ -180,7 +179,9 @@ function CommissionsPage() {
                 <DollarSign className="h-4 w-4" />
                 Pay All Agents
               </Button>
-            </div>
+          </div>
+        <TabsContent value="weekly" className="mt-0">
+          <div>          
             <DataTable 
               columns={columns} 
               data={getTableData()} 
@@ -191,17 +192,7 @@ function CommissionsPage() {
         </TabsContent>
 
         <TabsContent value="paid" className="mt-0">
-          <div className="space-y-4">
-            <div className="flex justify-end">
-              <Button
-                variant="primary"
-                className="inline-flex items-center gap-2 bg-green-500 hover:bg-green-600"
-                onClick={handlePayAllAgents}
-              >
-                <DollarSign className="h-4 w-4" />
-                Pay All Agents
-              </Button>
-            </div>
+          <div>            
             <DataTable 
               columns={columns} 
               data={getTableData()} 
@@ -212,17 +203,7 @@ function CommissionsPage() {
         </TabsContent>
 
         <TabsContent value="bonus" className="mt-0">
-          <div className="space-y-4">
-            <div className="flex justify-end">
-              <Button
-                variant="primary"
-                className="inline-flex items-center gap-2 bg-green-500 hover:bg-green-600"
-                onClick={handlePayAllAgents}
-              >
-                <DollarSign className="h-4 w-4" />
-                Pay All Agents
-              </Button>
-            </div>
+           <div>            
             <DataTable 
               columns={columns} 
               data={getTableData()} 

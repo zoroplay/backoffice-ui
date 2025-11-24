@@ -3,22 +3,14 @@
 import React, { useMemo, useState } from "react";
 import Image from "next/image";
 import type { ColumnDef } from "@tanstack/react-table";
-import Select, {
-  type ActionMeta,
-  type GroupBase,
-  type MultiValue,
-  type StylesConfig,
-} from "react-select";
-import { CalendarRange, Filter, PencilLine, Plus, RefreshCw, Trash2 } from "lucide-react";
+import type { ActionMeta, GroupBase, MultiValue } from "react-select";
+import { CalendarRange, PencilLine, Plus, RefreshCw, Trash2 } from "lucide-react";
 
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import { FilterActions } from "@/components/common/FilterActions";
+import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
 import { DataTable } from "@/components/tables/DataTable";
 import Badge from "@/components/ui/badge/Badge";
 import Button from "@/components/ui/button/Button";
-import { cn } from "@/lib/utils";
-import { useTheme } from "@/context/ThemeContext";
-import { reactSelectStyles } from "@/utils/reactSelectStyles";
 import { withAuth } from "@/utils/withAuth";
 
 import PromotionFormModal from "./components/PromotionFormModal";
@@ -43,16 +35,22 @@ type PromotionFilterGroup = {
   options: PromotionFilterOption[];
 };
 
-const statusBadgeClass: Record<string, string> = {
-  draft:
-    "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300 border border-dashed border-gray-300 dark:border-gray-700",
-  scheduled:
-    "bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-200",
-  active:
-    "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200",
-  expired:
-    "bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-200",
-};
+function enforceSingleSelections(
+  options: MultiValue<PromotionFilterOption>
+): PromotionFilterOption[] {
+  const deduped: PromotionFilterOption[] = [];
+  for (const option of options) {
+    const existingIndex = deduped.findIndex(
+      (item) => item.group === option.group
+    );
+    if (existingIndex >= 0) {
+      deduped[existingIndex] = option;
+    } else {
+      deduped.push(option);
+    }
+  }
+  return deduped;
+}
 
 function toFormValues(promotion: Promotion): PromotionFormValues {
   const { id, ...rest } = promotion;
@@ -60,22 +58,6 @@ function toFormValues(promotion: Promotion): PromotionFormValues {
 }
 
 function PromotionsPage() {
-  const { theme } = useTheme();
-  const normalizedTheme =
-    theme === "light" || theme === "dark" ? theme : undefined;
-
-  const selectStyles = useMemo<
-    StylesConfig<PromotionFilterOption, true, GroupBase<PromotionFilterOption>>
-  >(
-    () =>
-      reactSelectStyles<
-        PromotionFilterOption,
-        true,
-        GroupBase<PromotionFilterOption>
-      >(normalizedTheme),
-    [normalizedTheme]
-  );
-
   const filterOptions = useMemo<PromotionFilterGroup[]>(() => {
     return [
       {
@@ -121,7 +103,8 @@ function PromotionsPage() {
     options: MultiValue<PromotionFilterOption>,
     _meta: ActionMeta<PromotionFilterOption>
   ) => {
-    setSelectedFilters([...options]);
+    const deduped = enforceSingleSelections(options);
+    setSelectedFilters(deduped);
   };
 
   const handleApplyFilters = () => {
@@ -246,9 +229,14 @@ function PromotionsPage() {
         accessorKey: "type",
         header: "Type",
         cell: ({ row }) => (
-          <span className="inline-flex items-center rounded-full bg-brand-500/10 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-brand-600 dark:bg-brand-500/20 dark:text-brand-200">
+          <Badge
+            color="primary"
+            variant="light"
+            size="sm"
+            className="text-xs font-semibold uppercase tracking-wide"
+          >
             {row.original.type}
-          </span>
+          </Badge>
         ),
       },
       {
@@ -296,16 +284,27 @@ function PromotionsPage() {
       {
         accessorKey: "status",
         header: "Status",
-        cell: ({ row }) => (
-          <span
-            className={cn(
-              "inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold",
-              statusBadgeClass[row.original.status] ?? statusBadgeClass.draft
-            )}
-          >
-            {row.original.status.toUpperCase()}
-          </span>
-        ),
+        cell: ({ row }) => {
+          const status = row.original.status;
+          const statusColorMap: Record<string, "neutral" | "primary" | "success" | "error"> = {
+            draft: "neutral",
+            scheduled: "primary",
+            active: "success",
+            expired: "error",
+          };
+          return (
+            <Badge
+              color={statusColorMap[status] ?? "neutral"}
+              variant="light"
+              size="sm"
+              className={`text-xs font-semibold uppercase ${
+                status === "draft" ? "border border-dashed" : ""
+              }`}
+            >
+              {status.toUpperCase()}
+            </Badge>
+          );
+        },
       },
       {
         id: "actions",
@@ -353,7 +352,7 @@ function PromotionsPage() {
           </Button>
         </div>
 
-        <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="my-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900/60">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
               Total Campaigns
@@ -402,25 +401,21 @@ function PromotionsPage() {
           </div>
         </div>
 
-        <div className="mt-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="max-w-md flex w-full items-center gap-4 rounded-xl border border-dashed border-gray-200 bg-white px-3 py-2 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-            <Filter className="h-4 w-4 text-gray-400 dark:text-gray-500" />
-            <Select<PromotionFilterOption, true>
-              isMulti
-              closeMenuOnSelect={false}
-              hideSelectedOptions={false}
-              options={filterOptions}
-              value={selectedFilters}
-              onChange={handleFilterChange}
-              styles={selectStyles}
-              placeholder="Filter by status, platform, or type"
-            />
-          </div>
-          <FilterActions
-            onSearch={handleApplyFilters}
-            onClear={handleClearFilters}
-          />
-        </div>
+        <TableFilterToolbar<PromotionFilterOption, true, GroupBase<PromotionFilterOption>>
+          selectProps={{
+            options: filterOptions,
+            value: selectedFilters,
+            onChange: handleFilterChange,
+            isMulti: true,
+            closeMenuOnSelect: false,
+            hideSelectedOptions: false,
+            placeholder: "Filter by status, platform, or type",
+          }}
+          actions={{
+            onSearch: handleApplyFilters,
+            onClear: handleClearFilters,
+          }}
+        />
       </div>
 
       <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950">
@@ -433,9 +428,7 @@ function PromotionsPage() {
               Keep creative assets, copy, and scheduling aligned across channels.
             </p>
           </div>
-          <Badge variant="light" color="info" size="sm">
-            {promotions.length} total records
-          </Badge>
+         
         </div>
         <DataTable columns={columns} data={filteredPromotions} />
       </div>

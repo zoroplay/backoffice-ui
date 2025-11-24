@@ -15,7 +15,7 @@ export const openBets: OpenBet[] = [
     stake: 50,
     ret: 125,
     clientType: "Cashier",
-    
+    ticketType: "Real",
      },
   {
     betslipId: "QB-1002",
@@ -31,6 +31,7 @@ export const openBets: OpenBet[] = [
     stake: 30,
     ret: 57,
     clientType: "Mobile",
+    ticketType: "Real",
   },
   {
     betslipId: "QB-1003",
@@ -46,5 +47,6 @@ export const openBets: OpenBet[] = [
     stake: 100,
     ret: 160,
     clientType: "Website",
+    ticketType: "Simulated",
      },
 ];

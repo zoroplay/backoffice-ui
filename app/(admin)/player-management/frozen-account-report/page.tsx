@@ -1,23 +1,17 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
-import Select from "react-select";
-import makeAnimated from "react-select/animated";
 import type { Range } from "react-date-range";
-
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { DataTable } from "@/components/tables/DataTable";
-import { DateRangeFilter, defaultDateRange } from "@/components/common/DateRangeFilter";
-import { FilterActions } from "@/components/common/FilterActions";
+import { defaultDateRange } from "@/components/common/DateRangeFilter";
 import { withAuth } from "@/utils/withAuth";
-import { reactSelectStyles } from "@/utils/reactSelectStyles";
 import { useTheme } from "@/context/ThemeContext";
 import { useSearch } from "@/context/SearchContext";
-
 import { columns } from "./columns";
 import { frozenAccounts, FrozenAccount } from "./data";
-
-const animatedComponents = makeAnimated();
+import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
+import { Info } from "lucide-react";
 
 type FilterOption = {
   value: string;
@@ -64,7 +58,7 @@ function FrozenAccountReportPage() {
   const [selectedFilters, setSelectedFilters] = useState<FilterOption[]>([]);
 
   const [appliedFilters, setAppliedFilters] = useState<FilterOption[]>([]);
-  const [appliedDateRange, setAppliedDateRange] = useState<Range | null>(defaultDateRange);
+  const [appliedDateRange, setAppliedDateRange] = useState<Range | null>(null);
 
   const { query, setPlaceholder, resetPlaceholder, resetQuery } = useSearch();
 
@@ -164,7 +158,7 @@ function FrozenAccountReportPage() {
     setSelectedFilters([]);
     setDateRange(defaultDateRange);
     setAppliedFilters([]);
-    setAppliedDateRange(defaultDateRange);
+    setAppliedDateRange(null);
     setFilteredData(frozenAccounts);
     resetQuery();
   };
@@ -172,49 +166,19 @@ function FrozenAccountReportPage() {
   return (
     <div className="space-y-6 p-4">
       <PageBreadcrumb pageTitle="Frozen Account Report" />
+     
+     <span className="flex items-center gap-1 mb-2 text-gray-500 dark:text-gray-400">  <Info className="h-4 w-4" />    
+        <p className="text-sm text-gray-500 dark:text-gray-400">Use the global search to filter by Username, Full Name, or Reason</p>
+      </span>
 
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-4">
-          <DateRangeFilter range={dateRange} onChange={(range) => setDateRange(range)} />
-
-          <div className="w-[22rem]">
-            <Select
-              styles={reactSelectStyles(theme)}
-              options={filterOptions}
-              placeholder="Filter by Freeze Type, Player Status, Process Status"
-              components={animatedComponents}
-              isMulti
-              value={selectedFilters}
-              onChange={(val) => {
-                if (!val || (Array.isArray(val) && val.length === 0)) {
-                  setSelectedFilters([]);
-                  return;
-                }
-
-                const nextSelection = Array.isArray(val) ? [...val] : [val];
-                const latest = nextSelection[nextSelection.length - 1] as FilterOption;
-
-                if (!latest) {
-                  setSelectedFilters(nextSelection as FilterOption[]);
-                  return;
-                }
-
-                const categoryPrefix = latest.value.split(":")[0];
-                const filtered = nextSelection.filter(
-                  (item) => item.value.split(":")[0] !== categoryPrefix
-                );
-
-                setSelectedFilters([
-                  ...(filtered as FilterOption[]),
-                  latest,
-                ]);
-              }}
-            />
-          </div>
-        </div>
-
-        <FilterActions onSearch={applyFilters} onClear={clearFilters} />
-      </div>
+     <TableFilterToolbar
+       dateRange={dateRange}
+       onDateRangeChange={setDateRange}
+       actions={{
+         onSearch: applyFilters,
+         onClear: clearFilters,
+       }}
+     />
 
       <DataTable columns={columns} data={filteredData} />
     </div>

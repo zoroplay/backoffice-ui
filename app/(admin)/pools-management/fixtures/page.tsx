@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import Select, { type SingleValue } from "react-select";
+import Select, { type SingleValue, type MultiValue } from "react-select";
 
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import Form from "@/components/form/Form";
@@ -16,6 +16,7 @@ import { withAuth } from "@/utils/withAuth";
 
 import { columns, PoolFixtureRow } from "./columns";
 import { poolFixtures, PoolFixture } from "./data";
+import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
 
 type FilterOption = { value: string; label: string };
 
@@ -62,11 +63,21 @@ const mapFixtureToRow = (fixture: PoolFixture): PoolFixtureRow => ({
   status: fixture.status,
 });
 
+// Helper function to find which group an option belongs to
+const getOptionGroup = (option: FilterOption): string | null => {
+  for (const group of filterOptions) {
+    if (group.options.some((opt) => opt.value === option.value)) {
+      return group.label;
+    }
+  }
+  return null;
+};
+
 function FixturesPage() {
   const { theme } = useTheme();
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [filteredRows, setFilteredRows] = useState<PoolFixtureRow[]>(poolFixtures.map(mapFixtureToRow));
-  const [selectedFilter, setSelectedFilter] = useState<FilterOption | null>(null);
+  const [selectedFilters, setSelectedFilters] = useState<FilterOption[]>([]);
   const [dateRange, setDateRange] = useState(defaultDateRange);
   const [divisionOption, setDivisionOption] = useState<FilterOption | null>(null);
   const [roundOption, setRoundOption] = useState<FilterOption | null>(null);
@@ -82,13 +93,16 @@ function FixturesPage() {
   const handleFilter = () => {
     let rows = poolFixtures.slice();
 
-    if (selectedFilter) {
-      if (divisions.includes(selectedFilter.value)) {
-        rows = rows.filter((fixture) => fixture.division === selectedFilter.value);
+    // Apply filters from selected options
+    selectedFilters.forEach((filter) => {
+      if (divisions.includes(filter.value)) {
+        // Division filter
+        rows = rows.filter((fixture) => fixture.division === filter.value);
       } else {
-        rows = rows.filter((fixture) => fixture.status === selectedFilter.value);
+        // Status filter
+        rows = rows.filter((fixture) => fixture.status === filter.value);
       }
-    }
+    });
 
     if (dateRange.startDate && dateRange.endDate) {
       const start = new Date(dateRange.startDate);
@@ -106,7 +120,7 @@ function FixturesPage() {
   };
 
   const handleClear = () => {
-    setSelectedFilter(null);
+    setSelectedFilters([]);
     setDateRange(defaultDateRange);
     setFilteredRows(poolFixtures.map(mapFixtureToRow));
   };
@@ -172,23 +186,40 @@ function FixturesPage() {
       </div>
 
       <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-900">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-4">
-            <DateRangeFilter range={dateRange} onChange={(range) => setDateRange(range)} />
-            <div className="w-[18rem]">
-              <Select<FilterOption, false>
-                styles={reactSelectStyles(theme)}
-                options={filterOptions}
-                placeholder="Filter by Division or Status"
-                value={selectedFilter}
-                onChange={(value: SingleValue<FilterOption>) => setSelectedFilter(value ?? null)}
-                isClearable
-              />
-            </div>
-          </div>
+         <TableFilterToolbar<FilterOption, true>
+        dateRange={dateRange}
+        onDateRangeChange={setDateRange}
+        actions={{
+          onSearch: handleFilter,
+          onClear: handleClear,
+        }}
+        selectProps={{
+          containerClassName: "max-w-[22rem]",
+          options: filterOptions,
+          placeholder: "Filter Options",
+          value: selectedFilters,
+          onChange: (newValue: MultiValue<FilterOption>) => {
+            const newFilters = Array.from(newValue);
+            // Enforce one selection per group
+            const filtered: FilterOption[] = [];
+            const groupMap = new Map<string, FilterOption>();
+            
+            newFilters.forEach((option) => {
+              const groupLabel = getOptionGroup(option);
+              if (groupLabel) {
+                // If this group already has a selection, replace it with the new one
+                groupMap.set(groupLabel, option);
+              }
+            });
+            
+            // Convert map back to array
+            setSelectedFilters(Array.from(groupMap.values()));
+          },
+          isClearable: true,
+          isMulti: true,
+        }}
+      />
 
-          <FilterActions onSearch={handleFilter} onClear={handleClear} />
-        </div>
 
         <div className="mt-6 space-y-4">
           <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-800/70">

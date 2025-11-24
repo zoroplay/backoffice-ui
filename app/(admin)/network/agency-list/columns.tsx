@@ -2,9 +2,11 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { DollarSign, Lock, Check } from "lucide-react";
+import Link from "next/link";
 import Badge from "@/components/ui/badge/Badge";
 
 export type Agency = {
+  id?: string;
   username: string;
   name: string;
   agentType: string;
@@ -29,26 +31,32 @@ export const columns: ColumnDef<Agency>[] = [
   {
     accessorKey: "username",
     header: "Username",
-    cell: ({ row }) => (
-      <button
-        className="hover:text-brand-600 dark:hover:text-brand-300 hover:underline font-medium"
-        onClick={() => console.log("View agent:", row.original.username)}
-      >
-        {row.original.username}
-      </button>
-    ),
+    cell: ({ row }) => {
+      const agentId = row.original.id || row.original.username;
+      return (
+        <Link
+          href={`/network/agent/${agentId}`}
+          className="hover:text-brand-600 dark:hover:text-brand-300 hover:underline font-medium"
+        >
+          {row.original.username}
+        </Link>
+      );
+    },
   },
   {
     accessorKey: "name",
     header: "Name",
-    cell: ({ row }) => (
-      <button
-        className=" hover:text-brand-600  dark:hover:text-brand-300 hover:underline font-medium"
-        onClick={() => console.log("View agent:", row.original.name)}
-      >
-        {row.original.name}
-      </button>
-    ),
+    cell: ({ row }) => {
+      const agentId = row.original.id || row.original.username;
+      return (
+        <Link
+          href={`/network/agent/${agentId}`}
+          className="hover:text-brand-600 dark:hover:text-brand-300 hover:underline font-medium"
+        >
+          {row.original.name}
+        </Link>
+      );
+    },
   },
   {
     accessorKey: "agentType",

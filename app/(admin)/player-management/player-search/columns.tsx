@@ -6,7 +6,7 @@ import Button from "@/components/ui/button/Button";
 import { Dropdown } from "@/components/ui/dropdown/Dropdown";
 import { DropdownItem } from "@/components/ui/dropdown/DropdownItem";
 import Badge from "@/components/ui/badge/Badge";
-import { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 
 export type Player = {
   code: string;
@@ -24,9 +24,39 @@ export type Player = {
 // Dropdown cell component
 const ActionsCell = ({ player }: { player: Player }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [position, setPosition] = useState<"top" | "bottom">("bottom");
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isOpen && containerRef.current) {
+      // Use requestAnimationFrame to ensure DOM is updated
+      requestAnimationFrame(() => {
+        if (!containerRef.current) return;
+
+        const containerRect = containerRef.current.getBoundingClientRect();
+        const viewportHeight = window.innerHeight;
+        const spaceBelow = viewportHeight - containerRect.bottom;
+        const spaceAbove = containerRect.top;
+        
+        // More accurate dropdown height estimation (header + 6 items + padding)
+        const estimatedDropdownHeight = 280;
+        const buffer = 30; // Extra buffer for safety
+        
+        // Only position on top if we're really at the bottom of the viewport
+        // Be very conservative - only flip if there's clearly not enough space below
+        // and clearly enough space above
+        const needsTopPosition = 
+          spaceBelow < estimatedDropdownHeight && // Not enough space below
+          spaceAbove >= estimatedDropdownHeight + buffer && // Enough space above with buffer
+          spaceBelow < spaceAbove - 100; // Above has significantly more space (100px difference)
+
+        setPosition(needsTopPosition ? "top" : "bottom");
+      });
+    }
+  }, [isOpen]);
 
   return (
-    <div className="relative">
+    <div className="relative" ref={containerRef}>
       <Button
         variant="outline"
         size="sm"
@@ -36,7 +66,13 @@ const ActionsCell = ({ player }: { player: Player }) => {
         <MoreHorizontal className="h-4 w-4" />       
       </Button>
 
-      <Dropdown isOpen={isOpen} onClose={() => setIsOpen(false)} className="w-48">
+      <Dropdown 
+        isOpen={isOpen} 
+        onClose={() => setIsOpen(false)} 
+        position={position} 
+        anchorRef={containerRef as React.RefObject<HTMLElement>}
+        className="w-48"
+      >
         <div className="py-2">
           <div className="px-4 py-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
             Quick Actions

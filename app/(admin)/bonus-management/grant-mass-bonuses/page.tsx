@@ -16,6 +16,7 @@ import { useTheme } from "@/context/ThemeContext";
 
 import { columns, MassBonusPlayer } from "./columns";
 import { massBonusPlayersData } from "./data";
+import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
 
 type FilterOption = {
   value: string;
@@ -133,48 +134,21 @@ function GrantMassBonusesPage() {
       {/* Breadcrumb */}
       <PageBreadcrumb pageTitle="Grant Mass Bonuses" />
 
-      {/* Filters */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-4">
-          {/* Date Range Picker */}
-          <DateRangeFilter
-            range={dateRange}
-            onChange={(range) => setDateRange(range)}
-          />
-
-          {/* Segment Type */}
-          <div className="w-[20rem]">
-            <Select
-              styles={reactSelectStyles(theme)}
-              options={segmentTypeOptions}
-              placeholder="Segment Type"
-              value={segmentType}
-              onChange={(val) => setSegmentType(val)}
-              isClearable
-            />
-          </div>
-
-          {/* Enable Paging */}
-          {/* <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="enablePaging"
-              checked={enablePaging}
-              onChange={(e) => setEnablePaging(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700"
-            />
-            <label
-              htmlFor="enablePaging"
-              className="text-sm text-gray-700 dark:text-gray-300"
-            >
-              Enable Paging
-            </label>
-          </div> */}
-        </div>
-
-        <FilterActions onSearch={handleSearch} onClear={handleClearFilters} />
-      </div>
-
+      <TableFilterToolbar
+        dateRange={dateRange}
+        onDateRangeChange={setDateRange}
+        actions={{
+          onSearch: handleSearch,
+          onClear: handleClearFilters,
+        }}
+        selectProps={{
+          options: segmentTypeOptions,
+          placeholder: "Select Segment Type", 
+          value: segmentType,
+          onChange: (val) => setSegmentType(val ?? null),
+          isClearable: true,
+        }}
+      />
       {/* Results Section */}
       <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
         {/* Results Header */}
@@ -183,12 +157,12 @@ function GrantMassBonusesPage() {
           <div className="flex items-center gap-3">
             {/* Select Bonus Dropdown */}
             <div className="w-64">
-              <Select
+              <Select<FilterOption>
                 styles={reactSelectStyles(theme)}
                 options={bonusOptions}
                 placeholder="Select Bonus"
                 value={selectedBonus}
-                onChange={(val) => setSelectedBonus(val)}
+                onChange={(val) => setSelectedBonus(val as FilterOption | null)}
                 isClearable
               />
             </div>

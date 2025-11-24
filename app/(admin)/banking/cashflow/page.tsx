@@ -1,25 +1,24 @@
 "use client";
 
 import React, { useCallback, useMemo, useState } from "react";
-import Select, { MultiValue } from "react-select";
-import makeAnimated from "react-select/animated";
+import Select, { MultiValue, type GroupBase } from "react-select";
 import type { Range } from "react-date-range";
 import { Plus } from "lucide-react";
 
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { DataTable } from "@/components/tables/DataTable";
-import { DateRangeFilter, defaultDateRange } from "@/components/common/DateRangeFilter";
-import { FilterActions } from "@/components/common/FilterActions";
+import { defaultDateRange } from "@/components/common/DateRangeFilter";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import Button from "@/components/ui/button/Button";
-import { Modal, ModalBody, ModalFooter, ModalHeader } from "@/components/ui/modal";
 import { withAuth } from "@/utils/withAuth";
-import { reactSelectStyles } from "@/utils/reactSelectStyles";
 import { useTheme } from "@/context/ThemeContext";
+import { reactSelectStyles } from "@/utils/reactSelectStyles";
 import Form from "@/components/form/Form";
 import TextArea from "@/components/form/input/TextArea";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
+import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
+import Modal, { ModalHeader, ModalBody, ModalFooter } from "@/components/ui/modal/Modal";
+import Button from "@/components/ui/button/Button";
 
 import {
   createCashbooksColumns,
@@ -45,8 +44,6 @@ import {
   type ExpenseType,
   type ExpenseCategory,
 } from "./data";
-
-const animatedComponents = makeAnimated();
 
 type FilterOption = {
   value: string;
@@ -213,30 +210,22 @@ function CashBooksPage() {
     description: "",
   });
 
-  const handleMultiSelectChange = (
-    val: MultiValue<FilterOption>,
-    setter: React.Dispatch<React.SetStateAction<FilterOption[]>>
-  ) => {
-    if (!val || val.length === 0) {
-      setter([]);
-      return;
-    }
+  // Handle filter selection with one-per-group constraint
+  const handleMultiSelectChange = useCallback((selected: MultiValue<FilterOption>) => {
+    // Group selections by category and keep only the last one per category
+    const categoryMap = new Map<string, FilterOption>();
+    
+    selected.forEach((option) => {
+      const [category] = option.value.split(":");
+      if (category) {
+        // Keep only the last option for each category
+        categoryMap.set(category, option);
+      }
+    });
 
-    const nextSelection = [...val];
-    const latest = nextSelection[nextSelection.length - 1];
-
-    if (!latest) {
-      setter(nextSelection);
-      return;
-    }
-
-    const categoryPrefix = latest.value.split(":")[0];
-    const filtered = nextSelection.filter(
-      (item) => item.value.split(":")[0] !== categoryPrefix
-    );
-
-    setter([...filtered, latest]);
-  };
+    // Convert back to array, ensuring only one option per category
+    return Array.from(categoryMap.values());
+  }, []);
 
   const filterCashbooks = useCallback(
     (filters: FilterOption[], range: Range) => {
@@ -427,58 +416,80 @@ function CashBooksPage() {
   }, [appliedExpenseFilters, appliedExpenseDateRange, filterExpenses]);
 
   const applyFilters = () => {
-    if (activeTab === "cashbooks") {
-      const nextRange = cashbookDateRange.startDate && cashbookDateRange.endDate 
-        ? cashbookDateRange 
-        : defaultDateRange;
-      setAppliedCashbookFilters(cashbookFilters);
-      setAppliedCashbookDateRange(nextRange);
-    } else if (activeTab === "cashin") {
-      const nextRange = cashinDateRange.startDate && cashinDateRange.endDate 
-        ? cashinDateRange 
-        : defaultDateRange;
-      setAppliedCashinFilters(cashinFilters);
-      setAppliedCashinDateRange(nextRange);
-    } else if (activeTab === "cashout") {
-      const nextRange = cashoutDateRange.startDate && cashoutDateRange.endDate 
-        ? cashoutDateRange 
-        : defaultDateRange;
-      setAppliedCashoutFilters(cashoutFilters);
-      setAppliedCashoutDateRange(nextRange);
-    } else if (activeTab === "expenses") {
-      const nextRange = expenseDateRange.startDate && expenseDateRange.endDate 
-        ? expenseDateRange 
-        : defaultDateRange;
-      setAppliedExpenseFilters(expenseFilters);
-      setAppliedExpenseDateRange(nextRange);
+    switch (activeTab) {
+      case "cashbooks": {
+        const nextRange =
+          cashbookDateRange.startDate && cashbookDateRange.endDate
+            ? cashbookDateRange
+            : defaultDateRange;
+        setAppliedCashbookFilters(cashbookFilters);
+        setAppliedCashbookDateRange(nextRange);
+        break;
+      }
+      case "cashin": {
+        const nextRange =
+          cashinDateRange.startDate && cashinDateRange.endDate
+            ? cashinDateRange
+            : defaultDateRange;
+        setAppliedCashinFilters(cashinFilters);
+        setAppliedCashinDateRange(nextRange);
+        break;
+      }
+      case "cashout": {
+        const nextRange =
+          cashoutDateRange.startDate && cashoutDateRange.endDate
+            ? cashoutDateRange
+            : defaultDateRange;
+        setAppliedCashoutFilters(cashoutFilters);
+        setAppliedCashoutDateRange(nextRange);
+        break;
+      }
+      case "expenses": {
+        const nextRange =
+          expenseDateRange.startDate && expenseDateRange.endDate
+            ? expenseDateRange
+            : defaultDateRange;
+        setAppliedExpenseFilters(expenseFilters);
+        setAppliedExpenseDateRange(nextRange);
+        break;
+      }
+      default:
+        break;
     }
   };
 
   const clearFilters = () => {
-    if (activeTab === "cashbooks") {
-      setCashbookFilters([]);
-      setCashbookDateRange(defaultDateRange);
-      setAppliedCashbookFilters([]);
-      setAppliedCashbookDateRange(defaultDateRange);
-      setFilteredCashbooks(cashBooksData);
-    } else if (activeTab === "cashin") {
-      setCashinFilters([]);
-      setCashinDateRange(defaultDateRange);
-      setAppliedCashinFilters([]);
-      setAppliedCashinDateRange(defaultDateRange);
-      setFilteredCashIns(cashInsData);
-    } else if (activeTab === "cashout") {
-      setCashoutFilters([]);
-      setCashoutDateRange(defaultDateRange);
-      setAppliedCashoutFilters([]);
-      setAppliedCashoutDateRange(defaultDateRange);
-      setFilteredCashOuts(cashOutsData);
-    } else if (activeTab === "expenses") {
-      setExpenseFilters([]);
-      setExpenseDateRange(defaultDateRange);
-      setAppliedExpenseFilters([]);
-      setAppliedExpenseDateRange(defaultDateRange);
-      setFilteredExpenses(expensesData);
+    switch (activeTab) {
+      case "cashbooks":
+        setCashbookFilters([]);
+        setCashbookDateRange(defaultDateRange);
+        setAppliedCashbookFilters([]);
+        setAppliedCashbookDateRange(defaultDateRange);
+        setFilteredCashbooks(cashBooksData);
+        break;
+      case "cashin":
+        setCashinFilters([]);
+        setCashinDateRange(defaultDateRange);
+        setAppliedCashinFilters([]);
+        setAppliedCashinDateRange(defaultDateRange);
+        setFilteredCashIns(cashInsData);
+        break;
+      case "cashout":
+        setCashoutFilters([]);
+        setCashoutDateRange(defaultDateRange);
+        setAppliedCashoutFilters([]);
+        setAppliedCashoutDateRange(defaultDateRange);
+        setFilteredCashOuts(cashOutsData);
+        break;
+      case "expenses":
+        setExpenseFilters([]);
+        setExpenseDateRange(defaultDateRange);
+        setAppliedExpenseFilters([]);
+        setAppliedExpenseDateRange(defaultDateRange);
+        setFilteredExpenses(expensesData);
+        break;
+      default:
+        break;
     }
   };
 
@@ -898,27 +909,24 @@ function CashBooksPage() {
 
         {/* CashBooks Tab */}
         <TabsContent value="cashbooks" className="mt-0">
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-            <div className="flex flex-wrap items-center gap-4">
-              <DateRangeFilter
-                range={cashbookDateRange}
-                onChange={(range) => setCashbookDateRange(range)}
-              />
-
-              <div className="w-[22rem]">
-                <Select
-                  styles={reactSelectStyles(theme)}
-                  options={cashbookFilterOptions}
-                  placeholder="Filter by Branch, Status"
-                  components={animatedComponents}
-                  isMulti
-                  value={cashbookFilters}
-                  onChange={(val) => handleMultiSelectChange(val, setCashbookFilters)}
-                />
-              </div>
-            </div>
-
-            <FilterActions onSearch={applyFilters} onClear={clearFilters} />
+          <div className="mb-6">
+            <TableFilterToolbar<FilterOption, true, GroupBase<FilterOption>>
+              dateRange={cashbookDateRange}
+              onDateRangeChange={setCashbookDateRange}
+              actions={{
+                onSearch: applyFilters,
+                onClear: clearFilters,
+              }}
+              selectProps={{
+                containerClassName: "max-w-[22rem]",
+                options: cashbookFilterOptions,
+                placeholder: "Filter by Branch, Status",
+                value: cashbookFilters,
+                onChange: (selected: MultiValue<FilterOption>) =>
+                  setCashbookFilters(handleMultiSelectChange(selected)),
+                isMulti: true,
+              }}
+            />          
           </div>
 
           <div className="rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
@@ -933,8 +941,8 @@ function CashBooksPage() {
 
         {/* Cash In Tab */}
         <TabsContent value="cashin" className="mt-0">
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-            <div className="flex flex-wrap items-center gap-4">
+          <div className="mb-6 flex flex-col space-y-2">
+            <div className="flex flex-wrap items-center gap-4 self-end">
               <button
                 type="button"
                 onClick={handleCreateCashIn}
@@ -942,27 +950,26 @@ function CashBooksPage() {
               >
                 <Plus className="h-4 w-4" />
                 Add
-              </button>
-
-              <DateRangeFilter
-                range={cashinDateRange}
-                onChange={(range) => setCashinDateRange(range)}
-              />
-
-              <div className="w-[22rem]">
-                <Select
-                  styles={reactSelectStyles(theme)}
-                  options={cashinCashoutFilterOptions}
-                  placeholder="Filter by Branch, Status"
-                  components={animatedComponents}
-                  isMulti
-                  value={cashinFilters}
-                  onChange={(val) => handleMultiSelectChange(val, setCashinFilters)}
-                />
-              </div>
+              </button>              
             </div>
+            <TableFilterToolbar<FilterOption, true, GroupBase<FilterOption>>
+              dateRange={cashinDateRange}
+              onDateRangeChange={setCashinDateRange}
+              actions={{
+                onSearch: applyFilters,
+                onClear: clearFilters,
+              }}
+              selectProps={{
+                containerClassName: "max-w-[22rem]",
+                options: cashinCashoutFilterOptions,
+                placeholder: "Filter by Branch, Status",
+                value: cashinFilters,
+                onChange: (selected: MultiValue<FilterOption>) =>
+                  setCashinFilters(handleMultiSelectChange(selected)),
+                isMulti: true,
+              }}
+            />  
 
-            <FilterActions onSearch={applyFilters} onClear={clearFilters} />
           </div>
 
           <div className="rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
@@ -976,9 +983,9 @@ function CashBooksPage() {
         </TabsContent>
 
         {/* Cash Out Tab */}
-        <TabsContent value="cashout" className="mt-0">
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-            <div className="flex flex-wrap items-center gap-4">
+        <TabsContent value="cashout">
+          <div className="mb-6 flex flex-col space-y-2">
+            <div className="flex flex-wrap items-center justify-end gap-4">
               <button
                 type="button"
                 onClick={handleCreateCashOut}
@@ -987,26 +994,24 @@ function CashBooksPage() {
                 <Plus className="h-4 w-4" />
                 Add
               </button>
-
-              <DateRangeFilter
-                range={cashoutDateRange}
-                onChange={(range) => setCashoutDateRange(range)}
-              />
-
-              <div className="w-[22rem]">
-                <Select
-                  styles={reactSelectStyles(theme)}
-                  options={cashinCashoutFilterOptions}
-                  placeholder="Filter by Branch, Status"
-                  components={animatedComponents}
-                  isMulti
-                  value={cashoutFilters}
-                  onChange={(val) => handleMultiSelectChange(val, setCashoutFilters)}
-                />
-              </div>
             </div>
-
-            <FilterActions onSearch={applyFilters} onClear={clearFilters} />
+            <TableFilterToolbar<FilterOption, true, GroupBase<FilterOption>>
+              dateRange={cashoutDateRange}
+              onDateRangeChange={setCashoutDateRange}
+              actions={{
+                onSearch: applyFilters,
+                onClear: clearFilters,
+              }}
+              selectProps={{
+                containerClassName: "max-w-[22rem]",
+                options: cashinCashoutFilterOptions,
+                placeholder: "Filter by Branch, Status",
+                value: cashoutFilters,
+                onChange: (selected: MultiValue<FilterOption>) =>
+                  setCashoutFilters(handleMultiSelectChange(selected)),
+                isMulti: true,
+              }}
+            />
           </div>
 
           <div className="rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
@@ -1020,31 +1025,28 @@ function CashBooksPage() {
         </TabsContent>
 
         {/* Expenses Tab */}
-        <TabsContent value="expenses" className="mt-0">
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-            <div className="flex flex-wrap items-center gap-4">
-              <DateRangeFilter
-                range={expenseDateRange}
-                onChange={(range) => setExpenseDateRange(range)}
-              />
+        <TabsContent value="expenses" className="mt-4">
+         
+            <TableFilterToolbar<FilterOption, true, GroupBase<FilterOption>>
+              dateRange={expenseDateRange}
+              onDateRangeChange={setExpenseDateRange}
+              actions={{
+                onSearch: applyFilters,
+                onClear: clearFilters,
+              }}
+              selectProps={{
+                containerClassName: "max-w-[22rem]",
+                options: expenseFilterOptions,
+                placeholder: "Filter by Branch, Status",
+                value: expenseFilters,
+                onChange: (selected: MultiValue<FilterOption>) =>
+                  setExpenseFilters(handleMultiSelectChange(selected)),
+                isMulti: true,
+              }}
+            />
+          
 
-              <div className="w-[22rem]">
-                <Select
-                  styles={reactSelectStyles(theme)}
-                  options={expenseFilterOptions}
-                  placeholder="Filter by Branch, Status"
-                  components={animatedComponents}
-                  isMulti
-                  value={expenseFilters}
-                  onChange={(val) => handleMultiSelectChange(val, setExpenseFilters)}
-                />
-              </div>
-            </div>
-
-            <FilterActions onSearch={applyFilters} onClear={clearFilters} />
-          </div>
-
-          <div className="rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+          <div className="rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 mt-4">
             <div className="border-b border-gray-200 bg-gradient-to-r from-purple-500 to-purple-600 px-4 py-3 dark:border-gray-700">
               <h2 className="text-base font-semibold text-white">Expense</h2>
             </div>

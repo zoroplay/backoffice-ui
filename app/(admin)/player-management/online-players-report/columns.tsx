@@ -9,22 +9,22 @@ import { DropdownItem } from "@/components/ui/dropdown/DropdownItem";
 import Badge from "@/components/ui/badge/Badge";
 import type { OnlinePlayer } from "./data";
 
-// ✅ Status Badge Component (uses correct Badge props)
+
 const StatusBadge = ({ status }: { status: string }) => {
-  const normalized = status.trim().toLowerCase();
+  const normalizedStatus = status.trim().toLowerCase();
 
   return (
     <Badge
       variant="light"
-      color={normalized === "active" ? "success" : "error"}
-      size="sm"
+      color={normalizedStatus === "active" ? "success" : "error"}
+      // size="sm"
     >
       {status}
     </Badge>
   );
 };
 
-// ✅ Verified Badge Component (uses correct Badge props)
+
 const VerifiedBadge = ({ verified }: { verified: string }) => {
   const isVerified = verified.trim().toLowerCase() === "yes";
 
@@ -32,14 +32,13 @@ const VerifiedBadge = ({ verified }: { verified: string }) => {
     <Badge
       variant="light"
       color={isVerified ? "primary" : "light"}
-      size="sm"
-    >
+     >
       {isVerified ? "Yes" : "No"}
     </Badge>
   );
 };
 
-// ✅ Dropdown Actions Cell (same style as Player columns)
+
 const ActionsCell = ({ player }: { player: OnlinePlayer }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -86,7 +85,7 @@ const ActionsCell = ({ player }: { player: OnlinePlayer }) => {
   );
 };
 
-// ✅ Table Columns (consistent with Player table style)
+
 export const columns: ColumnDef<OnlinePlayer>[] = [
   {
     accessorKey: "username",

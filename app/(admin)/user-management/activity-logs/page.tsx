@@ -3,23 +3,21 @@
 import React, { useMemo, useState, useEffect } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
-  CalendarClock,
   Clock,
-  MapPin,
   MonitorSmartphone,
-  Search,
   Eye,
+  Info,
 } from "lucide-react";
 import { addDays, format } from "date-fns";
 
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import { FilterActions } from "@/components/common/FilterActions";
+import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
 import { DataTable } from "@/components/tables/DataTable";
 import Badge from "@/components/ui/badge/Badge";
 import Button from "@/components/ui/button/Button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DateRangeFilter, defaultDateRange } from "@/components/common/DateRangeFilter";
-import { cn } from "@/lib/utils";
+import { defaultDateRange } from "@/components/common/DateRangeFilter";
+import type { Range } from "react-date-range";
 import { withAuth } from "@/utils/withAuth";
 
 import LogDetailsModal from "./components/LogDetailsModal";
@@ -66,6 +64,22 @@ function ActivityLogsPage() {
       [field]: value,
     }));
   };
+
+  const handleDateRangeChange = (range: Range) => {
+    handleChangeFilterValue("dateRange", {
+      from: range.startDate ?? defaultFilters.dateRange.from,
+      to: range.endDate ?? defaultFilters.dateRange.to,
+    });
+  };
+
+  const dateRangeForToolbar: Range = useMemo(
+    () => ({
+      startDate: filters.dateRange.from,
+      endDate: filters.dateRange.to,
+      key: "selection",
+    }),
+    [filters.dateRange.from, filters.dateRange.to]
+  );
 
   const handleApplyFilters = () => {
     setAppliedFilters(filters);
@@ -274,32 +288,18 @@ function ActivityLogsPage() {
 
           <TabsContent value={activeTab} className="mt-6 space-y-6">
             <div className="grid gap-4 md:grid-cols-[minmax(0,1fr),minmax(0,0.9fr)] xl:grid-cols-[minmax(0,1.6fr),minmax(0,0.9fr)]">
-              <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-950">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-                  <div className="space-y-2 lg:flex-1">
-                    <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                      Date Range
-                    </label>
-                    <DateRangeFilter
-                      range={{
-                        startDate: filters.dateRange.from,
-                        endDate: filters.dateRange.to,
-                        key: "selection",
-                      }}
-                      onChange={(range) =>
-                        handleChangeFilterValue("dateRange", {
-                          from: range.startDate ?? defaultFilters.dateRange.from,
-                          to: range.endDate ?? defaultFilters.dateRange.to,
-                        })
-                      }
-                    />
-                  </div>
-                  <FilterActions
-                    onSearch={handleApplyFilters}
-                    onClear={handleClearFilters}
-                  />
-                </div>
-              </div>
+              <span className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                <Info className="h-4 w-4 " />
+                Use the global search to filter by Username or IP Address
+              </span>
+              <TableFilterToolbar
+                dateRange={dateRangeForToolbar}
+                onDateRangeChange={handleDateRangeChange}
+                actions={{
+                  onSearch: handleApplyFilters,
+                  onClear: handleClearFilters,
+                }}
+              />
 
               <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-950">
                 <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400">

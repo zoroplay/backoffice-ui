@@ -67,7 +67,7 @@ export const columns: ColumnDef<MassBonusPlayer>[] = [
       const verified = row.getValue("verified") as boolean;
       return (
         <span
-          className={`px-2 py-1 rounded-full text-xs font-medium ${
+          className={`px-2 py-1 rounded-full text-sm font-medium ${
             verified
               ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
               : "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200"
@@ -90,7 +90,7 @@ export const columns: ColumnDef<MassBonusPlayer>[] = [
       };
       return (
         <span
-          className={`px-2 py-1 rounded-full text-xs font-medium ${
+          className={`px-2 py-1 rounded-full text-sm font-medium ${
             statusColors[status as keyof typeof statusColors]
           }`}
         >

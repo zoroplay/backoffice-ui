@@ -5,6 +5,7 @@ import { ChevronRight, PencilLine, Plus, Trash2 } from "lucide-react";
 
 import { DataTable } from "@/components/tables/DataTable";
 import Button from "@/components/ui/button/Button";
+import Badge from "@/components/ui/badge/Badge";
 import type { ColumnDef } from "@tanstack/react-table";
 
 import type { GameCategory } from "../types";
@@ -54,21 +55,20 @@ const GameCategoriesTab: React.FC<GameCategoriesTabProps> = ({
         </span>
       ),
     },
-    {
-      accessorKey: "isActive",
-      header: "Status",
-      cell: ({ row }) => (
-        <span
-          className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
-            row.original.isActive
-              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200"
-              : "bg-gray-100 text-gray-600 dark:bg-gray-700/60 dark:text-gray-300"
-          }`}
-        >
-          {row.original.isActive ? "Active" : "Inactive"}
-        </span>
-      ),
-    },
+      {
+        accessorKey: "isActive",
+        header: "Status",
+        cell: ({ row }) => (
+          <Badge
+            color={row.original.isActive ? "success" : "neutral"}
+            variant="light"
+            size="sm"
+            className="text-xs font-semibold"
+          >
+            {row.original.isActive ? "Active" : "Inactive"}
+          </Badge>
+        ),
+      },
     {
       accessorKey: "createdAt",
       header: "Created",

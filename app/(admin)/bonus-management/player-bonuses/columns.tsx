@@ -91,7 +91,7 @@ export const columns: ColumnDef<PlayerBonus>[] = [
       };
       return (
         <span
-          className={`px-2 py-1 rounded-full text-xs font-medium ${
+          className={`px-2 py-1 rounded-full text-sm font-medium ${
             statusColors[status as keyof typeof statusColors]
           }`}
         >

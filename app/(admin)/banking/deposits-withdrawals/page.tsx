@@ -1,21 +1,17 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
-import Select from "react-select";
-import makeAnimated from "react-select/animated";
+import { MultiValue, type GroupBase } from "react-select";
 import type { Range } from "react-date-range";
 import { TrendingDown, TrendingUp } from "lucide-react";
 
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import {
-  DateRangeFilter,
   defaultDateRange,
 } from "@/components/common/DateRangeFilter";
-import { FilterActions } from "@/components/common/FilterActions";
 import { DataTable } from "@/components/tables/DataTable";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { withAuth } from "@/utils/withAuth";
-import { reactSelectStyles } from "@/utils/reactSelectStyles";
 import { useTheme } from "@/context/ThemeContext";
 import { useSearch } from "@/context/SearchContext";
 
@@ -26,8 +22,7 @@ import {
   Withdrawal,
 } from "./withdrawals-data";
 import { deposits, Deposit } from "./deposits-data";
-
-const animatedComponents = makeAnimated();
+import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
 
 type FilterOption = {
   value: string;
@@ -319,6 +314,24 @@ function DepositsWithdrawalsPage() {
     resetQuery();
   };
 
+  // Handle filter selection with one-per-group constraint
+  const handleFilterChange = useCallback((selected: MultiValue<FilterOption>) => {
+    // Group selections by category and keep only the last one per category
+    const categoryMap = new Map<string, FilterOption>();
+    
+    selected.forEach((option) => {
+      const [category] = option.value.split(":");
+      if (category) {
+        // Keep only the last option for each category
+        categoryMap.set(category, option);
+      }
+    });
+
+    // Convert back to array, ensuring only one option per category
+    const filteredSelection = Array.from(categoryMap.values());
+    setSelectedFilters(filteredSelection);
+  }, []);
+
   return (
     <div className="space-y-6 p-4">
       <PageBreadcrumb pageTitle="Deposits/Withdrawals Manager" />
@@ -346,60 +359,29 @@ function DepositsWithdrawalsPage() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Filters Section */}
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-4">
-            <DateRangeFilter
-              range={dateRange}
-              onChange={(range) => setDateRange(range)}
-            />
-
-            <div className="w-[26rem]">
-              <Select
-                styles={reactSelectStyles(theme)}
-                options={filterOptions}
-                placeholder="Filter by Status, Payment Method, Location, Bank"
-                components={animatedComponents}
-                isMulti
-                value={selectedFilters}
-                onChange={(val) => {
-                  if (!val || (Array.isArray(val) && val.length === 0)) {
-                    setSelectedFilters([]);
-                    return;
-                  }
-
-                  const nextSelection = Array.isArray(val) ? [...val] : [val];
-                  const latest = nextSelection[nextSelection.length - 1] as FilterOption;
-
-                  if (!latest) {
-                    setSelectedFilters(nextSelection as FilterOption[]);
-                    return;
-                  }
-
-                  const categoryPrefix = latest.value.split(":")[0];
-                  const filtered = nextSelection.filter(
-                    (item) => item.value.split(":")[0] !== categoryPrefix
-                  );
-
-                  setSelectedFilters([
-                    ...(filtered as FilterOption[]),
-                    latest,
-                  ]);
-                }}
-              />
-            </div>
-
-           </div>
-
-          <FilterActions onSearch={applyFilters} onClear={clearFilters} />
-        </div>
+        <TableFilterToolbar<FilterOption, true, GroupBase<FilterOption>>
+          dateRange={dateRange}
+          onDateRangeChange={setDateRange}
+          actions={{
+            onSearch: applyFilters,
+            onClear: clearFilters,
+          }}
+          selectProps={{
+            containerClassName: "max-w-[26rem]",
+            options: filterOptions,
+            placeholder: "Filter by Transaction Status, Payment Method, Location, or Bank",
+            value: selectedFilters,
+            onChange: handleFilterChange,
+            isMulti: true,
+          }}
+        />
 
         {/* Tab Content */}
-        <TabsContent value="withdrawals" className="mt-0">
+        <TabsContent value="withdrawals" className="mt-4">
           <DataTable columns={withdrawalColumns} data={filteredData as Withdrawal[]} />
         </TabsContent>
 
-        <TabsContent value="deposits" className="mt-0">
+        <TabsContent value="deposits" className="mt-4">
           <DataTable columns={depositColumns} data={filteredData as Deposit[]} />
         </TabsContent>
       </Tabs>

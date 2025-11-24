@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useMemo } from "react";
-import { Building2, Globe, PencilLine, Plus, Trash2 } from "lucide-react";
+import { Building2, Globe, PencilLine, Plus, Power, PowerOff, Trash2 } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
 
 import { DataTable } from "@/components/tables/DataTable";
 import Button from "@/components/ui/button/Button";
+import Badge from "@/components/ui/badge/Badge";
 
 import type { GameProvider } from "../types";
 
@@ -96,15 +97,14 @@ const ProvidersTab: React.FC<ProvidersTabProps> = ({
         accessorKey: "isActive",
         header: "Status",
         cell: ({ row }) => (
-          <span
-            className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
-              row.original.isActive
-                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200"
-                : "bg-gray-100 text-gray-600 dark:bg-gray-700/60 dark:text-gray-300"
-            }`}
+          <Badge
+            color={row.original.isActive ? "success" : "neutral"}
+            variant="light"
+            size="sm"
+            className="text-xs font-semibold"
           >
             {row.original.isActive ? "Active" : "Inactive"}
-          </span>
+          </Badge>
         ),
       },
       {
@@ -123,10 +123,18 @@ const ProvidersTab: React.FC<ProvidersTabProps> = ({
             <Button
               variant="outline"
               size="sm"
-              className="px-3 py-2 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
+              className={`px-3 py-2 transition-colors ${
+                row.original.isActive
+                  ? "dark:bg-gray-800 dark:text-gray-100 hover:bg-red-50 hover:text-red-600 hover:border-red-300 dark:hover:bg-red-500/20 dark:hover:text-red-400 dark:hover:border-red-500/30"
+                  : "dark:bg-gray-800 dark:text-gray-100 hover:bg-green-50 hover:text-green-600 hover:border-green-300 dark:hover:bg-green-500/20 dark:hover:text-green-400 dark:hover:border-green-500/30"
+              }`}
               onClick={() => onToggleProvider(row.original)}
             >
-              {row.original.isActive ? "Deactivate" : "Activate"}
+              {row.original.isActive ? (
+                <PowerOff size={16} />
+              ) : (
+                <Power size={16} />
+              )}
             </Button>
             <Button
               variant="outline"
