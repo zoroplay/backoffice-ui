@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useId } from "react";
 import Select, {
   type GroupBase,
   type Props as SelectProps,
@@ -52,9 +52,10 @@ function TableFilterToolbar<
   children,
 }: TableFilterToolbarProps<Option, IsMulti, Group>) {
   const { theme } = useTheme();
+  const instanceId = useId();
 
   const mergedContainerClassName = [
-    "flex flex-wrap items-center justify-between gap-4 border border-dashed border-gray-300 dark:border-gray-700 rounded-2xl p-4",
+    "flex flex-wrap items-center justify-between gap-4 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-2xl p-4",
     className ?? "",
   ]
     .join(" ")
@@ -101,6 +102,7 @@ function TableFilterToolbar<
               <Filter className="h-6 w-6 text-gray-500 dark:text-gray-400" />
             )}
             <Select<Option, IsMulti, Group>
+              instanceId={instanceId}
               className={selectClassName}
               styles={selectStyles}
               {...(restSelectProps as SelectProps<Option, IsMulti, Group>)}

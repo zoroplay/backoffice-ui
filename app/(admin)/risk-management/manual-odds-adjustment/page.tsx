@@ -379,7 +379,7 @@ function ManualOddsAdjustmentPage() {
         return (
           <input
             type="number"
-            value={targetSelection ? targetSelection.odds.toFixed(3) : ""}
+            value={targetSelection ? targetSelection.odds.toFixed(2) : ""}
             onChange={(event) => {
               if (!market || !targetSelection) return;
               handleOddsChange(
@@ -390,7 +390,7 @@ function ManualOddsAdjustmentPage() {
               );
             }}
             className="w-20 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
-            step="0.001"
+            step="0.01"
             min="1"
             disabled={!market || !targetSelection}
           />

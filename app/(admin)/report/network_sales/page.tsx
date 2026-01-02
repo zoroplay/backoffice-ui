@@ -11,6 +11,7 @@ import { NetworkSalesTypes } from "./columns";
 import { networkSalesData } from "../network_sales/data";
 import { withAuth } from "@/utils/withAuth";
 import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
+import { Infotext } from "@/components/common/Info";
 
 // ----------------------
 // Select Options
@@ -48,21 +49,21 @@ function NetworkSales() {
         ? selectedFilter.value.toLowerCase() === row.productType.toLowerCase()
         : true;
 
-      
+
       // Date range filter
       const matchesDate =
         dateRange && dateRange.startDate && dateRange.endDate
           ? (() => {
-              const rowDate = new Date(row.date);
-              const start = new Date(dateRange.startDate);
-              const end = new Date(dateRange.endDate);
+            const rowDate = new Date(row.date);
+            const start = new Date(dateRange.startDate);
+            const end = new Date(dateRange.endDate);
 
-              rowDate.setHours(0, 0, 0, 0);
-              start.setHours(0, 0, 0, 0);
-              end.setHours(23, 59, 59, 999);
+            rowDate.setHours(0, 0, 0, 0);
+            start.setHours(0, 0, 0, 0);
+            end.setHours(23, 59, 59, 999);
 
-              return rowDate >= start && rowDate <= end;
-            })()
+            return rowDate >= start && rowDate <= end;
+          })()
           : true;
 
       return matchesProductType && matchesDate;
@@ -84,6 +85,7 @@ function NetworkSales() {
     <section className="space-y-6 p-4">
       {/* Breadcrumb */}
       <PageBreadcrumb pageTitle="Network Sales" />
+      <Infotext text="Use the filters below to narrow down the results." />
 
       <TableFilterToolbar<FilterOption>
         dateRange={dateRange}
@@ -93,7 +95,7 @@ function NetworkSales() {
           onClear: handleClear,
         }}
         selectProps={{
-          containerClassName: "w-[22rem]",
+          containerClassName: "max-w-[22rem]",
           options: productTypeOptions,
           placeholder: "Filter by Product Type",
           value: selectedFilter,

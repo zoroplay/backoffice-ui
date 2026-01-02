@@ -9,6 +9,7 @@ import { columns } from "./columns";
 import { retailCashData, RetailCashRecord } from "./data";
 import { withAuth } from "@/utils/withAuth";
 import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
+import { Infotext } from "@/components/common/Info";
 
 
 function RetailCashReport() {
@@ -42,6 +43,7 @@ function RetailCashReport() {
     <div className="space-y-6 p-4">
       {/* Breadcrumb */}
       <PageBreadcrumb pageTitle="Retail Cash Report" />
+      <Infotext text="Use the filters below to narrow down the results." />
 
       <TableFilterToolbar
         dateRange={dateRange}

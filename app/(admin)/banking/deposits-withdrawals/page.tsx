@@ -23,6 +23,7 @@ import {
 } from "./withdrawals-data";
 import { deposits, Deposit } from "./deposits-data";
 import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
+import { Infotext } from "@/components/common/Info";
 
 type FilterOption = {
   value: string;
@@ -170,16 +171,16 @@ function DepositsWithdrawalsPage() {
         const matchesDate =
           range && range.startDate && range.endDate
             ? (() => {
-                const rowDate = new Date(row.dateRequested);
-                const start = new Date(range.startDate);
-                const end = new Date(range.endDate);
+              const rowDate = new Date(row.dateRequested);
+              const start = new Date(range.startDate);
+              const end = new Date(range.endDate);
 
-                rowDate.setHours(0, 0, 0, 0);
-                start.setHours(0, 0, 0, 0);
-                end.setHours(23, 59, 59, 999);
+              rowDate.setHours(0, 0, 0, 0);
+              start.setHours(0, 0, 0, 0);
+              end.setHours(23, 59, 59, 999);
 
-                return rowDate >= start && rowDate <= end;
-              })()
+              return rowDate >= start && rowDate <= end;
+            })()
             : true;
 
         return (
@@ -253,16 +254,16 @@ function DepositsWithdrawalsPage() {
         const matchesDate =
           range && range.startDate && range.endDate
             ? (() => {
-                const rowDate = new Date(row.createdDate);
-                const start = new Date(range.startDate);
-                const end = new Date(range.endDate);
+              const rowDate = new Date(row.createdDate);
+              const start = new Date(range.startDate);
+              const end = new Date(range.endDate);
 
-                rowDate.setHours(0, 0, 0, 0);
-                start.setHours(0, 0, 0, 0);
-                end.setHours(23, 59, 59, 999);
+              rowDate.setHours(0, 0, 0, 0);
+              start.setHours(0, 0, 0, 0);
+              end.setHours(23, 59, 59, 999);
 
-                return rowDate >= start && rowDate <= end;
-              })()
+              return rowDate >= start && rowDate <= end;
+            })()
             : true;
 
         return (
@@ -318,7 +319,7 @@ function DepositsWithdrawalsPage() {
   const handleFilterChange = useCallback((selected: MultiValue<FilterOption>) => {
     // Group selections by category and keep only the last one per category
     const categoryMap = new Map<string, FilterOption>();
-    
+
     selected.forEach((option) => {
       const [category] = option.value.split(":");
       if (category) {
@@ -358,6 +359,8 @@ function DepositsWithdrawalsPage() {
             Deposits
           </TabsTrigger>
         </TabsList>
+
+        <Infotext text={`Use the global search to filter by ${activeTab === "withdrawals" ? "Username, Transaction ID, Name on File, or Account Name" : "Username, Transaction ID, or Full Name"}, or use the filters below to narrow down the results.`} />
 
         <TableFilterToolbar<FilterOption, true, GroupBase<FilterOption>>
           dateRange={dateRange}

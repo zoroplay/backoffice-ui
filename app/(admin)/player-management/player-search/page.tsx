@@ -7,7 +7,7 @@ import { columns, Player } from "./columns";
 import { players } from "./data";
 import { withAuth } from "@/utils/withAuth";
 import { useSearch } from "@/context/SearchContext";
-import { Info } from "lucide-react";
+import { Infotext } from "@/components/common/Info";
 
 function PlayerSmartSearchPage() {
   const [filteredData, setFilteredData] = useState<Player[]>(players);
@@ -49,11 +49,9 @@ function PlayerSmartSearchPage() {
 
   return (
     <div className="space-y-6 p-4">
-     
+
       <PageBreadcrumb pageTitle="Player Smart Search" />
-      <span className="flex items-center gap-1 mb-2 text-gray-500 dark:text-gray-400">  <Info className="h-4 w-4" />
-        <p className="text-sm text-gray-500 dark:text-gray-400">Use the global search to filter by Customer Code, Name, Username, Email. </p>
-      </span>
+      <Infotext text="Use the global search to filter by Customer Code, Name, Username, Email." />
 
       {/* Data Table */}
       <div className="overflow-x-auto custom-scrollbar">

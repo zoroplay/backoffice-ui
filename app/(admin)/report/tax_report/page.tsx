@@ -12,6 +12,7 @@ import { taxSummary, taxDetails } from "./data";
 import { withAuth } from "@/utils/withAuth";
 import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
 import type { SingleValue } from "react-select";
+import { Infotext } from "@/components/common/Info";
 
 
 
@@ -74,6 +75,7 @@ function TaxReport() {
     <section className="space-y-6 p-4">
       {/* Breadcrumb */}
       <PageBreadcrumb pageTitle="Tax Report" />
+      <Infotext text="Use the filters below to narrow down the results." />
 
       <TableFilterToolbar<ClientTypeOption>
         dateRange={dateRange}

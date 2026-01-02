@@ -6,7 +6,6 @@ import {
   Clock,
   MonitorSmartphone,
   Eye,
-  Info,
 } from "lucide-react";
 import { addDays, format } from "date-fns";
 
@@ -23,6 +22,7 @@ import { withAuth } from "@/utils/withAuth";
 import LogDetailsModal from "./components/LogDetailsModal";
 import { activityLogsSeed } from "./data";
 import { useSearch } from "@/context/SearchContext";
+import { Infotext } from "@/components/common/Info";
 import type { ActivityFilters, ActivityLog } from "./types";
 
 const defaultFilters: ActivityFilters = {
@@ -95,7 +95,7 @@ function ActivityLogsPage() {
       const searchTerm = query.trim().toLowerCase();
       const matchesSearch = searchTerm
         ? log.username.toLowerCase().includes(searchTerm) ||
-          log.ipAddress.toLowerCase().includes(searchTerm)
+        log.ipAddress.toLowerCase().includes(searchTerm)
         : true;
       const matchesUsername = appliedFilters.username
         ? log.username.toLowerCase().includes(appliedFilters.username.toLowerCase())
@@ -115,8 +115,8 @@ function ActivityLogsPage() {
         activeTab === "all"
           ? true
           : activeTab === "errors"
-          ? isError
-          : !isError;
+            ? isError
+            : !isError;
       return matchesSearch && matchesUsername && matchesIp && matchesDate && matchesTab;
     });
   }, [logs, appliedFilters, activeTab, query]);
@@ -288,10 +288,7 @@ function ActivityLogsPage() {
 
           <TabsContent value={activeTab} className="mt-6 space-y-6">
             <div className="grid gap-4 md:grid-cols-[minmax(0,1fr),minmax(0,0.9fr)] xl:grid-cols-[minmax(0,1.6fr),minmax(0,0.9fr)]">
-              <span className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                <Info className="h-4 w-4 " />
-                Use the global search to filter by Username or IP Address
-              </span>
+              <Infotext text="Use the global search to filter by Username or IP Address" />
               <TableFilterToolbar
                 dateRange={dateRangeForToolbar}
                 onDateRangeChange={handleDateRangeChange}

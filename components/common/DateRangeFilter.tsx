@@ -45,7 +45,7 @@ export function DateRangeFilter({ range, onChange }: DateRangeFilterProps) {
       }
       readOnly
       onClick={() => setIsOpen(true)}
-      className="border py-2 pl-3 rounded focus:outline-none focus:ring focus:ring-zinc-500 dark:bg-gray-900 dark:text-gray-50 dark:placeholder:text-gray-50"
+      className="border-2 py-2 pl-3 rounded focus:outline-none focus:ring focus:ring-zinc-500 dark:bg-gray-900 dark:text-gray-50 dark:placeholder:text-gray-50"
 />
 
       {/* Calendar */}

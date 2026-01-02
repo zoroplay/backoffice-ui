@@ -236,7 +236,7 @@ function Dashboard() {
         </div>
 
         <div className=" w-full mt-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          
+
           <div>
             <p className="text-sm text-gray-500 dark:text-gray-400 uppercase">Date Range</p>
             <DateRangeFilter range={dateRange} onChange={setDateRange} />
@@ -246,7 +246,7 @@ function Dashboard() {
             <FilterActions onSearch={handleApplyFilters} onClear={handleClearFilters} />
           </div>
         </div>
-         </div>
+      </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {summaryMetrics.map((metric) => (
@@ -257,7 +257,7 @@ function Dashboard() {
             <div className="flex items-start justify-between gap-2">
               <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{metric.label}</p>
               {metric.delta && (
-                <Badge variant="light" color={metric.delta.trend === "down" ? "error" : metric.delta.trend === "flat" ? "light" : "success"} size="sm">
+                <Badge variant="light" size="sm">
                   {trendIconMap[metric.delta.trend]}
                 </Badge>
               )}
@@ -282,7 +282,7 @@ function Dashboard() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,2.3fr),minmax(0,1fr)]">
-        <div className="space-y-6">
+        <div className="space-y-6 min-w-0">
           <div className="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-950">
             <Tabs value={activeProductTab} onValueChange={(value) => setActiveProductTab(value as DashboardProductTabKey)}>
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 px-5 py-4 dark:border-gray-800">
@@ -294,7 +294,7 @@ function Dashboard() {
                     Compare performance across product groups, channels, and partners.
                   </p>
                 </div>
-                <TabsList className="bg-transparent gap-2 rounded-full border border-gray-100 p-1 dark:border-gray-800">
+                <TabsList className="hidden md:flex bg-transparent gap-2 rounded-full border border-gray-200 p-1 dark:border-gray-800">
                   {productTabs.map((tab) => (
                     <TabsTrigger
                       key={tab.key}
@@ -328,7 +328,7 @@ function Dashboard() {
                 Updated 5 mins ago
               </Badge>
             </div>
-            <div className="mt-5 h-[320px] w-full">
+            <div className="mt-5 h-[320px] w-full min-w-0">
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={turnoverChartData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
                   <CartesianGrid stroke={chartGridColor} strokeDasharray="4 6" />
@@ -385,9 +385,9 @@ function Dashboard() {
               </ResponsiveContainer>
             </div>
           </div>
-      </div>
+        </div>
 
-        <div className="space-y-6">
+        <div className="space-y-6 min-w-0">
           <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-950">
             <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
               Realtime Data
@@ -419,7 +419,7 @@ function Dashboard() {
                 );
               })}
             </div>
-      </div>
+          </div>
 
           <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-950">
             <Tabs
@@ -473,14 +473,14 @@ function Dashboard() {
                 </TabsContent>
               ))}
             </Tabs>
-      </div>
+          </div>
 
           <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-950">
             <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
               Financial Performance
             </h3>
             <div className="mt-4">{renderFinancialCards(financialPerformance)}</div>
-      </div>
+          </div>
 
           <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-950">
             <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">

@@ -13,6 +13,7 @@ import { useSearch } from "@/context/SearchContext";
 import { columns } from "./columns";
 import { networkSalesData, NetworkSalesReport } from "./data";
 import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
+import { Infotext } from "@/components/common/Info";
 
 const searchableFields: Array<keyof NetworkSalesReport> = ["name"];
 
@@ -74,6 +75,7 @@ function NetworkSalesReportPage() {
   return (
     <div className="space-y-6 p-4">
       <PageBreadcrumb pageTitle="Network Sales Report" />
+      <Infotext text="Use the global search to filter by Agent/Shop Name, or use the filters below to narrow down the results." />
 
       <TableFilterToolbar
         dateRange={dateRange}
@@ -81,7 +83,7 @@ function NetworkSalesReportPage() {
         actions={{
           onSearch: applyFilters,
           onClear: clearFilters,
-        }}          
+        }}
       />
 
       <DataTable columns={columns} data={filteredData} />

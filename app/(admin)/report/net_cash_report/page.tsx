@@ -17,6 +17,7 @@ import {
 } from "./data";
 import { withAuth } from "@/utils/withAuth";
 import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
+import { Infotext } from "@/components/common/Info";
 
 // ----------------------
 // Filter Options
@@ -151,6 +152,7 @@ function NetCashReport() {
     <section className="space-y-6 p-4">
       {/* Breadcrumb */}
       <PageBreadcrumb pageTitle="Net Cash Report" />
+      <Infotext text="Use the filters below to narrow down the results." />
 
       {/* Filters */}
       <TableFilterToolbar<FilterSelection, true, GroupBase<FilterSelection>>
@@ -161,7 +163,7 @@ function NetCashReport() {
           onClear: handleClear,
         }}
         selectProps={{
-          containerClassName: "w-[22rem]",
+          containerClassName: "max-w-[22rem]",
           options: filterOptions,
           components: animatedComponents,
           isMulti: true,

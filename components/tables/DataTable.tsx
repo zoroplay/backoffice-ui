@@ -57,10 +57,10 @@ export function DataTable<TData, TValue>({
   });
 
   return (
-    <div className="w-full">
+    <div className="w-full max-w-full">
       {/* Fixed height container with scroll for table content only */}
-      <div className="w-full overflow-x-auto rounded-md border border-gray-200 dark:border-gray-700 dark:text-gray-100">
-        <div className="relative max-h-[60vh] overflow-y-auto overflow-x-hidden custom-scrollbar">
+      <div className="w-full max-w-full overflow-x-auto rounded-md border-2 border-gray-200 dark:border-gray-700 dark:text-gray-100">
+        <div className="relative max-h-[60vh] overflow-y-auto custom-scrollbar">
           <Table className="w-full min-w-full">
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
@@ -73,9 +73,9 @@ export function DataTable<TData, TValue>({
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
                     </TableHead>
                   ))}
                 </TableRow>
@@ -101,10 +101,10 @@ export function DataTable<TData, TValue>({
                           "whitespace-nowrap text-sm text-center",
                           (
                             cell.column.columnDef.meta as
-                              | {
-                                  cellClassName?: string;
-                                }
-                              | undefined
+                            | {
+                              cellClassName?: string;
+                            }
+                            | undefined
                           )?.cellClassName
                         )}
                       >
@@ -132,7 +132,7 @@ export function DataTable<TData, TValue>({
       </div>
 
       {/* Pagination controls */}
-      <div className="flex items-center justify-between py-4">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between py-4 gap-2 md:gap-0 ">
         {/* Page info */}
         <div className="text-sm text-gray-700 dark:text-gray-300">
           Page {table.getState().pagination.pageIndex + 1} of{" "}
@@ -174,6 +174,7 @@ export function DataTable<TData, TValue>({
             Last
           </Button>
         </div>
+
       </div>
     </div>
   );

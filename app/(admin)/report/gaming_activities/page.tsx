@@ -12,7 +12,7 @@ import { withAuth } from "@/utils/withAuth";
 import { useSearch } from "@/context/SearchContext";
 import type { MultiValue } from "react-select";
 import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
-import { Info } from "lucide-react";
+import { Infotext } from "@/components/common/Info";
 
 
 // ----------------------
@@ -137,10 +137,7 @@ function GamingActivities() {
     <div className="space-y-6 p-4">
       {/* Breadcrumb */}
       <PageBreadcrumb pageTitle="Gaming Activities" />
-      <span className="flex items-center gap-1 mb-2 text-gray-500 dark:text-gray-400">
-        <Info className="h-4 w-4 " />
-        <p className="text-sm  ">Use the global search to filter by Group, or use the filters below to narrow down the results.</p>
-      </span>
+      <Infotext text="Use the global search to filter by Group, or use the filters below to narrow down the results." />  
 
       <TableFilterToolbar<FilterSelection, true, GroupBase<FilterSelection>>
         dateRange={dateRange}
