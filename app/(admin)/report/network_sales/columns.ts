@@ -1,19 +1,18 @@
-// columns/networkSalesColumns.ts
-"use client"
+import { ColumnDef } from "@tanstack/react-table";
 
-import { ColumnDef } from "@tanstack/react-table"
+export type NetworkSalesTypes = {
+  name: string;
+  bets: number;
+  turnover: number;
+  winnings: number;
+  ggr: number;
+  margin: string;
+  ngr: number;
+  date: string;
+  productType: string;
+};
 
-export type NetworkSales = {
-  name: string
-  bets: number
-  turnover: number
-  winnings: number
-  ggr: number
-  margin: string
-  ngr: number
-}
-
-export const networkSalesColumns: ColumnDef<NetworkSales>[] = [
+export const networkSalesColumns: ColumnDef<NetworkSalesTypes>[] = [
   {
     accessorKey: "name",
     header: "Name",
@@ -42,4 +41,4 @@ export const networkSalesColumns: ColumnDef<NetworkSales>[] = [
     accessorKey: "ngr",
     header: "NGR",
   },
-]
+];

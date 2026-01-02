@@ -3,13 +3,14 @@ import React, { ReactNode } from "react";
 interface ButtonProps {
   children: ReactNode; // Button text or content
   size?: "sm" | "md"; // Button size
-  variant?: "primary" | "outline" ; // Button variant
+  variant?: "primary" | "outline" | "error" ; // Button variant
   startIcon?: ReactNode; // Icon before the text
   endIcon?: ReactNode; // Icon after the text
-  onClick?: () => void; // Click handler
+  onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void; // Click handler
   disabled?: boolean; // Disabled state
   className?: string; // Disabled state
   type?: "button" | "submit" | "reset"; // HTML button type
+  form?: string;
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -22,6 +23,7 @@ const Button: React.FC<ButtonProps> = ({
   className = "",
   disabled = false,
   type = "button",
+  form,
 }) => {
   // Size Classes
   const sizeClasses = {
@@ -34,7 +36,9 @@ const Button: React.FC<ButtonProps> = ({
     primary:
       "bg-brand-500 text-white shadow-theme-xs hover:bg-brand-600 disabled:bg-brand-300",
     outline:
-      "bg-white text-gray-700 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-400 dark:ring-gray-700 dark:hover:dark:bg-gray-600 dark:hover:text-gray-300",
+      "bg-white text-gray-700 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-400 dark:ring-gray-700 dark:hover:dark:bg-gray-600 dark:hover:text-gray-300 transition hover:shadow-theme-xs disabled:bg-gray-200 disabled:text-gray-400 disabled:ring-gray-200 disabled:shadow-none",
+    error:
+      "bg-error-500 text-white shadow-theme-xs hover:bg-error-600 disabled:bg-error-300",
   };
 
   return (
@@ -47,6 +51,7 @@ const Button: React.FC<ButtonProps> = ({
       onClick={onClick}
       type={type}
       disabled={disabled}
+      form={form}
     >
       {startIcon && <span className="flex items-center">{startIcon}</span>}
       {children}

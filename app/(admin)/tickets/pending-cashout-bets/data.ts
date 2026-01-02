@@ -1,0 +1,48 @@
+import { PendingCashoutBet } from "./column";
+
+export const pendingCashoutBets: PendingCashoutBet[] = [
+  {
+    betslipId: "QB102394",
+    placedBy: "John Doe",
+    cashoutBy: "Cashier A",
+    selection: "Arsenal vs Chelsea - Over 2.5 Goals",
+    odds: 2.45,
+    stake: 2000,
+    potentialWins: 4900,
+    cashoutAmount: 3500,
+    dateTime: "2025-10-20T14:30:00",
+  },
+  {
+    betslipId: "QB102395",
+    placedBy: "Mary Johnson",
+    cashoutBy: "Agent 14",
+    selection: "Man City to Win",
+    odds: 1.85,
+    stake: 5000,
+    potentialWins: 9250,
+    cashoutAmount: 7300,
+    dateTime: "2025-10-21T09:12:00",
+  },
+  {
+    betslipId: "QB102396",
+    placedBy: "Alex Peters",
+    cashoutBy: "Cashier B",
+    selection: "Liverpool - Both Teams to Score",
+    odds: 2.1,
+    stake: 1500, 
+    potentialWins: 3150,
+    cashoutAmount: 2200,
+    dateTime: "2025-10-22T18:45:00",
+  },
+  {
+    betslipId: "QB102397",
+    placedBy: "Samuel Olu",
+    cashoutBy: "Branch 05",
+    selection: "Barcelona vs Real Madrid - Draw",
+    odds: 3.2,
+    stake: 3000,
+    potentialWins: 9600,
+    cashoutAmount: 6700,
+    dateTime: "2025-10-23T20:10:00",
+  },
+];

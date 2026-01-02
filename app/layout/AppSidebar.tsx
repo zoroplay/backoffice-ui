@@ -10,14 +10,22 @@ import {
   ChevronDownIcon,
   GridIcon,
   HorizontaLDots,
-  ListIcon,
-  PageIcon,
-  PieChartIcon,
   PlugInIcon,
   TableIcon,
   UserCircleIcon,
+  DollarLineIcon,
+  GroupIcon,
+  ChatIcon,
+  ShootingStarIcon,
+  PencilIcon,
+  FileIcon,
+  UserIcon,
+  LockIcon,
+  SportsBallsIcon,
+  CasinoSlotIcon,
+  GiftBoxIcon
 } from "../icons/index";
-import SidebarWidget from "./SidebarWidget";
+import { Gift, X } from "lucide-react";
 
 type NavItem = {
   name: string;
@@ -32,7 +40,7 @@ const navItems: NavItem[] = [
     name: "Dashboard",
     path: "/dashboard",
   },
-  
+
   {
     icon: <CalenderIcon />,
     name: "Reporting & BI",
@@ -48,63 +56,208 @@ const navItems: NavItem[] = [
         path: "/report/net_cash_report",
         pro: false,
       },
-      {        name: "Retail Cash Report",        path: "/report/retail_cash_report",    pro: false,      },
-         {
+      { name: "Retail Cash Report", path: "/report/retail_cash_report", pro: false, },
+      {
         name: "Money Transactions",
         path: "/report/money_transactions",
         pro: false,
       },
-         { name: "Tax Report", path: "/report/tax_report", pro: false },
+      {
+        name: "Tax Report",
+        path: "/report/tax_report",
+        pro: false
+      },
     ],
   },
 
   {
-    icon: <BoxCubeIcon />,
+    icon: <TableIcon />,
     name: "Tickets",
     subItems: [
-      { name: "Quick Bet Search", path: "/", pro: false },
-      { name: "Ticket On Hold", path: "/", pro: false },
-      { name: "Open Bet (Sports)", path: "/", pro: false },
-      { name: "Bets History", path: "/", pro: false },
-      { name: "Pending Cashout Bets", path: "/", pro: false },
-      { name: "Exposure Monitor", path: "/", pro: false },
+      { name: "Quick Bet Search", path: "/tickets/quick_bet", pro: false },
+      { name: "Ticket On Hold", path: "/tickets/ticket-on-hold", pro: false },
+      { name: "Open Bet (Sports)", path: "/tickets/open_bet", pro: false },
+      { name: "Bets History", path: "/tickets/bets-history", pro: false },
+      { name: "Pending Cashout Bets", path: "/tickets/pending-cashout-bets", pro: false },
+
     ],
-  },  
+  },
+
+  {
+    icon: <UserCircleIcon />,
+    name: "Player Management",
+    subItems: [
+      { name: "Player Search", path: "/player-management/player-search", pro: false },
+      { name: "Online Players Report", path: "/player-management/online-players-report", pro: false },
+      { name: "Registration Report", path: "/player-management/registration-report", pro: false },
+      { name: "Player Segmentation", path: "/player-management/player-segmentation", pro: false },
+      { name: "Inactive Players Report", path: "/player-management/inactive-players-report", pro: false },
+      { name: "Frozen Account Report", path: "/player-management/frozen-account-report", pro: false },
+    ],
+  },
+
+  {
+    icon: <GroupIcon />,
+    name: "Network",
+    subItems: [
+      { name: "Agency List", path: "/network/agency-list", pro: false },
+      { name: "Pending Requests", path: "/network/pending-requests", pro: false },
+      { name: "Add New Agent", path: "/network/add-new-agent", pro: false },
+      { name: "Commissions", path: "/network/commissions", pro: false },
+    ],
+  },
+
+  {
+    icon: <DollarLineIcon />,
+    name: "Banking",
+    subItems: [
+      { name: "Deposits/Withdrawals Manager", path: "/banking/deposits-withdrawals", pro: false },
+      { name: "Retail Cash Sales", path: "/banking/retail-cash-sales", pro: false },
+      { name: "CashFlow", path: "/banking/cashflow", pro: false },
+    ]
+  },
+
+  {
+    icon: <Gift />,
+    name: "Bonus Management",
+    subItems: [
+      { name: "Player Bonuses", path: "/bonus-management/player-bonuses", pro: false },
+      { name: "Bonus Campaigns", path: "/bonus-management/bonus-campaigns", pro: false },
+      { name: "Multibet Bonus", path: "/bonus-management/multibet-bonus", pro: false },
+      { name: "Grant Mass Bonuses", path: "/bonus-management/grant-mass-bonuses", pro: false },
+      // { name: "Mass Free Spins", path: "/bonus-management/mass-free-spins", pro: false },
+      { name: "Cashout", path: "/bonus-management/cashout", pro: false },
+      { name: "Player Bonuses Report", path: "/bonus-management/player-bonuses-report", pro: false },
+      { name: "Power Bonus Report", path: "/bonus-management/power-bonus-report", pro: false },
+    ],
+  },
+
+  {
+    icon: <ShootingStarIcon />,
+    name: "Jackpots",
+    subItems: [
+      { name: "Weekly Jackpots", path: "/jackpots/weekly-jackpots", pro: false },
+      { name: "Ticket Jackpots", path: "/jackpots/ticket-jackpots", pro: false },
+      { name: "Tickets", path: "/jackpots/jackpot-tickets", pro: false },
+    ]
+  },
+
+  {
+    icon: <ChatIcon />,
+    name: "Communications",
+    subItems: [
+      { name: "Player Messages", path: "/communications/player-messages", pro: false },
+      { name: "Network Messsages", path: "/communications/network-messages", pro: false },
+      { name: "Mass Inbox Messages", path: "/communications/mass-inbox-messages", pro: false },
+      { name: "SMS settings", path: "/communications/sms-settings", pro: false },
+    ]
+  },
+
+  {
+    icon: <PencilIcon />,
+    name: "Risk Management",
+    subItems: [
+      { name: "Betting Parameters", path: "/risk-management/betting-parameters", pro: false },
+      { name: "Liability", path: "/risk-management/liability", pro: false },
+      { name: "Profitability", path: "/risk-management/profitability", pro: false },
+      { name: "Manual Odds Adjustment", path: "/risk-management/manual-odds-adjustment", pro: false },
+      { name: "Event & Odds Margins", path: "/risk-management/event-odds-margins", pro: false },
+    ]
+  },
+
+  {
+    icon: <SportsBallsIcon />,
+    name: "Pools Management",
+    subItems: [
+      { name: "Fixtures", path: "/pools-management/fixtures", pro: false },
+      { name: "Tickets", path: "/pools-management/tickets", pro: false },
+      { name: "Coupon Tickets", path: "/pools-management/coupon-tickets", pro: false },
+    ]
+  },
+
+  {
+    icon: <FileIcon />,
+    name: "Content Management",
+    subItems: [
+      { name: "Site Menu", path: "/content-management/site-menu", pro: false },
+      { name: "Sports Menu", path: "/content-management/sports-menu", pro: false },
+      { name: "Pages", path: "/content-management/pages", pro: false },
+      { name: "Banners", path: "/content-management/banners", pro: false },
+      { name: "Markets Manager", path: "/content-management/markets-manager", pro: false },
+      { name: "Top Bets", path: "/content-management/top-bets", pro: false },
+    ]
+  },
+
+  {
+    icon: <CasinoSlotIcon />,
+    name: "Casino",
+    path: "/casino",
+  },
+
+  {
+    icon: <GiftBoxIcon />,
+    name: "Promotions",
+    path: "/promotions",
+  },
+
+  {
+    icon: <UserIcon />,
+    name: "User Management",
+    subItems: [
+      { name: "Users", path: "/user-management/users", pro: false },
+      { name: "Roles & Permissions", path: "/user-management/roles-permissions", pro: false },
+      { name: "Activity Logs", path: "/user-management/activity-logs", pro: false },
+    ]
+  },
 ];
 
 const othersItems: NavItem[] = [
   {
-    icon: <PieChartIcon />,
-    name: "Charts",
-    subItems: [
-      { name: "Line Chart", path: "/line-chart", pro: false },
-      { name: "Bar Chart", path: "/bar-chart", pro: false },
-    ],
-  },
-  {
-    icon: <BoxCubeIcon />,
-    name: "UI Elements",
-    subItems: [
-      { name: "Alerts", path: "/alerts", pro: false },
-      { name: "Avatar", path: "/avatars", pro: false },
-      { name: "Badge", path: "/badge", pro: false },
-      { name: "Buttons", path: "/buttons", pro: false },
-      { name: "Images", path: "/images", pro: false },
-      { name: "Videos", path: "/videos", pro: false },
-    ],
-  },
-  {
     icon: <PlugInIcon />,
-    name: "Authentication",
+    name: "Configurations",
     subItems: [
-      { name: "Sign In", path: "/signin", pro: false },
-      { name: "Sign Up", path: "/signup", pro: false },
-    ],
+      { name: "General", path: "/configurations/general", pro: false },
+      { name: "Tipster Settings", path: "/configurations/tipster-settings", pro: false },
+      { name: "Exposure Monitor Settings", path: "/configurations/exposure-monitor-settings", pro: false },
+    ]
   },
+  {
+    icon: <LockIcon />,
+    name: "Change Password",
+    path: "/change-password",
+  },
+  // {
+  //   icon: <PieChartIcon />,
+  //   name: "Charts",
+  //   subItems: [
+  //     { name: "Line Chart", path: "/line-chart", pro: false },
+  //     { name: "Bar Chart", path: "/bar-chart", pro: false },
+  //   ],
+  // },
+  // {
+  //   icon: <BoxCubeIcon />,
+  //   name: "UI Elements",
+  //   subItems: [
+  //     { name: "Alerts", path: "/alerts", pro: false },
+  //     { name: "Avatar", path: "/avatars", pro: false },
+  //     { name: "Badge", path: "/badge", pro: false },
+  //     { name: "Buttons", path: "/buttons", pro: false },
+  //     { name: "Images", path: "/images", pro: false },
+  //     { name: "Videos", path: "/videos", pro: false },
+  //   ],
+  // },
+  // {
+  //   icon: <PlugInIcon />,
+  //   name: "Authentication",
+  //   subItems: [
+  //     { name: "Sign In", path: "/signin", pro: false },
+  //     { name: "Sign Up", path: "/signup", pro: false },
+  //   ],
+  // },
 ];
 
 const AppSidebar: React.FC = () => {
-  const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
+  const { isExpanded, isMobileOpen, isHovered, setIsHovered, toggleMobileSidebar } = useSidebar();
   const pathname = usePathname();
 
   const renderMenuItems = (
@@ -117,22 +270,19 @@ const AppSidebar: React.FC = () => {
           {nav.subItems ? (
             <button
               onClick={() => handleSubmenuToggle(index, menuType)}
-              className={`menu-item group  ${
-                openSubmenu?.type === menuType && openSubmenu?.index === index
+              className={`menu-item group  ${openSubmenu?.type === menuType && openSubmenu?.index === index
                   ? "menu-item-active"
                   : "menu-item-inactive"
-              } cursor-pointer ${
-                !isExpanded && !isHovered
+                } cursor-pointer ${!isExpanded && !isHovered
                   ? "lg:justify-center"
                   : "lg:justify-start"
-              }`}
+                }`}
             >
               <span
-                className={` ${
-                  openSubmenu?.type === menuType && openSubmenu?.index === index
+                className={` ${openSubmenu?.type === menuType && openSubmenu?.index === index
                     ? "menu-item-icon-active"
                     : "menu-item-icon-inactive"
-                }`}
+                  }`}
               >
                 {nav.icon}
               </span>
@@ -141,12 +291,11 @@ const AppSidebar: React.FC = () => {
               )}
               {(isExpanded || isHovered || isMobileOpen) && (
                 <ChevronDownIcon
-                  className={`ml-auto w-5 h-5 transition-transform duration-200  ${
-                    openSubmenu?.type === menuType &&
-                    openSubmenu?.index === index
+                  className={`ml-auto w-5 h-5 transition-transform duration-200  ${openSubmenu?.type === menuType &&
+                      openSubmenu?.index === index
                       ? "rotate-180 text-brand-500"
                       : ""
-                  }`}
+                    }`}
                 />
               )}
             </button>
@@ -154,16 +303,14 @@ const AppSidebar: React.FC = () => {
             nav.path && (
               <Link
                 href={nav.path}
-                className={`menu-item group ${
-                  isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"
-                }`}
+                className={`menu-item group ${isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"
+                  }`}
               >
                 <span
-                  className={`${
-                    isActive(nav.path)
+                  className={`${isActive(nav.path)
                       ? "menu-item-icon-active"
                       : "menu-item-icon-inactive"
-                  }`}
+                    }`}
                 >
                   {nav.icon}
                 </span>
@@ -191,32 +338,29 @@ const AppSidebar: React.FC = () => {
                   <li key={subItem.name}>
                     <Link
                       href={subItem.path}
-                      className={`menu-dropdown-item ${
-                        isActive(subItem.path)
+                      className={`menu-dropdown-item ${isActive(subItem.path)
                           ? "menu-dropdown-item-active"
                           : "menu-dropdown-item-inactive"
-                      }`}
+                        }`}
                     >
                       {subItem.name}
                       <span className="flex items-center gap-1 ml-auto">
                         {subItem.new && (
                           <span
-                            className={`ml-auto ${
-                              isActive(subItem.path)
+                            className={`ml-auto ${isActive(subItem.path)
                                 ? "menu-dropdown-badge-active"
                                 : "menu-dropdown-badge-inactive"
-                            } menu-dropdown-badge `}
+                              } menu-dropdown-badge `}
                           >
                             new
                           </span>
                         )}
                         {subItem.pro && (
                           <span
-                            className={`ml-auto ${
-                              isActive(subItem.path)
+                            className={`ml-auto ${isActive(subItem.path)
                                 ? "menu-dropdown-badge-active"
                                 : "menu-dropdown-badge-inactive"
-                            } menu-dropdown-badge `}
+                              } menu-dropdown-badge `}
                           >
                             pro
                           </span>
@@ -299,11 +443,10 @@ const AppSidebar: React.FC = () => {
 
   return (
     <aside
-      className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 
-        ${
-          isExpanded || isMobileOpen
-            ? "w-[290px]"
-            : isHovered
+      className={`fixed flex flex-col pt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-[60] border-r border-gray-200 
+        ${isExpanded || isMobileOpen
+          ? "w-[290px]"
+          : isHovered
             ? "w-[290px]"
             : "w-[90px]"
         }
@@ -313,10 +456,18 @@ const AppSidebar: React.FC = () => {
       onMouseLeave={() => setIsHovered(false)}
     >
       <div
-        className={`py-8 flex  ${
-          !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
-        }`}
+        className={`py-8 flex relative ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
+          }`}
       >
+        {isMobileOpen && (
+          <button
+            onClick={toggleMobileSidebar}
+            className="absolute top-2 right-0 p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 lg:hidden"
+            aria-label="Close Sidebar"
+          >
+            <X size={24} />
+          </button>
+        )}
         <Link href="/">
           {isExpanded || isHovered || isMobileOpen ? (
             <div className="flex flex-col items-center max-w-md ">
@@ -346,11 +497,10 @@ const AppSidebar: React.FC = () => {
           <div className="flex flex-col gap-4">
             <div>
               <h2
-                className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
-                  !isExpanded && !isHovered
+                className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${!isExpanded && !isHovered
                     ? "lg:justify-center"
                     : "justify-start"
-                }`}
+                  }`}
               >
                 {isExpanded || isHovered || isMobileOpen ? (
                   "Menu"
@@ -363,11 +513,10 @@ const AppSidebar: React.FC = () => {
 
             <div className="">
               <h2
-                className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
-                  !isExpanded && !isHovered
+                className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${!isExpanded && !isHovered
                     ? "lg:justify-center"
                     : "justify-start"
-                }`}
+                  }`}
               >
                 {isExpanded || isHovered || isMobileOpen ? (
                   "Others"
@@ -375,7 +524,7 @@ const AppSidebar: React.FC = () => {
                   <HorizontaLDots />
                 )}
               </h2>
-              {/* {renderMenuItems(othersItems, "others")} */}
+              {renderMenuItems(othersItems, "others")}
             </div>
           </div>
         </nav>

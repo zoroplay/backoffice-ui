@@ -6,6 +6,7 @@ import AppSidebar from "@/app/layout/AppSidebar";
 import Backdrop from "@/app/layout/Backdrop";
 import React from "react";
 import { ThemeProvider } from "@/context/ThemeContext";
+import { SearchProvider } from "@/context/SearchContext";
 import { Outfit } from "next/font/google";
 import "react-date-range/dist/styles.css"; // main style file
 import "react-date-range/dist/theme/default.css";
@@ -22,21 +23,21 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className={`${outfit.variable} dark:bg-gray-900`}>
-        <ThemeProvider>
+    <div className="">
+      <ThemeProvider>
+        <SearchProvider>
           <SidebarProvider>
             <AdminLayoutContent>{children}</AdminLayoutContent>
           </SidebarProvider>
-        </ThemeProvider>
-      </body>
-    </html>
+        </SearchProvider>
+      </ThemeProvider>
+    </div>
   );
 }
 
 function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative min-h-screen xl:flex">
+    <div className=" min-h-screen xl:flex">
       {/* Sidebar and Backdrop */}
       <AppSidebar />
       <Backdrop />
@@ -58,13 +59,15 @@ function MainContent({ children }: { children: React.ReactNode }) {
 
   return (
     <div
-      className={`relative flex-1 transition-all duration-300 ease-in-out ${mainContentMargin}`}
+      className={`fixed inset-0 ${mainContentMargin} flex flex-col transition-all duration-300 ease-in-out`}
     >
-      {/* Header */}
+      {/* Fixed Header */}
       <AppHeader />
-      {/* Page Content */}
-      <div className="p-4 mx-auto  md:p-6">
-        {children}
+      {/* Scrollable Content Area */}
+      <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 custom-scrollbar">
+        <div className="min-h-full p-4 md:p-6">
+          {children}
+        </div>
       </div>
     </div>
   );

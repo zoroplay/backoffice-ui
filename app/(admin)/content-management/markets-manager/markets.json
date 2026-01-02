@@ -1,0 +1,5339 @@
+{
+ "success": true,
+ "message": "Markets retreived",
+ "status": 200,
+ "data": [
+     {
+         "marketID": "282",
+         "marketName": "Innings 1 to 5th top - {$competitor1} total (282)"
+     },
+     {
+         "marketID": "701",
+         "marketName": "Any player to score {milestone} (701)"
+     },
+     {
+         "marketID": "625",
+         "marketName": "{!mapnr} map - player with most deaths (incl. overtime) (625)"
+     },
+     {
+         "marketID": "683",
+         "marketName": "Top batter (683)"
+     },
+     {
+         "marketID": "337",
+         "marketName": "{!mapnr} map knife round - winner (337)"
+     },
+     {
+         "marketID": "1170",
+         "marketName": "Holes {from} to {to} - head2head (1x2) (1170)"
+     },
+     {
+         "marketID": "340",
+         "marketName": "Winner (incl. super over) (340)"
+     },
+     {
+         "marketID": "1084",
+         "marketName": "Exact strikes of {%player} {!appearancenr} time at bat (1084)"
+     },
+     {
+         "marketID": "447",
+         "marketName": "{!periodnr} period - {$competitor1} total (447)"
+     },
+     {
+         "marketID": "1075",
+         "marketName": "{!inningnr} inning - {$competitor2} exact home runs (1075)"
+     },
+     {
+         "marketID": "1066",
+         "marketName": "{!drivenr} drive - {%competitor} result (1066)"
+     },
+     {
+         "marketID": "1102",
+         "marketName": "Top {winners} (teams) (1102)"
+     },
+     {
+         "marketID": "1008",
+         "marketName": "{%competitor} total strokes (1008)"
+     },
+     {
+         "marketID": "69",
+         "marketName": "1st half - {$competitor1} total (69)"
+     },
+     {
+         "marketID": "124",
+         "marketName": "Penalty shootout - {!penaltynr} penalty scored (124)"
+     },
+     {
+         "marketID": "1179",
+         "marketName": "1st Half Result or Match Result (1179)"
+     },
+     {
+         "marketID": "868",
+         "marketName": "Place (868)"
+     },
+     {
+         "marketID": "131",
+         "marketName": "Penalty shootout - odd/even (131)"
+     },
+     {
+         "marketID": "350",
+         "marketName": "{!inningnr} innings - {$competitor2} total at {!dismissalnr} dismissal (350)"
+     },
+     {
+         "marketID": "1094",
+         "marketName": "{!retirementnr} to retire (1094)"
+     },
+     {
+         "marketID": "1140",
+         "marketName": "{!inningnr} innings - {%player1} or {%player2} dismissal method (1140)"
+     },
+     {
+         "marketID": "385",
+         "marketName": "{$competitor1} total 180s (385)"
+     },
+     {
+         "marketID": "62",
+         "marketName": "1st half - {!goalnr} goal (62)"
+     },
+     {
+         "marketID": "351",
+         "marketName": "{!inningnr} innings overs 0 to {overnr} - 1x2 (351)"
+     },
+     {
+         "marketID": "612",
+         "marketName": "Draw no bet (incl. overtime) (612)"
+     },
+     {
+         "marketID": "302",
+         "marketName": "{!quarternr} quarter - draw no bet (302)"
+     },
+     {
+         "marketID": "556",
+         "marketName": "{!mapnr} map - {!xth} dragon (556)"
+     },
+     {
+         "marketID": "110",
+         "marketName": "5 minutes - total from {from} to {to} (110)"
+     },
+     {
+         "marketID": "33",
+         "marketName": "{$competitor1} win to nil (33)"
+     },
+     {
+         "marketID": "970",
+         "marketName": "Total sixes spread (970)"
+     },
+     {
+         "marketID": "700",
+         "marketName": "{!inningnr} innings - any player to score {milestone} (700)"
+     },
+     {
+         "marketID": "673",
+         "marketName": "{!inningnr} innings - {$competitor2} exact runs (673)"
+     },
+     {
+         "marketID": "114",
+         "marketName": "Overtime - which team wins the rest (114)"
+     },
+     {
+         "marketID": "621",
+         "marketName": "{!mapnr} map - odd/even rounds (incl. overtime) (621)"
+     },
+     {
+         "marketID": "31",
+         "marketName": "{$competitor1} clean sheet (31)"
+     },
+     {
+         "marketID": "12",
+         "marketName": "{$competitor1} no bet (12)"
+     },
+     {
+         "marketID": "1011",
+         "marketName": "{%competitor} total birdies (1011)"
+     },
+     {
+         "marketID": "129",
+         "marketName": "Penalty shootout - {$competitor2} total (129)"
+     },
+     {
+         "marketID": "322",
+         "marketName": "{!setnr} set end {endnr} - winner (322)"
+     },
+     {
+         "marketID": "792",
+         "marketName": "Player disposals (792)"
+     },
+     {
+         "marketID": "323",
+         "marketName": "{!setnr} set end {endnr} - total (323)"
+     },
+     {
+         "marketID": "234",
+         "marketName": "Highest scoring quarter (234)"
+     },
+     {
+         "marketID": "176",
+         "marketName": "1st half - corner handicap (176)"
+     },
+     {
+         "marketID": "486",
+         "marketName": "1st half - try handicap (486)"
+     },
+     {
+         "marketID": "376",
+         "marketName": "{!setnr} set leg {legnr} - total darts (376)"
+     },
+     {
+         "marketID": "984",
+         "marketName": "{!inningnr} innings - {$competitor1} total {upsnr} ups spread (984)"
+     },
+     {
+         "marketID": "309",
+         "marketName": "{!setnr} set - point handicap (309)"
+     },
+     {
+         "marketID": "584",
+         "marketName": "5 minutes - {$competitor2} total corners from {from} to {to} (584)"
+     },
+     {
+         "marketID": "27",
+         "marketName": "{$competitor1} odd/even (27)"
+     },
+     {
+         "marketID": "727",
+         "marketName": "{!mapnr} map - total aegis (727)"
+     },
+     {
+         "marketID": "1238",
+         "marketName": "Triple Double (incl. Overtime) (1238)"
+     },
+     {
+         "marketID": "1103",
+         "marketName": "Head2head (teams) (1103)"
+     },
+     {
+         "marketID": "1121",
+         "marketName": "{$competitor1} total home runs (incl. extra innings) (1121)"
+     },
+     {
+         "marketID": "1120",
+         "marketName": "Total home runs (incl. extra innings) (1120)"
+     },
+     {
+         "marketID": "83",
+         "marketName": "2nd half - 1x2 (83)"
+     },
+     {
+         "marketID": "610",
+         "marketName": "1x2 (incl. overtime) (610)"
+     },
+     {
+         "marketID": "791",
+         "marketName": "Player handballs (791)"
+     },
+     {
+         "marketID": "631",
+         "marketName": "{!mapnr} map round {roundnr} - bomb planted (631)"
+     },
+     {
+         "marketID": "95",
+         "marketName": "2nd half - both teams to score (95)"
+     },
+     {
+         "marketID": "980",
+         "marketName": "{$competitor1} joy of six spread (980)"
+     },
+     {
+         "marketID": "887",
+         "marketName": "1 minute - total penalties awarded from {from} to {to} (887)"
+     },
+     {
+         "marketID": "411",
+         "marketName": "US spread (incl. overtime and penalties) (411)"
+     },
+     {
+         "marketID": "820",
+         "marketName": "Halftime/fulltime & exact goals (820)"
+     },
+     {
+         "marketID": "125",
+         "marketName": "Penalty shootout - {!goalnr} goal (125)"
+     },
+     {
+         "marketID": "906",
+         "marketName": "Championship free text market (906)"
+     },
+     {
+         "marketID": "757",
+         "marketName": "{!quarternr} quarter - {$competitor2} total (757)"
+     },
+     {
+         "marketID": "227",
+         "marketName": "{$competitor1} total (incl. overtime) (227)"
+     },
+     {
+         "marketID": "164",
+         "marketName": "Last corner (164)"
+     },
+     {
+         "marketID": "1211",
+         "marketName": "Match to end {score} (1211)"
+     },
+     {
+         "marketID": "430",
+         "marketName": "Correct score [{score}] (430)"
+     },
+     {
+         "marketID": "841",
+         "marketName": "{!inningnr} innings - {$competitor1} total spread at {!dismissalnr} dismissal (841)"
+     },
+     {
+         "marketID": "367",
+         "marketName": "Total legs (367)"
+     },
+     {
+         "marketID": "528",
+         "marketName": "{!setnr} set - total (528)"
+     },
+     {
+         "marketID": "165",
+         "marketName": "Corner handicap (165)"
+     },
+     {
+         "marketID": "1146",
+         "marketName": "{!inningnr} innings - race to {runs} runs (1146)"
+     },
+     {
+         "marketID": "150",
+         "marketName": "1st half - {!bookingnr} booking (150)"
+     },
+     {
+         "marketID": "756",
+         "marketName": "{!quarternr} quarter - {$competitor1} total (756)"
+     },
+     {
+         "marketID": "654",
+         "marketName": "Total run outs (654)"
+     },
+     {
+         "marketID": "475",
+         "marketName": "Try draw no bet (475)"
+     },
+     {
+         "marketID": "914",
+         "marketName": "{%player} total passing yards (incl. overtime) (914)"
+     },
+     {
+         "marketID": "711",
+         "marketName": "{!inningnr} innings - 1x2 (711)"
+     },
+     {
+         "marketID": "655",
+         "marketName": "Total extras (655)"
+     },
+     {
+         "marketID": "613",
+         "marketName": "{!quarternr} quarter - draw no bet (incl. overtime) (613)"
+     },
+     {
+         "marketID": "1239",
+         "marketName": "End of run {runnr} - Leader (1239)"
+     },
+     {
+         "marketID": "858",
+         "marketName": "{$competitor2} or over {total} (858)"
+     },
+     {
+         "marketID": "632",
+         "marketName": "{!mapnr} map round {roundnr} - bomb defused (632)"
+     },
+     {
+         "marketID": "476",
+         "marketName": "Try handicap {hcp} (476)"
+     },
+     {
+         "marketID": "895",
+         "marketName": "{!setnr} set tiebreak - total points (895)"
+     },
+     {
+         "marketID": "206",
+         "marketName": "{!setnr} set - will there be a tiebreak (206)"
+     },
+     {
+         "marketID": "34",
+         "marketName": "{$competitor2} win to nil (34)"
+     },
+     {
+         "marketID": "1056",
+         "marketName": "{!setnr} set - winner & total (1056)"
+     },
+     {
+         "marketID": "1168",
+         "marketName": "Hole {holenr} - head2head (1x2) (1168)"
+     },
+     {
+         "marketID": "784",
+         "marketName": "Batter runs (incl. extra innings) (784)"
+     },
+     {
+         "marketID": "1024",
+         "marketName": "Hole {holenr} - 2 ball (handicap) (1024)"
+     },
+     {
+         "marketID": "5",
+         "marketName": "Winning method (5)"
+     },
+     {
+         "marketID": "774",
+         "marketName": "Player 3-point field goals (incl. overtime) (774)"
+     },
+     {
+         "marketID": "819",
+         "marketName": "Halftime/fulltime & 1st half total (819)"
+     },
+     {
+         "marketID": "130",
+         "marketName": "Penalty shootout - exact goals (130)"
+     },
+     {
+         "marketID": "1002",
+         "marketName": "{!inningnr} innings - {%player} {upsnr} ups spread (1002)"
+     },
+     {
+         "marketID": "593",
+         "marketName": "10 minutes - sending off from {from} to {to} (593)"
+     },
+     {
+         "marketID": "288",
+         "marketName": "{!inningnr} inning - total (288)"
+     },
+     {
+         "marketID": "1221",
+         "marketName": "{!inningnr} innings - {$competitor1}  {!dismissalnr} dismissal method (limited) (1221)"
+     },
+     {
+         "marketID": "876",
+         "marketName": "{!inningnr} innings - {$competitor2} total at {!dismissalnr} dismissal (876)"
+     },
+     {
+         "marketID": "1207",
+         "marketName": "Next {!breaknr} break (1207)"
+     },
+     {
+         "marketID": "454",
+         "marketName": "{!periodnr} period - {$competitor1} clean sheet (454)"
+     },
+     {
+         "marketID": "1161",
+         "marketName": "Head2head (1x2) (1161)"
+     },
+     {
+         "marketID": "303",
+         "marketName": "{!quarternr} quarter - handicap (303)"
+     },
+     {
+         "marketID": "266",
+         "marketName": "{!runnr} run (incl. extra innings) (266)"
+     },
+     {
+         "marketID": "207",
+         "marketName": "{!setnr} set - correct score (207)"
+     },
+     {
+         "marketID": "192",
+         "marketName": "{$competitor1} to win a set (192)"
+     },
+     {
+         "marketID": "1176",
+         "marketName": "1st quarter handicap & 1st quarter total (1176)"
+     },
+     {
+         "marketID": "421",
+         "marketName": "{$competitor1} clean sheet (incl. overtime and penalties) (421)"
+     },
+     {
+         "marketID": "260",
+         "marketName": "{$competitor1} total (incl. extra innings) (260)"
+     },
+     {
+         "marketID": "312",
+         "marketName": "{!setnr} set - {!pointnr} point (312)"
+     },
+     {
+         "marketID": "1076",
+         "marketName": "{!inningnr} inning - total pitches (1076)"
+     },
+     {
+         "marketID": "28",
+         "marketName": "{$competitor2} odd/even (28)"
+     },
+     {
+         "marketID": "829",
+         "marketName": "Bonus ball equals any regular ball (829)"
+     },
+     {
+         "marketID": "783",
+         "marketName": "Batter runs batted in (incl. extra innings) (783)"
+     },
+     {
+         "marketID": "746",
+         "marketName": "{!inningnr} inning - handicap (746)"
+     },
+     {
+         "marketID": "68",
+         "marketName": "1st half - total (68)"
+     },
+     {
+         "marketID": "557",
+         "marketName": "{!mapnr} map - {!xth} baron (557)"
+     },
+     {
+         "marketID": "1044",
+         "marketName": "{!inningnr} inning - {$competitor1} total hits (1044)"
+     },
+     {
+         "marketID": "221",
+         "marketName": "{!scorenr} score (incl. overtime) (221)"
+     },
+     {
+         "marketID": "999",
+         "marketName": "{%player} total player performance spread (999)"
+     },
+     {
+         "marketID": "96",
+         "marketName": "2nd half - {$competitor1} clean sheet (96)"
+     },
+     {
+         "marketID": "1027",
+         "marketName": "Holes {from} to {to} - 3 ball (1027)"
+     },
+     {
+         "marketID": "316",
+         "marketName": "{!setnr} set - draw no bet (316)"
+     },
+     {
+         "marketID": "690",
+         "marketName": "{!inningnr} innings - {$competitor1} odd/even (690)"
+     },
+     {
+         "marketID": "682",
+         "marketName": "Total in the highest scoring over (682)"
+     },
+     {
+         "marketID": "1224",
+         "marketName": "{!inningnr} innings over {overnr} - {$competitor2} run range (1224)"
+     },
+     {
+         "marketID": "638",
+         "marketName": "{!inningnr} innings - {%player} total (638)"
+     },
+     {
+         "marketID": "602",
+         "marketName": "1st half - race to {cornernr} corners (602)"
+     },
+     {
+         "marketID": "1063",
+         "marketName": "{!drivenr} drive play {playnr} - {%competitor} total yards gained (1063)"
+     },
+     {
+         "marketID": "674",
+         "marketName": "{!inningnr} innings - {$competitor1} top batter (674)"
+     },
+     {
+         "marketID": "489",
+         "marketName": "1st half - {$competitor2} total tries (489)"
+     },
+     {
+         "marketID": "1216",
+         "marketName": "{!inningnr} innings - {$competitor1} most economical bowler (1216)"
+     },
+     {
+         "marketID": "412",
+         "marketName": "Total (incl. overtime and penalties) (412)"
+     },
+     {
+         "marketID": "502",
+         "marketName": "{!framenr} frame - odd/even (502)"
+     },
+     {
+         "marketID": "909",
+         "marketName": "{!touchdownnr} touchdown scorer (incl. overtime) (909)"
+     },
+     {
+         "marketID": "482",
+         "marketName": "1st half - try 1x2 (482)"
+     },
+     {
+         "marketID": "148",
+         "marketName": "{$competitor2} sending off (148)"
+     },
+     {
+         "marketID": "1049",
+         "marketName": "Result of {!pitchnr} pitch (1049)"
+     },
+     {
+         "marketID": "157",
+         "marketName": "1st half - {$competitor2} exact bookings (157)"
+     },
+     {
+         "marketID": "565",
+         "marketName": "15 minutes - corner 1x2 from {from} to {to} (565)"
+     },
+     {
+         "marketID": "1093",
+         "marketName": "Fastest lap (1093)"
+     },
+     {
+         "marketID": "281",
+         "marketName": "Innings 1 to 5th top - total (281)"
+     },
+     {
+         "marketID": "611",
+         "marketName": "{!quarternr} quarter - 1x2 (incl. overtime) (611)"
+     },
+     {
+         "marketID": "956",
+         "marketName": "{!timeoutnr} timeout (956)"
+     },
+     {
+         "marketID": "431",
+         "marketName": "Correct score (431)"
+     },
+     {
+         "marketID": "330",
+         "marketName": "{!mapnr} map - winner (incl. overtime) (330)"
+     },
+     {
+         "marketID": "582",
+         "marketName": "5 minutes - total corners from {from} to {to} (582)"
+     },
+     {
+         "marketID": "747",
+         "marketName": "{!inningnr} inning - {$competitor1} total (747)"
+     },
+     {
+         "marketID": "193",
+         "marketName": "{$competitor2} to win a set (193)"
+     },
+     {
+         "marketID": "402",
+         "marketName": "1st half - correct score [{score}] (402)"
+     },
+     {
+         "marketID": "274",
+         "marketName": "Innings 1 to 5 - 1x2 (274)"
+     },
+     {
+         "marketID": "284",
+         "marketName": "Innings {from} to {to} - total (284)"
+     },
+     {
+         "marketID": "467",
+         "marketName": "{!scorenr} scoring play (467)"
+     },
+     {
+         "marketID": "178",
+         "marketName": "1st half - {$competitor1} total corners (178)"
+     },
+     {
+         "marketID": "449",
+         "marketName": "{!periodnr} period - exact goals (449)"
+     },
+     {
+         "marketID": "709",
+         "marketName": "{%player} total player performance (709)"
+     },
+     {
+         "marketID": "294",
+         "marketName": "2nd half - draw no bet (incl. overtime) (294)"
+     },
+     {
+         "marketID": "1012",
+         "marketName": "{%competitor} total pars (1012)"
+     },
+     {
+         "marketID": "257",
+         "marketName": "US Spread (incl. extra innings) (257)"
+     },
+     {
+         "marketID": "691",
+         "marketName": "{!inningnr} innings - {$competitor2} odd/even (691)"
+     },
+     {
+         "marketID": "708",
+         "marketName": "{!inningnr} innings - {%player} total dismissals (708)"
+     },
+     {
+         "marketID": "893",
+         "marketName": "Last goalscorer (893)"
+     },
+     {
+         "marketID": "604",
+         "marketName": "{!penaltynr} penalty scored (604)"
+     },
+     {
+         "marketID": "620",
+         "marketName": "{!mapnr} map - race to {roundnr} rounds (620)"
+     },
+     {
+         "marketID": "1191",
+         "marketName": "Player to be carded (incl. overtime) (1191)"
+     },
+     {
+         "marketID": "295",
+         "marketName": "2nd half - odd/even (incl. overtime) (295)"
+     },
+     {
+         "marketID": "1034",
+         "marketName": "Holes {from} to {to} - 3 ball most pars (1034)"
+     },
+     {
+         "marketID": "344",
+         "marketName": "{!inningnr} innings - {!dismissalnr} dismissal method (limited) (344)"
+     },
+     {
+         "marketID": "630",
+         "marketName": "{!mapnr} map round {roundnr} - {$competitor2} total kills (630)"
+     },
+     {
+         "marketID": "75",
+         "marketName": "1st half - both teams to score (75)"
+     },
+     {
+         "marketID": "574",
+         "marketName": "10 minutes - corner handicap from {from} to {to} (574)"
+     },
+     {
+         "marketID": "509",
+         "marketName": "{!framenr} frame - break 50+ (509)"
+     },
+     {
+         "marketID": "809",
+         "marketName": "{$event} - qualify to play offs (809)"
+     },
+     {
+         "marketID": "840",
+         "marketName": "{!inningnr} innings - {$competitor2} total spread (840)"
+     },
+     {
+         "marketID": "639",
+         "marketName": "Total fours (639)"
+     },
+     {
+         "marketID": "781",
+         "marketName": "Batter hits (incl. extra innings) (781)"
+     },
+     {
+         "marketID": "859",
+         "marketName": "{$competitor2} or under {total} (859)"
+     },
+     {
+         "marketID": "646",
+         "marketName": "Team with highest score at {!dismissalnr} dismissal (646)"
+     },
+     {
+         "marketID": "6",
+         "marketName": "Which team kicks off (6)"
+     },
+     {
+         "marketID": "894",
+         "marketName": "{!setnr} set tiebreak - correct score (894)"
+     },
+     {
+         "marketID": "718",
+         "marketName": "{!inningnr} innings - {!dismissalnr} dismissal method (extended) (718)"
+     },
+     {
+         "marketID": "139",
+         "marketName": "Total bookings (139)"
+     },
+     {
+         "marketID": "357",
+         "marketName": "{!inningnr} innings over {overnr} - {$competitor2} total (357)"
+     },
+     {
+         "marketID": "1235",
+         "marketName": "Player Touchdowns (incl. Overtime) (1235)"
+     },
+     {
+         "marketID": "765",
+         "marketName": "Player receiving yards (incl. overtime) (765)"
+     },
+     {
+         "marketID": "1052",
+         "marketName": "Result of {!hitnr} hit (1052)"
+     },
+     {
+         "marketID": "247",
+         "marketName": "{!gamenr} game - total points (247)"
+     },
+     {
+         "marketID": "1074",
+         "marketName": "{!inningnr} inning - {$competitor1} exact home runs (1074)"
+     },
+     {
+         "marketID": "503",
+         "marketName": "{!framenr} frame - race to {pointnr} points (503)"
+     },
+     {
+         "marketID": "645",
+         "marketName": "{!inningnr} innings over {overnr} - 1x2 (645)"
+     },
+     {
+         "marketID": "285",
+         "marketName": "Innings {from} to {to} - {$competitor1} total (285)"
+     },
+     {
+         "marketID": "48",
+         "marketName": "{$competitor1} to win both halves (48)"
+     },
+     {
+         "marketID": "19",
+         "marketName": "{$competitor1} total (19)"
+     },
+     {
+         "marketID": "13",
+         "marketName": "{$competitor2} no bet (13)"
+     },
+     {
+         "marketID": "663",
+         "marketName": "{!inningnr} innings overs 0 to {overnr} - {$competitor1} total dismissals (663)"
+     },
+     {
+         "marketID": "758",
+         "marketName": "{!quarternr} quarter - winning margin (758)"
+     },
+     {
+         "marketID": "520",
+         "marketName": "{!gamenr} game - {!pointnr} point (520)"
+     },
+     {
+         "marketID": "439",
+         "marketName": "{$competitor1} to score in all periods (439)"
+     },
+     {
+         "marketID": "241",
+         "marketName": "Exact games (241)"
+     },
+     {
+         "marketID": "199",
+         "marketName": "Correct score (199)"
+     },
+     {
+         "marketID": "900",
+         "marketName": "{$competitor1} {!c1goalnr} goalscorer (900)"
+     },
+     {
+         "marketID": "603",
+         "marketName": "{!goalnr} goal - strike zone (603)"
+     },
+     {
+         "marketID": "358",
+         "marketName": "1st over - total (358)"
+     },
+     {
+         "marketID": "213",
+         "marketName": "{!setnr} set game {gamenr} - odd/even points (213)"
+     },
+     {
+         "marketID": "810",
+         "marketName": "{$event} group {group} - top {pos} exact order (810)"
+     },
+     {
+         "marketID": "877",
+         "marketName": "{!inningnr} innings - {$competitor1} total (877)"
+     },
+     {
+         "marketID": "801",
+         "marketName": "{$event} matchday {matchday} - total home team wins (801)"
+     },
+     {
+         "marketID": "537",
+         "marketName": "3-ball (537)"
+     },
+     {
+         "marketID": "1065",
+         "marketName": "{!drivenr} drive play {playnr} - {%competitor} sack (1065)"
+     },
+     {
+         "marketID": "763",
+         "marketName": "Player rushing touchdowns (incl. overtime) (763)"
+     },
+     {
+         "marketID": "1149",
+         "marketName": "{!overnr} over - {$competitor2} total ({ballcount}-ball overs) (1149)"
+     },
+     {
+         "marketID": "1125",
+         "marketName": "{!inningnr} innings - {%player1} to score {milestone} & {%player2} over {total} dismissals (1125)"
+     },
+     {
+         "marketID": "1062",
+         "marketName": "{!drivenr} drive play {playnr} - {%competitor} pass completion (1062)"
+     },
+     {
+         "marketID": "866",
+         "marketName": "Win (866)"
+     },
+     {
+         "marketID": "812",
+         "marketName": "{$event} - to reach the final (812)"
+     },
+     {
+         "marketID": "965",
+         "marketName": "{$competitor1} to lead by {points} (965)"
+     },
+     {
+         "marketID": "879",
+         "marketName": "{$competitor2} to win (879)"
+     },
+     {
+         "marketID": "393",
+         "marketName": "{!setnr} set leg {legnr} - {$competitor2} to score a 180 (393)"
+     },
+     {
+         "marketID": "848",
+         "marketName": "{$event} - top {pos} exact order (848)"
+     },
+     {
+         "marketID": "923",
+         "marketName": "{%player} total rebounds (incl. overtime) (923)"
+     },
+     {
+         "marketID": "737",
+         "marketName": "Maximum consecutive runs by either team (737)"
+     },
+     {
+         "marketID": "391",
+         "marketName": "{!setnr} set leg {legnr} - any player to score a 180 (391)"
+     },
+     {
+         "marketID": "766",
+         "marketName": "Player receiving touchdowns (incl. overtime) (766)"
+     },
+     {
+         "marketID": "837",
+         "marketName": "{$competitor1}/{$competitor2} supremacy (837)"
+     },
+     {
+         "marketID": "1163",
+         "marketName": "{%competitor} total holes won (1163)"
+     },
+     {
+         "marketID": "838",
+         "marketName": "{$competitor2}/{$competitor1} supremacy (838)"
+     },
+     {
+         "marketID": "179",
+         "marketName": "1st half - {$competitor2} total corners (179)"
+     },
+     {
+         "marketID": "1035",
+         "marketName": "Holes {from} to {to} - 3 ball most bogeys (1035)"
+     },
+     {
+         "marketID": "973",
+         "marketName": "{$competitor2} 10/3 sixes head2head spread (973)"
+     },
+     {
+         "marketID": "927",
+         "marketName": "{%player} total batter runs + runs batted in (incl. extra innings) (927)"
+     },
+     {
+         "marketID": "849",
+         "marketName": "Any team winning margin (incl. overtime) (849)"
+     },
+     {
+         "marketID": "136",
+         "marketName": "Booking 1x2 (136)"
+     },
+     {
+         "marketID": "962",
+         "marketName": "{$competitor1} total maximum consecutive points (962)"
+     },
+     {
+         "marketID": "1148",
+         "marketName": "{!overnr} over - {$competitor1} total ({ballcount}-ball overs) (1148)"
+     },
+     {
+         "marketID": "171",
+         "marketName": "{$competitor2} corner range (171)"
+     },
+     {
+         "marketID": "1177",
+         "marketName": "1st half 1x2 & 1st half total (1177)"
+     },
+     {
+         "marketID": "1032",
+         "marketName": "Holes {from} to {to} - 2 ball (1x2) most bogeys (1032)"
+     },
+     {
+         "marketID": "514",
+         "marketName": "{!framenr} frame - {!xth} colour potted (514)"
+     },
+     {
+         "marketID": "547",
+         "marketName": "Double chance & total (547)"
+     },
+     {
+         "marketID": "384",
+         "marketName": "Total 180s (384)"
+     },
+     {
+         "marketID": "1029",
+         "marketName": "Holes {from} to {to} - 2 ball (handicap) (1029)"
+     },
+     {
+         "marketID": "1020",
+         "marketName": "Total 2+ over par (1020)"
+     },
+     {
+         "marketID": "546",
+         "marketName": "Double chance & both teams to score (546)"
+     },
+     {
+         "marketID": "1097",
+         "marketName": "Grid position range of the winner (1097)"
+     },
+     {
+         "marketID": "405",
+         "marketName": "Race to {goalnr} goals (incl. overtime) (405)"
+     },
+     {
+         "marketID": "143",
+         "marketName": "{$competitor1} exact bookings (143)"
+     },
+     {
+         "marketID": "20",
+         "marketName": "{$competitor2} total (20)"
+     },
+     {
+         "marketID": "660",
+         "marketName": "{!inningnr} innings - {$competitor1} total sixes (660)"
+     },
+     {
+         "marketID": "802",
+         "marketName": "{$event} matchday {matchday} - total draws (802)"
+     },
+     {
+         "marketID": "1183",
+         "marketName": "{%player} total shots (incl. overtime) (1183)"
+     },
+     {
+         "marketID": "267",
+         "marketName": "Race to {runnr} runs (incl. extra innings) (267)"
+     },
+     {
+         "marketID": "41",
+         "marketName": "Correct score [{score}] (41)"
+     },
+     {
+         "marketID": "1162",
+         "marketName": "Hole handicap (1162)"
+     },
+     {
+         "marketID": "420",
+         "marketName": "Which team to score (incl. overtime and penalties) (420)"
+     },
+     {
+         "marketID": "117",
+         "marketName": "Overtime - handicap (117)"
+     },
+     {
+         "marketID": "773",
+         "marketName": "Player steals (incl. overtime) (773)"
+     },
+     {
+         "marketID": "446",
+         "marketName": "{!periodnr} period - total (446)"
+     },
+     {
+         "marketID": "413",
+         "marketName": "US total (incl. overtime and penalties) (413)"
+     },
+     {
+         "marketID": "680",
+         "marketName": "Most extras (680)"
+     },
+     {
+         "marketID": "652",
+         "marketName": "{!inningnr} innings over {overnr} - {$competitor1} boundary (652)"
+     },
+     {
+         "marketID": "748",
+         "marketName": "{!inningnr} inning - {$competitor2} total (748)"
+     },
+     {
+         "marketID": "734",
+         "marketName": "{!mapnr} map 10 minutes - total kills from {from} to {to} (734)"
+     },
+     {
+         "marketID": "1019",
+         "marketName": "Total bogeys (1019)"
+     },
+     {
+         "marketID": "1139",
+         "marketName": "{!inningnr} innings over {overnr} - {!deliverynr} delivery {$competitor2} to be a wicket (1139)"
+     },
+     {
+         "marketID": "728",
+         "marketName": "{!mapnr} map - total towers (728)"
+     },
+     {
+         "marketID": "398",
+         "marketName": "{!mapnr} map - {!xth} barracks (398)"
+     },
+     {
+         "marketID": "40",
+         "marketName": "Anytime goalscorer (40)"
+     },
+     {
+         "marketID": "219",
+         "marketName": "Winner (incl. overtime) (219)"
+     },
+     {
+         "marketID": "255",
+         "marketName": "Winning margin (incl. extra innings) (255)"
+     },
+     {
+         "marketID": "392",
+         "marketName": "{!setnr} set leg {legnr} - {$competitor1} to score a 180 (392)"
+     },
+     {
+         "marketID": "899",
+         "marketName": "Player to score 3+ (899)"
+     },
+     {
+         "marketID": "495",
+         "marketName": "Odd/even frames (495)"
+     },
+     {
+         "marketID": "331",
+         "marketName": "{!mapnr} map - round handicap (incl. overtime) (331)"
+     },
+     {
+         "marketID": "377",
+         "marketName": "{!setnr} set leg {legnr} - highest scoring player on {!visitnr} visits (377)"
+     },
+     {
+         "marketID": "1169",
+         "marketName": "Hole {holenr} - draw no bet (1169)"
+     },
+     {
+         "marketID": "313",
+         "marketName": "{!setnr} set - race to {pointnr} points (313)"
+     },
+     {
+         "marketID": "830",
+         "marketName": "Bonus ball range (830)"
+     },
+     {
+         "marketID": "49",
+         "marketName": "{$competitor2} to win both halves (49)"
+     },
+     {
+         "marketID": "123",
+         "marketName": "Penalty shootout - winner (123)"
+     },
+     {
+         "marketID": "55",
+         "marketName": "1st/2nd half both teams to score (55)"
+     },
+     {
+         "marketID": "865",
+         "marketName": "{$competitor2} or any clean sheet (865)"
+     },
+     {
+         "marketID": "618",
+         "marketName": "1st half - {$competitor1} odd/even (618)"
+     },
+     {
+         "marketID": "97",
+         "marketName": "2nd half - {$competitor2} clean sheet (97)"
+     },
+     {
+         "marketID": "662",
+         "marketName": "{!inningnr} innings - {%player} to score {milestone} (662)"
+     },
+     {
+         "marketID": "934",
+         "marketName": "Total sacks (incl. overtime) (934)"
+     },
+     {
+         "marketID": "739",
+         "marketName": "When will the {!runnr} run be scored (incl. extra innings) (739)"
+     },
+     {
+         "marketID": "248",
+         "marketName": "{!gamenr} game - odd/even (248)"
+     },
+     {
+         "marketID": "103",
+         "marketName": "15 minutes - {!goalnr} goal from {from} to {to} (103)"
+     },
+     {
+         "marketID": "994",
+         "marketName": "{!inningnr} innings {!overnr} over - total runs spread (994)"
+     },
+     {
+         "marketID": "1086",
+         "marketName": "Total speed of {!pitchnr} pitch (1086)"
+     },
+     {
+         "marketID": "74",
+         "marketName": "1st half - odd/even (74)"
+     },
+     {
+         "marketID": "846",
+         "marketName": "{!inningnr} innings over {overnr} - {$competitor1} total spread (846)"
+     },
+     {
+         "marketID": "619",
+         "marketName": "1st half - {$competitor2} odd/even (619)"
+     },
+     {
+         "marketID": "776",
+         "marketName": "Player shots (incl. overtime) (776)"
+     },
+     {
+         "marketID": "684",
+         "marketName": "Top bowler (684)"
+     },
+     {
+         "marketID": "18",
+         "marketName": "Total (18)"
+     },
+     {
+         "marketID": "889",
+         "marketName": "Anytime goalscorer & correct score (889)"
+     },
+     {
+         "marketID": "1058",
+         "marketName": "{!scorenr} scoring type (1058)"
+     },
+     {
+         "marketID": "225",
+         "marketName": "Total (incl. overtime) (225)"
+     },
+     {
+         "marketID": "1067",
+         "marketName": "Winner & total (incl. extra innings) (1067)"
+     },
+     {
+         "marketID": "1053",
+         "marketName": "Result of {%player} {!appearancenr} time at bat (1053)"
+     },
+     {
+         "marketID": "501",
+         "marketName": "{!framenr} frame - total points (501)"
+     },
+     {
+         "marketID": "269",
+         "marketName": "{$competitor1} to bat in 9th inning (269)"
+     },
+     {
+         "marketID": "804",
+         "marketName": "{$event} - winner (804)"
+     },
+     {
+         "marketID": "527",
+         "marketName": "{!setnr} set - handicap (527)"
+     },
+     {
+         "marketID": "390",
+         "marketName": "{!setnr} set - {$competitor2} total 180s (390)"
+     },
+     {
+         "marketID": "832",
+         "marketName": "Standard bet (832)"
+     },
+     {
+         "marketID": "831",
+         "marketName": "Draw sum total (incl. bonus ball) (831)"
+     },
+     {
+         "marketID": "1109",
+         "marketName": "{!lapnr} lap - fastest lap (1109)"
+     },
+     {
+         "marketID": "126",
+         "marketName": "Penalty shootout - winning margin (126)"
+     },
+     {
+         "marketID": "650",
+         "marketName": "{!inningnr} innings - {$competitor2} total dismissals (650)"
+     },
+     {
+         "marketID": "651",
+         "marketName": "{!inningnr} innings - {%player} dismissal method (651)"
+     },
+     {
+         "marketID": "1072",
+         "marketName": "{!inningnr} inning - most hits (1072)"
+     },
+     {
+         "marketID": "108",
+         "marketName": "5 minutes - 1x2 from {from} to {to} (108)"
+     },
+     {
+         "marketID": "343",
+         "marketName": "{!inningnr} innings - {!dismissalnr} dismissal method (343)"
+     },
+     {
+         "marketID": "526",
+         "marketName": "Will there be a 5th set (526)"
+     },
+     {
+         "marketID": "88",
+         "marketName": "2nd half - handicap (88)"
+     },
+     {
+         "marketID": "226",
+         "marketName": "US total (incl. overtime) (226)"
+     },
+     {
+         "marketID": "681",
+         "marketName": "Most run outs (681)"
+     },
+     {
+         "marketID": "707",
+         "marketName": "{!inningnr} innings - {$competitor2} total ducks (707)"
+     },
+     {
+         "marketID": "1054",
+         "marketName": "{%player} to strike out {!appearancenr} time at bat (1054)"
+     },
+     {
+         "marketID": "1229",
+         "marketName": "{!inningnr} innings overs 0 to {overnr} - {$competitor1} total (1229)"
+     },
+     {
+         "marketID": "789",
+         "marketName": "Player kicks (789)"
+     },
+     {
+         "marketID": "1050",
+         "marketName": "Hit on {!pitchnr} pitch (1050)"
+     },
+     {
+         "marketID": "1036",
+         "marketName": "{!quarternr} quarter - handicap {hcp} (1036)"
+     },
+     {
+         "marketID": "474",
+         "marketName": "Try double chance (474)"
+     },
+     {
+         "marketID": "1001",
+         "marketName": "{!inningnr} innings overs {overnrX} x {overnrY} - {$competitor2} multi run spread (1001)"
+     },
+     {
+         "marketID": "163",
+         "marketName": "{!cornernr} corner (163)"
+     },
+     {
+         "marketID": "713",
+         "marketName": "Most catches (713)"
+     },
+     {
+         "marketID": "365",
+         "marketName": "Set handicap {hcp} (365)"
+     },
+     {
+         "marketID": "1010",
+         "marketName": "{%competitor} total eagles (1010)"
+     },
+     {
+         "marketID": "300",
+         "marketName": "Race to {pointnr} points (300)"
+     },
+     {
+         "marketID": "119",
+         "marketName": "Overtime 1st half - 1x2 (119)"
+     },
+     {
+         "marketID": "70",
+         "marketName": "1st half - {$competitor2} total (70)"
+     },
+     {
+         "marketID": "577",
+         "marketName": "10 minutes - {$competitor2} total corners from {from} to {to} (577)"
+     },
+     {
+         "marketID": "370",
+         "marketName": "{!setnr} set - which player wins the rest (370)"
+     },
+     {
+         "marketID": "373",
+         "marketName": "{!setnr} set - odd/even legs (373)"
+     },
+     {
+         "marketID": "1130",
+         "marketName": "{!inningnr} innings - {%player1} + {%player2} + {%player3} total (1130)"
+     },
+     {
+         "marketID": "905",
+         "marketName": "1st half - next score (905)"
+     },
+     {
+         "marketID": "803",
+         "marketName": "{$event} matchday {matchday} - total away team wins (803)"
+     },
+     {
+         "marketID": "761",
+         "marketName": "Player passing touchdowns (incl. overtime) (761)"
+     },
+     {
+         "marketID": "1037",
+         "marketName": "Race to {goals} goals (1037)"
+     },
+     {
+         "marketID": "634",
+         "marketName": "Team with highest scoring half (634)"
+     },
+     {
+         "marketID": "1081",
+         "marketName": "{!inningnr} inning - {$competitor1} to record a double or triple play (1081)"
+     },
+     {
+         "marketID": "917",
+         "marketName": "{%player} total carries (incl. overtime) (917)"
+     },
+     {
+         "marketID": "90",
+         "marketName": "2nd half - total (90)"
+     },
+     {
+         "marketID": "1151",
+         "marketName": "Overs 0 to {overnr} - {$competitor2} total ({ballcount}-ball overs) (1151)"
+     },
+     {
+         "marketID": "741",
+         "marketName": "Both teams over {total} (incl. extra innings) (741)"
+     },
+     {
+         "marketID": "246",
+         "marketName": "{!gamenr} game - point handicap (246)"
+     },
+     {
+         "marketID": "235",
+         "marketName": "{!quarternr} quarter - 1x2 (235)"
+     },
+     {
+         "marketID": "440",
+         "marketName": "{$competitor2} to score in all periods (440)"
+     },
+     {
+         "marketID": "433",
+         "marketName": "{$competitor1} highest scoring period (433)"
+     },
+     {
+         "marketID": "839",
+         "marketName": "{!inningnr} innings - {$competitor1} total spread (839)"
+     },
+     {
+         "marketID": "755",
+         "marketName": "{!quarternr} quarter - point range (755)"
+     },
+     {
+         "marketID": "53",
+         "marketName": "{$competitor1} highest scoring half (53)"
+     },
+     {
+         "marketID": "151",
+         "marketName": "1st half - total booking points (151)"
+     },
+     {
+         "marketID": "1219",
+         "marketName": "{!inningnr} innings - {$competitor2} next boundary {boundary number} off Bat, Four or Six (1219)"
+     },
+     {
+         "marketID": "911",
+         "marketName": "Will the fight go the distance (911)"
+     },
+     {
+         "marketID": "190",
+         "marketName": "{$competitor1} total games (190)"
+     },
+     {
+         "marketID": "301",
+         "marketName": "{!quarternr} quarter - winning margin (301)"
+     },
+     {
+         "marketID": "1160",
+         "marketName": "Draw no bet (1160)"
+     },
+     {
+         "marketID": "992",
+         "marketName": "Total wides spread (992)"
+     },
+     {
+         "marketID": "749",
+         "marketName": "{!inningnr} inning - {$competitor1} to score (749)"
+     },
+     {
+         "marketID": "886",
+         "marketName": "1 minute - total offsides from {from} to {to} (886)"
+     },
+     {
+         "marketID": "335",
+         "marketName": "{!mapnr} map - will there be overtime (335)"
+     },
+     {
+         "marketID": "325",
+         "marketName": "{!setnr} set end {endnr} - odd/even (325)"
+     },
+     {
+         "marketID": "1070",
+         "marketName": "{!inningnr} inning - most strikes (1070)"
+     },
+     {
+         "marketID": "633",
+         "marketName": "{!mapnr} map round {roundnr} - player with {!killnr} kill (633)"
+     },
+     {
+         "marketID": "643",
+         "marketName": "{!inningnr} innings - {%player} total fours (643)"
+     },
+     {
+         "marketID": "1234",
+         "marketName": "Player To Score 1st Touchdown (incl. Overtime) (1234)"
+     },
+     {
+         "marketID": "898",
+         "marketName": "Player to score 2+ (898)"
+     },
+     {
+         "marketID": "432",
+         "marketName": "Highest scoring period (432)"
+     },
+     {
+         "marketID": "916",
+         "marketName": "{%player} total passing touchdowns (incl. overtime) (916)"
+     },
+     {
+         "marketID": "1064",
+         "marketName": "{!drivenr} drive play {playnr} - {%competitor} new first down (1064)"
+     },
+     {
+         "marketID": "1137",
+         "marketName": "{!inningnr} innings over {overnr} - {!deliverynr} delivery {$competitor2} exact runs (1137)"
+     },
+     {
+         "marketID": "324",
+         "marketName": "{!setnr} set end {endnr} - exact points (324)"
+     },
+     {
+         "marketID": "162",
+         "marketName": "Corner 1x2 (162)"
+     },
+     {
+         "marketID": "599",
+         "marketName": "5 minutes - {$competitor1} sending off from {from} to {to} (599)"
+     },
+     {
+         "marketID": "1047",
+         "marketName": "Innings 1 to 5 - {$competitor1} total hits (1047)"
+     },
+     {
+         "marketID": "318",
+         "marketName": "{!setnr} set - {$competitor1} total (318)"
+     },
+     {
+         "marketID": "426",
+         "marketName": "{!periodnr} period 1x2 & winner (incl. overtime and penalties) (426)"
+     },
+     {
+         "marketID": "170",
+         "marketName": "{$competitor1} corner range (170)"
+     },
+     {
+         "marketID": "606",
+         "marketName": "{!inningnr} innings - {$competitor1} total (606)"
+     },
+     {
+         "marketID": "685",
+         "marketName": "Player of the match (685)"
+     },
+     {
+         "marketID": "46",
+         "marketName": "Halftime/fulltime correct score (46)"
+     },
+     {
+         "marketID": "861",
+         "marketName": "Draw or both teams to score (861)"
+     },
+     {
+         "marketID": "1152",
+         "marketName": "{%player} total rushing touchdowns (incl. overtime) (1152)"
+     },
+     {
+         "marketID": "463",
+         "marketName": "Overtime - double chance (463)"
+     },
+     {
+         "marketID": "116",
+         "marketName": "Overtime - total (116)"
+     },
+     {
+         "marketID": "653",
+         "marketName": "{!inningnr} innings over {overnr} - {$competitor2} boundary (653)"
+     },
+     {
+         "marketID": "926",
+         "marketName": "{%player} total bases (incl. extra innings) (926)"
+     },
+     {
+         "marketID": "328",
+         "marketName": "Total maps (328)"
+     },
+     {
+         "marketID": "228",
+         "marketName": "{$competitor2} total (incl. overtime) (228)"
+     },
+     {
+         "marketID": "541",
+         "marketName": "Double chance (match) & 2nd half both teams score (541)"
+     },
+     {
+         "marketID": "699",
+         "marketName": "Team with top bowler (699)"
+     },
+     {
+         "marketID": "925",
+         "marketName": "{%player} total pitcher strikeouts (incl. extra innings) (925)"
+     },
+     {
+         "marketID": "644",
+         "marketName": "{!inningnr} innings - {%player} total sixes (644)"
+     },
+     {
+         "marketID": "664",
+         "marketName": "{!inningnr} innings overs 0 to {overnr} - {$competitor2} total dismissals (664)"
+     },
+     {
+         "marketID": "1085",
+         "marketName": "Exact balls of {%player} {!appearancenr} time at bat (1085)"
+     },
+     {
+         "marketID": "874",
+         "marketName": "Show (874)"
+     },
+     {
+         "marketID": "102",
+         "marketName": "15 minutes - 1x2 from {from} to {to} (102)"
+     },
+     {
+         "marketID": "329",
+         "marketName": "Correct score (in maps) (329)"
+     },
+     {
+         "marketID": "1095",
+         "marketName": "{!stopnr} pit stop (1095)"
+     },
+     {
+         "marketID": "1209",
+         "marketName": "{!setnr} set - exact score group (1209)"
+     },
+     {
+         "marketID": "452",
+         "marketName": "{!periodnr} period - both teams to score (452)"
+     },
+     {
+         "marketID": "972",
+         "marketName": "{$competitor1} 10/3 sixes head2head spread (972)"
+     },
+     {
+         "marketID": "297",
+         "marketName": "Total (over-exact-under) (297)"
+     },
+     {
+         "marketID": "768",
+         "marketName": "Player points (incl. overtime) (768)"
+     },
+     {
+         "marketID": "145",
+         "marketName": "Booking point range (145)"
+     },
+     {
+         "marketID": "491",
+         "marketName": "Which player wins the rest of the match (491)"
+     },
+     {
+         "marketID": "84",
+         "marketName": "2nd half - {!goalnr} goal (84)"
+     },
+     {
+         "marketID": "1128",
+         "marketName": "{!inningnr} innings - {%player1} & {%player2} to score {milestone} & {%player3} over {total} dismissals (1128)"
+     },
+     {
+         "marketID": "672",
+         "marketName": "{!inningnr} innings - {$competitor1} exact runs (672)"
+     },
+     {
+         "marketID": "888",
+         "marketName": "Anytime goalscorer & 1x2 (888)"
+     },
+     {
+         "marketID": "605",
+         "marketName": "{!inningnr} innings - total (605)"
+     },
+     {
+         "marketID": "290",
+         "marketName": "Winning margin (incl. overtime) (290)"
+     },
+     {
+         "marketID": "549",
+         "marketName": "{$competitor1} multigoals (549)"
+     },
+     {
+         "marketID": "790",
+         "marketName": "Player marks (790)"
+     },
+     {
+         "marketID": "569",
+         "marketName": "15 minutes - {$competitor1} total corners from {from} to {to} (569)"
+     },
+     {
+         "marketID": "118",
+         "marketName": "Overtime - correct score [{score}] (118)"
+     },
+     {
+         "marketID": "974",
+         "marketName": "{!inningnr} innings - {$competitor1} total sixes spread (974)"
+     },
+     {
+         "marketID": "548",
+         "marketName": "Multigoals (548)"
+     },
+     {
+         "marketID": "483",
+         "marketName": "1st half - try double chance (483)"
+     },
+     {
+         "marketID": "817",
+         "marketName": "{!inningnr} innings - {$competitor2} {!dismissalnr} dismissal method (extended) (817)"
+     },
+     {
+         "marketID": "597",
+         "marketName": "5 minutes - total bookings from {from} to {to} (597)"
+     },
+     {
+         "marketID": "180",
+         "marketName": "1st half - {$competitor1} exact corners (180)"
+     },
+     {
+         "marketID": "860",
+         "marketName": "{$competitor1} or both teams to score (860)"
+     },
+     {
+         "marketID": "740",
+         "marketName": "Total scoreless innings (740)"
+     },
+     {
+         "marketID": "534",
+         "marketName": "Championship free text market (534)"
+     },
+     {
+         "marketID": "1100",
+         "marketName": "Total overtakings (1100)"
+     },
+     {
+         "marketID": "967",
+         "marketName": "Any team to lead by {points} (967)"
+     },
+     {
+         "marketID": "782",
+         "marketName": "Batter home runs (incl. extra innings) (782)"
+     },
+     {
+         "marketID": "371",
+         "marketName": "{!setnr} set - leg handicap (371)"
+     },
+     {
+         "marketID": "897",
+         "marketName": "Overtime - correct score (897)"
+     },
+     {
+         "marketID": "1141",
+         "marketName": "{!inningnr} innings over {overnr} - {%player1} & {%player2} to hit a boundary (1141)"
+     },
+     {
+         "marketID": "818",
+         "marketName": "Halftime/fulltime & total (818)"
+     },
+     {
+         "marketID": "853",
+         "marketName": "{$competitor2} to win exactly 2 sets (853)"
+     },
+     {
+         "marketID": "1189",
+         "marketName": "{%player} total tackles (incl. overtime) (1189)"
+     },
+     {
+         "marketID": "73",
+         "marketName": "1st half - {$competitor2} exact goals (73)"
+     },
+     {
+         "marketID": "181",
+         "marketName": "1st half - {$competitor2} exact corners (181)"
+     },
+     {
+         "marketID": "554",
+         "marketName": "{!mapnr} map - kill draw no bet (554)"
+     },
+     {
+         "marketID": "380",
+         "marketName": "{!setnr} set leg {legnr} - checkout colour (380)"
+     },
+     {
+         "marketID": "419",
+         "marketName": "Odd/even (incl. overtime and penalties) (419)"
+     },
+     {
+         "marketID": "8",
+         "marketName": "{!goalnr} goal (8)"
+     },
+     {
+         "marketID": "1026",
+         "marketName": "Hole {holenr} - {%competitor} under par (1026)"
+     },
+     {
+         "marketID": "775",
+         "marketName": "Player goals (incl. overtime) (775)"
+     },
+     {
+         "marketID": "555",
+         "marketName": "{!mapnr} map - kill handicap (555)"
+     },
+     {
+         "marketID": "98",
+         "marketName": "2nd half - correct score (98)"
+     },
+     {
+         "marketID": "220",
+         "marketName": "Will there be overtime (220)"
+     },
+     {
+         "marketID": "208",
+         "marketName": "{!setnr} set - race to {games} games (208)"
+     },
+     {
+         "marketID": "91",
+         "marketName": "2nd half - {$competitor1} total (91)"
+     },
+     {
+         "marketID": "259",
+         "marketName": "US Total (incl. extra innings) (259)"
+     },
+     {
+         "marketID": "455",
+         "marketName": "{!periodnr} period - {$competitor2} clean sheet (455)"
+     },
+     {
+         "marketID": "315",
+         "marketName": "{!setnr} set - 1x2 (315)"
+     },
+     {
+         "marketID": "963",
+         "marketName": "{$competitor2} total maximum consecutive points (963)"
+     },
+     {
+         "marketID": "268",
+         "marketName": "Will there be an extra inning (268)"
+     },
+     {
+         "marketID": "1092",
+         "marketName": "Winner of group (1092)"
+     },
+     {
+         "marketID": "444",
+         "marketName": "{!periodnr} period - {!goalnr} goal (444)"
+     },
+     {
+         "marketID": "875",
+         "marketName": "{!inningnr} innings - {$competitor1} total at {!dismissalnr} dismissal (875)"
+     },
+     {
+         "marketID": "480",
+         "marketName": "{$competitor2} total tries (480)"
+     },
+     {
+         "marketID": "671",
+         "marketName": "{!inningnr} innings - {$competitor2} total in the highest scoring over (671)"
+     },
+     {
+         "marketID": "137",
+         "marketName": "{!bookingnr} booking (137)"
+     },
+     {
+         "marketID": "191",
+         "marketName": "{$competitor2} total games (191)"
+     },
+     {
+         "marketID": "287",
+         "marketName": "{!inningnr} inning - 1x2 (287)"
+     },
+     {
+         "marketID": "473",
+         "marketName": "Try 1x2 (473)"
+     },
+     {
+         "marketID": "1142",
+         "marketName": "{!inningnr} innings over {overnr} - {%player1} & {%player2} over {total} (1142)"
+     },
+     {
+         "marketID": "1057",
+         "marketName": "{!quarternr} quarter - race to {pointnr} points (1057)"
+     },
+     {
+         "marketID": "352",
+         "marketName": "{!inningnr} innings overs 0 to {overnr} - {$competitor1} total (352)"
+     },
+     {
+         "marketID": "1143",
+         "marketName": "{!inningnr} innings over {overnr} - {$competitor1} to score a boundary four & a six (1143)"
+     },
+     {
+         "marketID": "996",
+         "marketName": "Total run outs spread (996)"
+     },
+     {
+         "marketID": "847",
+         "marketName": "{!inningnr} innings over {overnr} - {$competitor2} total spread (847)"
+     },
+     {
+         "marketID": "754",
+         "marketName": "{!quarternr} quarter - which team wins the rest (754)"
+     },
+     {
+         "marketID": "726",
+         "marketName": "{!mapnr} map - total kills (726)"
+     },
+     {
+         "marketID": "563",
+         "marketName": "Race to {pointnr} points (563)"
+     },
+     {
+         "marketID": "47",
+         "marketName": "Halftime/fulltime (47)"
+     },
+     {
+         "marketID": "568",
+         "marketName": "15 minutes - total corners from {from} to {to} (568)"
+     },
+     {
+         "marketID": "540",
+         "marketName": "Double chance (match) & 1st half both teams score (540)"
+     },
+     {
+         "marketID": "507",
+         "marketName": "{!framenr} frame - {$competitor1} break 100+ (507)"
+     },
+     {
+         "marketID": "173",
+         "marketName": "1st half - corner 1x2 (173)"
+     },
+     {
+         "marketID": "7",
+         "marketName": "Which team wins the rest of the match (7)"
+     },
+     {
+         "marketID": "918",
+         "marketName": "{%player} total rushing yards (incl. overtime) (918)"
+     },
+     {
+         "marketID": "1018",
+         "marketName": "Total pars (1018)"
+     },
+     {
+         "marketID": "1131",
+         "marketName": "Both teams to score {milestone} (1131)"
+     },
+     {
+         "marketID": "488",
+         "marketName": "1st half - {$competitor1} total tries (488)"
+     },
+     {
+         "marketID": "678",
+         "marketName": "{!inningnr} innings - {$competitor1} last player standing (678)"
+     },
+     {
+         "marketID": "583",
+         "marketName": "5 minutes - {$competitor1} total corners from {from} to {to} (583)"
+     },
+     {
+         "marketID": "245",
+         "marketName": "{!gamenr} game - winner (245)"
+     },
+     {
+         "marketID": "1017",
+         "marketName": "Total birdies (1017)"
+     },
+     {
+         "marketID": "445",
+         "marketName": "{!periodnr} period - handicap {hcp} (445)"
+     },
+     {
+         "marketID": "904",
+         "marketName": "Next scoring type (incl. overtime) (904)"
+     },
+     {
+         "marketID": "261",
+         "marketName": "{$competitor2} total (incl. extra innings) (261)"
+     },
+     {
+         "marketID": "36",
+         "marketName": "Total & both teams to score (36)"
+     },
+     {
+         "marketID": "101",
+         "marketName": "When will the {!goalnr} goal be scored (10 min interval) (101)"
+     },
+     {
+         "marketID": "272",
+         "marketName": "Highest scoring inning (272)"
+     },
+     {
+         "marketID": "982",
+         "marketName": "Total {upsnr} ups spread (982)"
+     },
+     {
+         "marketID": "198",
+         "marketName": "Odd/even games (198)"
+     },
+     {
+         "marketID": "1236",
+         "marketName": "First Point Scorer (incl. Overtime) (1236)"
+     },
+     {
+         "marketID": "310",
+         "marketName": "{!setnr} set - total points (310)"
+     },
+     {
+         "marketID": "378",
+         "marketName": "{!setnr} set leg {legnr} - point range on {!visitnr} visit (378)"
+     },
+     {
+         "marketID": "513",
+         "marketName": "{!framenr} frame - player to pot {!xth} ball (513)"
+     },
+     {
+         "marketID": "460",
+         "marketName": "{!periodnr} period - handicap (460)"
+     },
+     {
+         "marketID": "262",
+         "marketName": "Total (over-exact-under) (incl. extra innings) (262)"
+     },
+     {
+         "marketID": "338",
+         "marketName": "{!mapnr} map round {roundnr} - winner (338)"
+     },
+     {
+         "marketID": "1171",
+         "marketName": "Holes {from} to {to} - draw no bet (1171)"
+     },
+     {
+         "marketID": "510",
+         "marketName": "{!framenr} frame - {$competitor1} break 50+ (510)"
+     },
+     {
+         "marketID": "496",
+         "marketName": "Race to {framenr} frames (496)"
+     },
+     {
+         "marketID": "201",
+         "marketName": "Double result (1st set/match) (201)"
+     },
+     {
+         "marketID": "1178",
+         "marketName": "1st half handicap & 1st half total (1178)"
+     },
+     {
+         "marketID": "706",
+         "marketName": "{!inningnr} innings - {$competitor1} total ducks (706)"
+     },
+     {
+         "marketID": "497",
+         "marketName": "Frames {fromframe} to {toframe} - {frames} consecutive frames winner (497)"
+     },
+     {
+         "marketID": "764",
+         "marketName": "Player rushing yards (incl. overtime) (764)"
+     },
+     {
+         "marketID": "25",
+         "marketName": "Goal range (25)"
+     },
+     {
+         "marketID": "26",
+         "marketName": "Odd/even (26)"
+     },
+     {
+         "marketID": "56",
+         "marketName": "{$competitor1} to score in both halves (56)"
+     },
+     {
+         "marketID": "218",
+         "marketName": "{!setnr} set game {gamenr} - {!pointnr} point (218)"
+     },
+     {
+         "marketID": "279",
+         "marketName": "Innings 1 to 5th top - 1x2 (279)"
+     },
+     {
+         "marketID": "128",
+         "marketName": "Penalty shootout - {$competitor1} total (128)"
+     },
+     {
+         "marketID": "1129",
+         "marketName": "{!inningnr} innings - {%player1} + {%player2} total (1129)"
+     },
+     {
+         "marketID": "45",
+         "marketName": "Correct score (45)"
+     },
+     {
+         "marketID": "1123",
+         "marketName": "{!inningnr} inning - Winner (1123)"
+     },
+     {
+         "marketID": "907",
+         "marketName": "Short term free text market (907)"
+     },
+     {
+         "marketID": "591",
+         "marketName": "10 minutes - booking 1x2 from {from} to {to} (591)"
+     },
+     {
+         "marketID": "346",
+         "marketName": "{!inningnr} innings - {$competitor2} run range (346)"
+     },
+     {
+         "marketID": "254",
+         "marketName": "Handicap {hcp} (incl. extra innings) (254)"
+     },
+     {
+         "marketID": "1045",
+         "marketName": "{!inningnr} inning - {$competitor2} total hits (1045)"
+     },
+     {
+         "marketID": "273",
+         "marketName": "Exact runs in highest scoring inning (273)"
+     },
+     {
+         "marketID": "418",
+         "marketName": "{$competitor2} exact goals (incl. overtime and penalties) (418)"
+     },
+     {
+         "marketID": "743",
+         "marketName": "Innings {from} to {to} - 1x2 (743)"
+     },
+     {
+         "marketID": "932",
+         "marketName": "Total field goals made (incl. overtime) (932)"
+     },
+     {
+         "marketID": "750",
+         "marketName": "{!inningnr} inning - {$competitor2} to score (750)"
+     },
+     {
+         "marketID": "576",
+         "marketName": "10 minutes - {$competitor1} total corners from {from} to {to} (576)"
+     },
+     {
+         "marketID": "81",
+         "marketName": "1st half - correct score (81)"
+     },
+     {
+         "marketID": "142",
+         "marketName": "Exact bookings (142)"
+     },
+     {
+         "marketID": "665",
+         "marketName": "{!daynr} day session {sessionnr} - total (665)"
+     },
+     {
+         "marketID": "253",
+         "marketName": "Which team wins the rest of the match (incl. extra innings) (253)"
+     },
+     {
+         "marketID": "404",
+         "marketName": "{!goalnr} goal (incl. overtime) (404)"
+     },
+     {
+         "marketID": "61",
+         "marketName": "1st half - which team wins the rest (61)"
+     },
+     {
+         "marketID": "692",
+         "marketName": "{!inningnr} innings - {$competitor1} to finish with a boundary (692)"
+     },
+     {
+         "marketID": "735",
+         "marketName": "{!mapnr} map - player with highest creep score (735)"
+     },
+     {
+         "marketID": "657",
+         "marketName": "{!inningnr} innings - {!dismissalnr} batter out (657)"
+     },
+     {
+         "marketID": "796",
+         "marketName": "Player runs (796)"
+     },
+     {
+         "marketID": "1214",
+         "marketName": "{!inningnr} innings - {%player} total deliveries faced (1214)"
+     },
+     {
+         "marketID": "417",
+         "marketName": "{$competitor1} exact goals (incl. overtime and penalties) (417)"
+     },
+     {
+         "marketID": "356",
+         "marketName": "{!inningnr} innings over {overnr} - {$competitor1} total (356)"
+     },
+     {
+         "marketID": "535",
+         "marketName": "Short term free text market (535)"
+     },
+     {
+         "marketID": "127",
+         "marketName": "Penalty shootout - total (127)"
+     },
+     {
+         "marketID": "989",
+         "marketName": "{!inningnr} innings overs 0 to {overnr} - {$competitor2} supremacy spread (989)"
+     },
+     {
+         "marketID": "1042",
+         "marketName": "{$competitor2} total hits (incl. extra innings) (1042)"
+     },
+     {
+         "marketID": "719",
+         "marketName": "Player Saves (incl. overtime) (719)"
+     },
+     {
+         "marketID": "172",
+         "marketName": "Odd/even corners (172)"
+     },
+     {
+         "marketID": "379",
+         "marketName": "{!setnr} set leg {legnr} - checkout score {score}+ (379)"
+     },
+     {
+         "marketID": "656",
+         "marketName": "{!inningnr} innings - {!dismissalnr} partnership 1x2 (656)"
+     },
+     {
+         "marketID": "670",
+         "marketName": "{!inningnr} innings - {$competitor1} total in the highest scoring over (670)"
+     },
+     {
+         "marketID": "1226",
+         "marketName": "{!inningnr} innings - {$competitor2} run range (1226)"
+     },
+     {
+         "marketID": "1181",
+         "marketName": "Winning Method (Double Chance) (1181)"
+     },
+     {
+         "marketID": "590",
+         "marketName": "15 minutes - {$competitor2} sending off from {from} to {to} (590)"
+     },
+     {
+         "marketID": "1237",
+         "marketName": "Double Double (incl. Overtime) (1237)"
+     },
+     {
+         "marketID": "580",
+         "marketName": "5 minutes - {!cornernr} corner from {from} to {to} (580)"
+     },
+     {
+         "marketID": "677",
+         "marketName": "{!inningnr} innings - {$competitor2} top bowler (677)"
+     },
+     {
+         "marketID": "10",
+         "marketName": "Double chance (10)"
+     },
+     {
+         "marketID": "697",
+         "marketName": "Total dismissals (697)"
+     },
+     {
+         "marketID": "1028",
+         "marketName": "Holes {from} to {to} - 2 ball (1x2) (1028)"
+     },
+     {
+         "marketID": "543",
+         "marketName": "2nd half - 1x2 & both teams to score (543)"
+     },
+     {
+         "marketID": "1107",
+         "marketName": "Laps {from} to {to} - fastest lap (1107)"
+     },
+     {
+         "marketID": "617",
+         "marketName": "{$competitor2} odd/even (incl. overtime) (617)"
+     },
+     {
+         "marketID": "696",
+         "marketName": "Total wides (696)"
+     },
+     {
+         "marketID": "712",
+         "marketName": "Most keeper catches (712)"
+     },
+     {
+         "marketID": "465",
+         "marketName": "Overtime - {$competitor1} no bet (465)"
+     },
+     {
+         "marketID": "1225",
+         "marketName": "{!inningnr} innings - {$competitor1} run range (1225)"
+     },
+     {
+         "marketID": "998",
+         "marketName": "Man of the match player performance spread (998)"
+     },
+     {
+         "marketID": "1016",
+         "marketName": "Total eagles (1016)"
+     },
+     {
+         "marketID": "732",
+         "marketName": "{!mapnr} map - race to {xth} net worth (732)"
+     },
+     {
+         "marketID": "16",
+         "marketName": "Handicap (16)"
+     },
+     {
+         "marketID": "624",
+         "marketName": "{!mapnr} map - player with most kills (incl. overtime) (624)"
+     },
+     {
+         "marketID": "1043",
+         "marketName": "{!inningnr} inning - total hits (1043)"
+     },
+     {
+         "marketID": "714",
+         "marketName": "Most stumpings (714)"
+     },
+     {
+         "marketID": "913",
+         "marketName": "Winner & round range (913)"
+     },
+     {
+         "marketID": "154",
+         "marketName": "1st half - {$competitor2} total bookings (154)"
+     },
+     {
+         "marketID": "168",
+         "marketName": "{$competitor2} total corners (168)"
+     },
+     {
+         "marketID": "975",
+         "marketName": "{!inningnr} innings - {$competitor2} total sixes spread (975)"
+     },
+     {
+         "marketID": "854",
+         "marketName": "{$competitor1} or over {total} (854)"
+     },
+     {
+         "marketID": "816",
+         "marketName": "{!inningnr} innings - {$competitor1} {!dismissalnr} dismissal method (extended) (816)"
+     },
+     {
+         "marketID": "1098",
+         "marketName": "{%competitor} total overtakings (1098)"
+     },
+     {
+         "marketID": "579",
+         "marketName": "5 minutes - corner 1x2 from {from} to {to} (579)"
+     },
+     {
+         "marketID": "140",
+         "marketName": "{$competitor1} total bookings (140)"
+     },
+     {
+         "marketID": "484",
+         "marketName": "1st half - try draw no bet (484)"
+     },
+     {
+         "marketID": "289",
+         "marketName": "Which team wins the jump ball (289)"
+     },
+     {
+         "marketID": "1048",
+         "marketName": "Innings 1 to 5 - {$competitor2} total hits (1048)"
+     },
+     {
+         "marketID": "742",
+         "marketName": "First {innings} innings 1x2 & 1x2 (incl. extra innings) (742)"
+     },
+     {
+         "marketID": "38",
+         "marketName": "{!goalnr} goalscorer (38)"
+     },
+     {
+         "marketID": "1073",
+         "marketName": "{!inningnr} inning - exact home runs (1073)"
+     },
+     {
+         "marketID": "669",
+         "marketName": "{!inningnr} innings - {$competitor2} total run outs (669)"
+     },
+     {
+         "marketID": "169",
+         "marketName": "Corner range (169)"
+     },
+     {
+         "marketID": "745",
+         "marketName": "Innings {from} to {to} - odd/even (745)"
+     },
+     {
+         "marketID": "733",
+         "marketName": "{!mapnr} map - race to level {xth} (733)"
+     },
+     {
+         "marketID": "236",
+         "marketName": "{!quarternr} quarter - total (236)"
+     },
+     {
+         "marketID": "833",
+         "marketName": "Standard bet (incl. bonus ball in same drum) (833)"
+     },
+     {
+         "marketID": "270",
+         "marketName": "Team to win more innings (270)"
+     },
+     {
+         "marketID": "566",
+         "marketName": "15 minutes - {!cornernr} corner from {from} to {to} (566)"
+     },
+     {
+         "marketID": "326",
+         "marketName": "Map handicap {hcp} (326)"
+     },
+     {
+         "marketID": "216",
+         "marketName": "{!setnr} set game {gamenr} - race to {pointnr} points (216)"
+     },
+     {
+         "marketID": "425",
+         "marketName": "1x2 & both teams to score (incl. overtime and penalties) (425)"
+     },
+     {
+         "marketID": "762",
+         "marketName": "Player carries (incl. overtime) (762)"
+     },
+     {
+         "marketID": "29",
+         "marketName": "Both teams to score (29)"
+     },
+     {
+         "marketID": "844",
+         "marketName": "{!inningnr} innings overs 0 to {overnr} - {$competitor1} total spread (844)"
+     },
+     {
+         "marketID": "271",
+         "marketName": "Team with highest scoring inning (271)"
+     },
+     {
+         "marketID": "2",
+         "marketName": "To qualify (2)"
+     },
+     {
+         "marketID": "345",
+         "marketName": "{!inningnr} innings - {$competitor1} run range (345)"
+     },
+     {
+         "marketID": "1089",
+         "marketName": "Any team scoring type {!pointnr} point (incl. overtime) (1089)"
+     },
+     {
+         "marketID": "1165",
+         "marketName": "Total holes played (1165)"
+     },
+     {
+         "marketID": "976",
+         "marketName": "Total fours spread (976)"
+     },
+     {
+         "marketID": "596",
+         "marketName": "5 minutes - booking 1x2 from {from} to {to} (596)"
+     },
+     {
+         "marketID": "694",
+         "marketName": "Which team wins the coin toss (694)"
+     },
+     {
+         "marketID": "237",
+         "marketName": "Point handicap (237)"
+     },
+     {
+         "marketID": "787",
+         "marketName": "Batter total bases (incl. extra innings) (787)"
+     },
+     {
+         "marketID": "1215",
+         "marketName": "{!inningnr} innings - {%player} runs conceded (1215)"
+     },
+     {
+         "marketID": "977",
+         "marketName": "Multi fours spread (977)"
+     },
+     {
+         "marketID": "72",
+         "marketName": "1st half - {$competitor1} exact goals (72)"
+     },
+     {
+         "marketID": "873",
+         "marketName": "Trio (873)"
+     },
+     {
+         "marketID": "723",
+         "marketName": "Will there be a rampage (723)"
+     },
+     {
+         "marketID": "995",
+         "marketName": "Multi flyer spread (995)"
+     },
+     {
+         "marketID": "35",
+         "marketName": "1x2 & both teams to score (35)"
+     },
+     {
+         "marketID": "481",
+         "marketName": "Odd/even tries (481)"
+     },
+     {
+         "marketID": "1051",
+         "marketName": "Home run on {!pitchnr} pitch (1051)"
+     },
+     {
+         "marketID": "698",
+         "marketName": "Team with top batter (698)"
+     },
+     {
+         "marketID": "368",
+         "marketName": "Odd/even sets (368)"
+     },
+     {
+         "marketID": "515",
+         "marketName": "{!framenr} frame - player to pot last ball (515)"
+     },
+     {
+         "marketID": "135",
+         "marketName": "Penalty shootout - correct score (135)"
+     },
+     {
+         "marketID": "589",
+         "marketName": "15 minutes - {$competitor1} sending off from {from} to {to} (589)"
+     },
+     {
+         "marketID": "78",
+         "marketName": "1st half - 1x2 & both teams to score (78)"
+     },
+     {
+         "marketID": "881",
+         "marketName": "Any team to win (881)"
+     },
+     {
+         "marketID": "160",
+         "marketName": "1st half - {$competitor1} sending off (160)"
+     },
+     {
+         "marketID": "182",
+         "marketName": "1st half - corner range (182)"
+     },
+     {
+         "marketID": "969",
+         "marketName": "Player to score a point (969)"
+     },
+     {
+         "marketID": "457",
+         "marketName": "{!periodnr} period - last team to score (457)"
+     },
+     {
+         "marketID": "571",
+         "marketName": "15 minutes - odd/even corners from {from} to {to} (571)"
+     },
+     {
+         "marketID": "388",
+         "marketName": "{!setnr} set - total 180s (388)"
+     },
+     {
+         "marketID": "1",
+         "marketName": "1x2 (1)"
+     },
+     {
+         "marketID": "80",
+         "marketName": "1st half - correct score [{score}] (80)"
+     },
+     {
+         "marketID": "1135",
+         "marketName": "Which team has the highest 1st partnership & 1st over & overs 0 to {overnr} (1135)"
+     },
+     {
+         "marketID": "532",
+         "marketName": "Correct score (in sets) (532)"
+     },
+     {
+         "marketID": "752",
+         "marketName": "{!mapnr} map - {!xth} shrine (752)"
+     },
+     {
+         "marketID": "1187",
+         "marketName": "{%player} total passes (incl. overtime) (1187)"
+     },
+     {
+         "marketID": "354",
+         "marketName": "{!inningnr} innings overs 0 to {overnr} - {$competitor1} run range (354)"
+     },
+     {
+         "marketID": "649",
+         "marketName": "{!inningnr} innings - {$competitor1} total dismissals (649)"
+     },
+     {
+         "marketID": "826",
+         "marketName": "Bonus ball total (826)"
+     },
+     {
+         "marketID": "152",
+         "marketName": "1st half - total bookings (152)"
+     },
+     {
+         "marketID": "334",
+         "marketName": "{!mapnr} map - 1x2 (334)"
+     },
+     {
+         "marketID": "498",
+         "marketName": "Frames 1 to {framenr} - 1x2 (498)"
+     },
+     {
+         "marketID": "966",
+         "marketName": "{$competitor2} to lead by {points} (966)"
+     },
+     {
+         "marketID": "500",
+         "marketName": "{!framenr} frame - point handicap (500)"
+     },
+     {
+         "marketID": "912",
+         "marketName": "Winner & exact rounds (912)"
+     },
+     {
+         "marketID": "57",
+         "marketName": "{$competitor2} to score in both halves (57)"
+     },
+     {
+         "marketID": "188",
+         "marketName": "Set handicap (188)"
+     },
+     {
+         "marketID": "508",
+         "marketName": "{!framenr} frame - {$competitor2} break 100+ (508)"
+     },
+     {
+         "marketID": "263",
+         "marketName": "Run range (incl. extra innings) (263)"
+     },
+     {
+         "marketID": "196",
+         "marketName": "Exact sets (196)"
+     },
+     {
+         "marketID": "30",
+         "marketName": "Which team to score (30)"
+     },
+     {
+         "marketID": "427",
+         "marketName": "Correct score (incl. overtime and penalties) (427)"
+     },
+     {
+         "marketID": "492",
+         "marketName": "Will there be a deciding frame (492)"
+     },
+     {
+         "marketID": "824",
+         "marketName": "Bonus ball odd/even (824)"
+     },
+     {
+         "marketID": "1087",
+         "marketName": "Exact home runs (incl. extra innings) (1087)"
+     },
+     {
+         "marketID": "533",
+         "marketName": "Frames 1 to {framenr} - correct score (533)"
+     },
+     {
+         "marketID": "552",
+         "marketName": "1st half - multigoals (552)"
+     },
+     {
+         "marketID": "896",
+         "marketName": "{!scorenr} scoring type (896)"
+     },
+     {
+         "marketID": "542",
+         "marketName": "1st half - double chance & both teams to score (542)"
+     },
+     {
+         "marketID": "1088",
+         "marketName": "Scoring type {!pointnr} point (incl. overtime) (1088)"
+     },
+     {
+         "marketID": "399",
+         "marketName": "{$competitor1} goal range (399)"
+     },
+     {
+         "marketID": "1173",
+         "marketName": "Winner (including OT) & Total (including OT) (1173)"
+     },
+     {
+         "marketID": "23",
+         "marketName": "{$competitor1} exact goals (23)"
+     },
+     {
+         "marketID": "490",
+         "marketName": "1st half - odd/even tries (490)"
+     },
+     {
+         "marketID": "961",
+         "marketName": "{!freethrownr} free throw scored (961)"
+     },
+     {
+         "marketID": "485",
+         "marketName": "1st half - try handicap {hcp} (485)"
+     },
+     {
+         "marketID": "37",
+         "marketName": "1x2 & total (37)"
+     },
+     {
+         "marketID": "834",
+         "marketName": "Standard bet (incl. bonus ball in additional drum) (834)"
+     },
+     {
+         "marketID": "855",
+         "marketName": "{$competitor1} or under {total} (855)"
+     },
+     {
+         "marketID": "788",
+         "marketName": "Batter runs + runs batted in (incl. extra innings) (788)"
+     },
+     {
+         "marketID": "229",
+         "marketName": "Odd/even (incl. overtime) (229)"
+     },
+     {
+         "marketID": "806",
+         "marketName": "{$event} - bottom {pos} finish (806)"
+     },
+     {
+         "marketID": "959",
+         "marketName": "{!drivenr} drive - result (959)"
+     },
+     {
+         "marketID": "1059",
+         "marketName": "{$competitor1} {!c1scorenr} scoring type (1059)"
+     },
+     {
+         "marketID": "363",
+         "marketName": "{!inningnr} innings over {overnr} - {!deliverynr} delivery {$competitor2} total (363)"
+     },
+     {
+         "marketID": "209",
+         "marketName": "{!setnr} set - {!gamenrX} and {!gamenrY} game winner (209)"
+     },
+     {
+         "marketID": "769",
+         "marketName": "Player field goals (incl. overtime) (769)"
+     },
+     {
+         "marketID": "1101",
+         "marketName": "Winner (teams) (1101)"
+     },
+     {
+         "marketID": "882",
+         "marketName": "{%player} to score (incl. overtime) (882)"
+     },
+     {
+         "marketID": "100",
+         "marketName": "When will the {!goalnr} goal be scored (15 min interval) (100)"
+     },
+     {
+         "marketID": "648",
+         "marketName": "Most sixes (648)"
+     },
+     {
+         "marketID": "341",
+         "marketName": "Will there be a super over (341)"
+     },
+     {
+         "marketID": "133",
+         "marketName": "Penalty shootout - {$competitor2} odd/even (133)"
+     },
+     {
+         "marketID": "505",
+         "marketName": "{!framenr} frame - highest break (505)"
+     },
+     {
+         "marketID": "407",
+         "marketName": "{!goalnr} goal (incl. overtime and penalties) (407)"
+     },
+     {
+         "marketID": "920",
+         "marketName": "{%player} total receptions (incl. overtime) (920)"
+     },
+     {
+         "marketID": "203",
+         "marketName": "{!setnr} set - game handicap (203)"
+     },
+     {
+         "marketID": "336",
+         "marketName": "{!mapnr} map - correct score (in rounds) (336)"
+     },
+     {
+         "marketID": "751",
+         "marketName": "{!inningnr} inning - both teams to score (751)"
+     },
+     {
+         "marketID": "298",
+         "marketName": "Point range (298)"
+     },
+     {
+         "marketID": "1108",
+         "marketName": "{!lapnr} lap - total retirements (1108)"
+     },
+     {
+         "marketID": "795",
+         "marketName": "Player run meters (795)"
+     },
+     {
+         "marketID": "668",
+         "marketName": "{!inningnr} innings - {$competitor1} total run outs (668)"
+     },
+     {
+         "marketID": "960",
+         "marketName": "{!quarternr} quarter - last point (960)"
+     },
+     {
+         "marketID": "1231",
+         "marketName": "Sum of bonus balls exact number (1231)"
+     },
+     {
+         "marketID": "798",
+         "marketName": "{$event} matchday {matchday} - away teams total (798)"
+     },
+     {
+         "marketID": "51",
+         "marketName": "{$competitor2} to win either half (51)"
+     },
+     {
+         "marketID": "1242",
+         "marketName": "Race to home {homepoints} and away {awaypoints} points (1242)"
+     },
+     {
+         "marketID": "1122",
+         "marketName": "{$competitor2} total home runs (incl. extra innings) (1122)"
+     },
+     {
+         "marketID": "659",
+         "marketName": "{!inningnr} innings - {$competitor2} total fours (659)"
+     },
+     {
+         "marketID": "372",
+         "marketName": "{!setnr} set - total legs (372)"
+     },
+     {
+         "marketID": "435",
+         "marketName": "{$competitor1} to win all periods (435)"
+     },
+     {
+         "marketID": "478",
+         "marketName": "Total tries (478)"
+     },
+     {
+         "marketID": "472",
+         "marketName": "1st half - race to {pointnr} points (472)"
+     },
+     {
+         "marketID": "462",
+         "marketName": "{!periodnr} period - odd/even (462)"
+     },
+     {
+         "marketID": "1080",
+         "marketName": "{!inningnr} inning - {$competitor2} exact strikeouts (1080)"
+     },
+     {
+         "marketID": "616",
+         "marketName": "{$competitor1} odd/even (incl. overtime) (616)"
+     },
+     {
+         "marketID": "981",
+         "marketName": "{$competitor2} joy of six spread (981)"
+     },
+     {
+         "marketID": "863",
+         "marketName": "{$competitor1} or any clean sheet (863)"
+     },
+     {
+         "marketID": "434",
+         "marketName": "{$competitor2} highest scoring period (434)"
+     },
+     {
+         "marketID": "251",
+         "marketName": "Winner (incl. extra innings) (251)"
+     },
+     {
+         "marketID": "230",
+         "marketName": "Race to {pointnr} points (incl. overtime) (230)"
+     },
+     {
+         "marketID": "1005",
+         "marketName": "3 ball (1005)"
+     },
+     {
+         "marketID": "805",
+         "marketName": "{$event} - top {pos} finish (805)"
+     },
+     {
+         "marketID": "327",
+         "marketName": "Map handicap (327)"
+     },
+     {
+         "marketID": "627",
+         "marketName": "{!mapnr} map round {roundnr} - kill handicap (627)"
+     },
+     {
+         "marketID": "453",
+         "marketName": "{!periodnr} period - which team to score (453)"
+     },
+     {
+         "marketID": "778",
+         "marketName": "Player passes (incl. overtime) (778)"
+     },
+     {
+         "marketID": "451",
+         "marketName": "{!periodnr} period - {$competitor2} exact goals (451)"
+     },
+     {
+         "marketID": "256",
+         "marketName": "Handicap (incl. extra innings) (256)"
+     },
+     {
+         "marketID": "189",
+         "marketName": "Total games (189)"
+     },
+     {
+         "marketID": "92",
+         "marketName": "2nd half - {$competitor2} total (92)"
+     },
+     {
+         "marketID": "161",
+         "marketName": "1st half - {$competitor2} sending off (161)"
+     },
+     {
+         "marketID": "777",
+         "marketName": "Player shots on goal (incl. overtime) (777)"
+     },
+     {
+         "marketID": "545",
+         "marketName": "2nd half - double chance & both teams to score (545)"
+     },
+     {
+         "marketID": "725",
+         "marketName": "{!mapnr} map - duration (725)"
+     },
+     {
+         "marketID": "1031",
+         "marketName": "Holes {from} to {to} - 2 ball (1x2) most pars (1031)"
+     },
+     {
+         "marketID": "890",
+         "marketName": "{!goalnr} goalscorer & correct score (890)"
+     },
+     {
+         "marketID": "1230",
+         "marketName": "{!inningnr} innings overs 0 to {overnr} - {$competitor2} total (1230)"
+     },
+     {
+         "marketID": "797",
+         "marketName": "{$event} matchday {matchday} - home teams total (797)"
+     },
+     {
+         "marketID": "679",
+         "marketName": "{!inningnr} innings - {$competitor2} last player standing (679)"
+     },
+     {
+         "marketID": "52",
+         "marketName": "Highest scoring half (52)"
+     },
+     {
+         "marketID": "642",
+         "marketName": "{!inningnr} innings over {overnr} - {$competitor2} dismissal (642)"
+     },
+     {
+         "marketID": "891",
+         "marketName": "{!goalnr} goalscorer & 1x2 (891)"
+     },
+     {
+         "marketID": "676",
+         "marketName": "{!inningnr} innings - {$competitor1} top bowler (676)"
+     },
+     {
+         "marketID": "635",
+         "marketName": "1st half - goal range (635)"
+     },
+     {
+         "marketID": "933",
+         "marketName": "Total turnovers (incl. overtime) (933)"
+     },
+     {
+         "marketID": "424",
+         "marketName": "1x2 & total (incl. overtime and penalties) (424)"
+     },
+     {
+         "marketID": "353",
+         "marketName": "{!inningnr} innings overs 0 to {overnr} - {$competitor2} total (353)"
+     },
+     {
+         "marketID": "396",
+         "marketName": "{!mapnr} map - {!xth} aegis (396)"
+     },
+     {
+         "marketID": "588",
+         "marketName": "15 minutes - sending off from {from} to {to} (588)"
+     },
+     {
+         "marketID": "538",
+         "marketName": "Head2head (1x2) (538)"
+     },
+     {
+         "marketID": "406",
+         "marketName": "Winner (incl. overtime and penalties) (406)"
+     },
+     {
+         "marketID": "382",
+         "marketName": "{!xth} player to score a 180 (382)"
+     },
+     {
+         "marketID": "1150",
+         "marketName": "Overs 0 to {overnr} - {$competitor1} total ({ballcount}-ball overs) (1150)"
+     },
+     {
+         "marketID": "815",
+         "marketName": "{!mapnr} map - assist draw no bet (815)"
+     },
+     {
+         "marketID": "471",
+         "marketName": "1st half - point range (471)"
+     },
+     {
+         "marketID": "578",
+         "marketName": "10 minutes - odd/even corners from {from} to {to} (578)"
+     },
+     {
+         "marketID": "559",
+         "marketName": "Free text market (559)"
+     },
+     {
+         "marketID": "570",
+         "marketName": "15 minutes - {$competitor2} total corners from {from} to {to} (570)"
+     },
+     {
+         "marketID": "147",
+         "marketName": "{$competitor1} sending off (147)"
+     },
+     {
+         "marketID": "1217",
+         "marketName": "{!inningnr} innings - {$competitor2} most economical bowler (1217)"
+     },
+     {
+         "marketID": "753",
+         "marketName": "{!quarternr} quarter - double chance (753)"
+     },
+     {
+         "marketID": "715",
+         "marketName": "{!inningnr} innings over {overnr} - {$competitor1} run range (715)"
+     },
+     {
+         "marketID": "770",
+         "marketName": "Player assists (incl. overtime) (770)"
+     },
+     {
+         "marketID": "499",
+         "marketName": "{!framenr} frame - winner (499)"
+     },
+     {
+         "marketID": "442",
+         "marketName": "All periods under {total} (442)"
+     },
+     {
+         "marketID": "85",
+         "marketName": "2nd half - double chance (85)"
+     },
+     {
+         "marketID": "1159",
+         "marketName": "Winner (1159)"
+     },
+     {
+         "marketID": "862",
+         "marketName": "{$competitor2} or both teams to score (862)"
+     },
+     {
+         "marketID": "175",
+         "marketName": "1st half - last corner (175)"
+     },
+     {
+         "marketID": "919",
+         "marketName": "{%player} total receiving yards (incl. overtime) (919)"
+     },
+     {
+         "marketID": "924",
+         "marketName": "{%player} total 3-point field goals (incl. overtime) (924)"
+     },
+     {
+         "marketID": "416",
+         "marketName": "Exact goals (incl. overtime and penalties) (416)"
+     },
+     {
+         "marketID": "443",
+         "marketName": "{!periodnr} period - 1x2 (443)"
+     },
+     {
+         "marketID": "910",
+         "marketName": "Winning method (910)"
+     },
+     {
+         "marketID": "217",
+         "marketName": "{!setnr} set game {gamenr} - first {pointnr} points winner (217)"
+     },
+     {
+         "marketID": "551",
+         "marketName": "Multiscores (551)"
+     },
+     {
+         "marketID": "215",
+         "marketName": "{!setnr} set game {gamenr} - correct score or break (215)"
+     },
+     {
+         "marketID": "153",
+         "marketName": "1st half - {$competitor1} total bookings (153)"
+     },
+     {
+         "marketID": "823",
+         "marketName": "Draw sum range (823)"
+     },
+     {
+         "marketID": "58",
+         "marketName": "Both halves over {total} (58)"
+     },
+     {
+         "marketID": "238",
+         "marketName": "Total points (238)"
+     },
+     {
+         "marketID": "1071",
+         "marketName": "{!inningnr} inning - most balls (1071)"
+     },
+     {
+         "marketID": "397",
+         "marketName": "{!mapnr} map - {!xth} tower (397)"
+     },
+     {
+         "marketID": "15",
+         "marketName": "Winning margin (15)"
+     },
+     {
+         "marketID": "1079",
+         "marketName": "{!inningnr} inning - {$competitor1} exact strikeouts (1079)"
+     },
+     {
+         "marketID": "317",
+         "marketName": "{!setnr} set - handicap {hcp} (317)"
+     },
+     {
+         "marketID": "550",
+         "marketName": "{$competitor2} multigoals (550)"
+     },
+     {
+         "marketID": "348",
+         "marketName": "{!inningnr} innings - run range in the highest scoring over (348)"
+     },
+     {
+         "marketID": "1228",
+         "marketName": "{!inningnr} innings overs 0 to {overnr} - {$competitor2} run range (1228)"
+     },
+     {
+         "marketID": "134",
+         "marketName": "Penalty shootout - winner & total (134)"
+     },
+     {
+         "marketID": "63",
+         "marketName": "1st half - double chance (63)"
+     },
+     {
+         "marketID": "607",
+         "marketName": "{!inningnr} innings - {$competitor2} total (607)"
+     },
+     {
+         "marketID": "845",
+         "marketName": "{!inningnr} innings overs 0 to {overnr} - {$competitor2} total spread (845)"
+     },
+     {
+         "marketID": "210",
+         "marketName": "{!setnr} set game {gamenr} - winner (210)"
+     },
+     {
+         "marketID": "1136",
+         "marketName": "{!inningnr} innings over {overnr} - {!deliverynr} delivery {$competitor1} exact runs (1136)"
+     },
+     {
+         "marketID": "666",
+         "marketName": "{!inningnr} innings - {$competitor1} total extras (666)"
+     },
+     {
+         "marketID": "883",
+         "marketName": "1 minute - total from {from} to {to} (883)"
+     },
+     {
+         "marketID": "852",
+         "marketName": "{$competitor1} to win exactly 2 sets (852)"
+     },
+     {
+         "marketID": "9",
+         "marketName": "Last goal (9)"
+     },
+     {
+         "marketID": "450",
+         "marketName": "{!periodnr} period - {$competitor1} exact goals (450)"
+     },
+     {
+         "marketID": "280",
+         "marketName": "Innings 1 to 5th top - handicap (280)"
+     },
+     {
+         "marketID": "86",
+         "marketName": "2nd half - draw no bet (86)"
+     },
+     {
+         "marketID": "381",
+         "marketName": "Most 180s (381)"
+     },
+     {
+         "marketID": "880",
+         "marketName": "{$competitor1} to win (880)"
+     },
+     {
+         "marketID": "389",
+         "marketName": "{!setnr} set - {$competitor1} total 180s (389)"
+     },
+     {
+         "marketID": "738",
+         "marketName": "When will the match be decided (738)"
+     },
+     {
+         "marketID": "1023",
+         "marketName": "Hole {holenr} - 2 ball (1x2) (1023)"
+     },
+     {
+         "marketID": "109",
+         "marketName": "5 minutes - {!goalnr} goal from {from} to {to} (109)"
+     },
+     {
+         "marketID": "704",
+         "marketName": "{!inningnr} innings - {$competitor1} total wides bowled (704)"
+     },
+     {
+         "marketID": "202",
+         "marketName": "{!setnr} set - winner (202)"
+     },
+     {
+         "marketID": "464",
+         "marketName": "Overtime - draw no bet (464)"
+     },
+     {
+         "marketID": "573",
+         "marketName": "10 minutes - {!cornernr} corner from {from} to {to} (573)"
+     },
+     {
+         "marketID": "120",
+         "marketName": "Overtime 1st half - handicap (120)"
+     },
+     {
+         "marketID": "64",
+         "marketName": "1st half - draw no bet (64)"
+     },
+     {
+         "marketID": "144",
+         "marketName": "{$competitor2} exact bookings (144)"
+     },
+     {
+         "marketID": "516",
+         "marketName": "{!framenr} frame - last points scored (516)"
+     },
+     {
+         "marketID": "658",
+         "marketName": "{!inningnr} innings - {$competitor1} total fours (658)"
+     },
+     {
+         "marketID": "731",
+         "marketName": "{!mapnr} map - race to {xth} kills (731)"
+     },
+     {
+         "marketID": "1099",
+         "marketName": "Total finishers (1099)"
+     },
+     {
+         "marketID": "54",
+         "marketName": "{$competitor2} highest scoring half (54)"
+     },
+     {
+         "marketID": "626",
+         "marketName": "{!mapnr} map round {roundnr} - total kills (626)"
+     },
+     {
+         "marketID": "224",
+         "marketName": "US spread (incl. overtime) (224)"
+     },
+     {
+         "marketID": "71",
+         "marketName": "1st half - exact goals (71)"
+     },
+     {
+         "marketID": "375",
+         "marketName": "{!setnr} set leg {legnr} - winner (375)"
+     },
+     {
+         "marketID": "687",
+         "marketName": "Bowler head2head (1x2) (687)"
+     },
+     {
+         "marketID": "693",
+         "marketName": "{!inningnr} innings - {$competitor2} to finish with a boundary (693)"
+     },
+     {
+         "marketID": "1158",
+         "marketName": "2 ball (1158)"
+     },
+     {
+         "marketID": "598",
+         "marketName": "5 minutes - sending off from {from} to {to} (598)"
+     },
+     {
+         "marketID": "1144",
+         "marketName": "{!inningnr} innings over {overnr} - {$competitor2} to score a boundary four & a six (1144)"
+     },
+     {
+         "marketID": "107",
+         "marketName": "10 minutes - total from {from} to {to} (107)"
+     },
+     {
+         "marketID": "530",
+         "marketName": "1st half - {!scorenr} score (530)"
+     },
+     {
+         "marketID": "183",
+         "marketName": "1st half - odd/even corners (183)"
+     },
+     {
+         "marketID": "1223",
+         "marketName": "{!inningnr} innings over {overnr} - {$competitor1} run range (1223)"
+     },
+     {
+         "marketID": "780",
+         "marketName": "Player tackles (incl. overtime) (780)"
+     },
+     {
+         "marketID": "232",
+         "marketName": "2nd half - total (incl. overtime) (232)"
+     },
+     {
+         "marketID": "401",
+         "marketName": "Correct score [{score}] (401)"
+     },
+     {
+         "marketID": "997",
+         "marketName": "Launch spread (997)"
+     },
+     {
+         "marketID": "794",
+         "marketName": "Player tries (794)"
+     },
+     {
+         "marketID": "902",
+         "marketName": "Next scoring play (902)"
+     },
+     {
+         "marketID": "265",
+         "marketName": "1x2 & total (incl. extra innings) (265)"
+     },
+     {
+         "marketID": "544",
+         "marketName": "2nd half - 1x2 & total (544)"
+     },
+     {
+         "marketID": "121",
+         "marketName": "Overtime 1st half - correct score [{score}] (121)"
+     },
+     {
+         "marketID": "355",
+         "marketName": "{!inningnr} innings overs 0 to {overnr} - {$competitor2} run range (355)"
+     },
+     {
+         "marketID": "1077",
+         "marketName": "{!inningnr} inning - {$competitor1} total pitches (1077)"
+     },
+     {
+         "marketID": "1132",
+         "marketName": "{!inningsnr} innings  over {overnr} - deliveries {deliverynr1} & {deliverynr2} {$competitor1} over {total} (1132)"
+     },
+     {
+         "marketID": "112",
+         "marketName": "Overtime & goal (112)"
+     },
+     {
+         "marketID": "979",
+         "marketName": "{!inningnr} innings - {$competitor2} total fours spread (979)"
+     },
+     {
+         "marketID": "205",
+         "marketName": "{!setnr} set - odd/even games (205)"
+     },
+     {
+         "marketID": "1134",
+         "marketName": "{!inningnr} innings - {%player1} & {%player2} dismissal method (1134)"
+     },
+     {
+         "marketID": "600",
+         "marketName": "5 minutes - {$competitor2} sending off from {from} to {to} (600)"
+     },
+     {
+         "marketID": "311",
+         "marketName": "{!setnr} set - odd/even (311)"
+     },
+     {
+         "marketID": "553",
+         "marketName": "2nd half - multigoals (553)"
+     },
+     {
+         "marketID": "857",
+         "marketName": "Draw or under {total} (857)"
+     },
+     {
+         "marketID": "395",
+         "marketName": "{!mapnr} map - winner (395)"
+     },
+     {
+         "marketID": "884",
+         "marketName": "1 minute - total corners from {from} to {to} (884)"
+     },
+     {
+         "marketID": "1218",
+         "marketName": "{!inningnr} innings - {$competitor1} next boundary {boundary number} off Bat, Four or Six (1218)"
+     },
+     {
+         "marketID": "512",
+         "marketName": "{!framenr} frame - will there be a foul committed (512)"
+     },
+     {
+         "marketID": "414",
+         "marketName": "{$competitor1} total (incl. overtime and penalties) (414)"
+     },
+     {
+         "marketID": "66",
+         "marketName": "1st half - handicap (66)"
+     },
+     {
+         "marketID": "807",
+         "marketName": "{$event} - head2head (807)"
+     },
+     {
+         "marketID": "1069",
+         "marketName": "Any team win to nil (incl. extra innings) (1069)"
+     },
+     {
+         "marketID": "184",
+         "marketName": "{!goalnr} goal & 1x2 (184)"
+     },
+     {
+         "marketID": "204",
+         "marketName": "{!setnr} set - total games (204)"
+     },
+     {
+         "marketID": "835",
+         "marketName": "{$competitor1} windex (835)"
+     },
+     {
+         "marketID": "1078",
+         "marketName": "{!inningnr} inning - {$competitor2} total pitches (1078)"
+     },
+     {
+         "marketID": "971",
+         "marketName": "Multi sixes spread (971)"
+     },
+     {
+         "marketID": "32",
+         "marketName": "{$competitor2} clean sheet (32)"
+     },
+     {
+         "marketID": "1243",
+         "marketName": "Anytime exact score {homepoints}:{awaypoints} (1243)"
+     },
+     {
+         "marketID": "275",
+         "marketName": "Innings 1 to 5 - handicap (275)"
+     },
+     {
+         "marketID": "156",
+         "marketName": "1st half - {$competitor1} exact bookings (156)"
+     },
+     {
+         "marketID": "105",
+         "marketName": "10 minutes - 1x2 from {from} to {to} (105)"
+     },
+     {
+         "marketID": "362",
+         "marketName": "{!inningnr} innings over {overnr} - {!deliverynr} delivery {$competitor1} total (362)"
+     },
+     {
+         "marketID": "438",
+         "marketName": "{$competitor2} to win any period (438)"
+     },
+     {
+         "marketID": "506",
+         "marketName": "{!framenr} frame - break 100+ (506)"
+     },
+     {
+         "marketID": "1096",
+         "marketName": "Total laps at {!stopnr} pit stop (1096)"
+     },
+     {
+         "marketID": "1006",
+         "marketName": "2 ball (1x2) (1006)"
+     },
+     {
+         "marketID": "525",
+         "marketName": "Will there be a 4th set (525)"
+     },
+     {
+         "marketID": "374",
+         "marketName": "{!setnr} set - correct score (in legs) (374)"
+     },
+     {
+         "marketID": "661",
+         "marketName": "{!inningnr} innings - {$competitor2} total sixes (661)"
+     },
+     {
+         "marketID": "1233",
+         "marketName": "Regular {!selectednr} numbers selected plus bonus ball (same drum) (1233)"
+     },
+     {
+         "marketID": "760",
+         "marketName": "Player pass completions (incl. overtime) (760)"
+     },
+     {
+         "marketID": "850",
+         "marketName": "{$competitor1} to win exactly 1 set (850)"
+     },
+     {
+         "marketID": "305",
+         "marketName": "{!quarternr} quarter - race to {pointnr} points (305)"
+     },
+     {
+         "marketID": "1185",
+         "marketName": "{%player} total shots on goal (incl. overtime) (1185)"
+     },
+     {
+         "marketID": "214",
+         "marketName": "{!setnr} set game {gamenr} - correct score (214)"
+     },
+     {
+         "marketID": "1166",
+         "marketName": "Will there be a tie (1166)"
+     },
+     {
+         "marketID": "1041",
+         "marketName": "{$competitor1} total hits (incl. extra innings) (1041)"
+     },
+     {
+         "marketID": "113",
+         "marketName": "Overtime - 1x2 (113)"
+     },
+     {
+         "marketID": "1007",
+         "marketName": "2 ball (handicap) (1007)"
+     },
+     {
+         "marketID": "686",
+         "marketName": "Batter head2head (1x2) (686)"
+     },
+     {
+         "marketID": "870",
+         "marketName": "Exacta (870)"
+     },
+     {
+         "marketID": "724",
+         "marketName": "Will there be an ultra kill (724)"
+     },
+     {
+         "marketID": "11",
+         "marketName": "Draw no bet (11)"
+     },
+     {
+         "marketID": "386",
+         "marketName": "{$competitor2} total 180s (386)"
+     },
+     {
+         "marketID": "159",
+         "marketName": "1st half - sending off (159)"
+     },
+     {
+         "marketID": "536",
+         "marketName": "Free text multiwinner market (536)"
+     },
+     {
+         "marketID": "250",
+         "marketName": "{!gamenr} game - race to {pointnr} points (250)"
+     },
+     {
+         "marketID": "581",
+         "marketName": "5 minutes - corner handicap from {from} to {to} (581)"
+     },
+     {
+         "marketID": "211",
+         "marketName": "{!setnr} set game {gamenr} - exact points (211)"
+     },
+     {
+         "marketID": "1220",
+         "marketName": "Total batsman milestones (50's/100's) (1220)"
+     },
+     {
+         "marketID": "39",
+         "marketName": "Last goalscorer (39)"
+     },
+     {
+         "marketID": "799",
+         "marketName": "{$event} matchday {matchday} - total (799)"
+     },
+     {
+         "marketID": "141",
+         "marketName": "{$competitor2} total bookings (141)"
+     },
+     {
+         "marketID": "459",
+         "marketName": "{!periodnr} period - draw no bet (459)"
+     },
+     {
+         "marketID": "978",
+         "marketName": "{!inningnr} innings - {$competitor1} total fours spread (978)"
+     },
+     {
+         "marketID": "76",
+         "marketName": "1st half - {$competitor1} clean sheet (76)"
+     },
+     {
+         "marketID": "964",
+         "marketName": "Any team total maximum consecutive points (964)"
+     },
+     {
+         "marketID": "1222",
+         "marketName": "{!inningnr} innings - {$competitor2}  {!dismissalnr} dismissal method (limited) (1222)"
+     },
+     {
+         "marketID": "252",
+         "marketName": "1x2 (incl. extra innings) (252)"
+     },
+     {
+         "marketID": "892",
+         "marketName": "{!goalnr} goalscorer (892)"
+     },
+     {
+         "marketID": "494",
+         "marketName": "Total frames (494)"
+     },
+     {
+         "marketID": "539",
+         "marketName": "Head2head (539)"
+     },
+     {
+         "marketID": "793",
+         "marketName": "Player fantasy points (793)"
+     },
+     {
+         "marketID": "276",
+         "marketName": "Innings 1 to 5 - total (276)"
+     },
+     {
+         "marketID": "174",
+         "marketName": "1st half - {!cornernr} corner (174)"
+     },
+     {
+         "marketID": "710",
+         "marketName": "Which team wins the coin toss and the match (710)"
+     },
+     {
+         "marketID": "333",
+         "marketName": "{!mapnr} map - {!xth} kill (333)"
+     },
+     {
+         "marketID": "843",
+         "marketName": "{!inningnr} innings - {%player} total spread (843)"
+     },
+     {
+         "marketID": "332",
+         "marketName": "{!mapnr} map - total rounds (incl. overtime) (332)"
+     },
+     {
+         "marketID": "14",
+         "marketName": "Handicap {hcp} (14)"
+     },
+     {
+         "marketID": "60",
+         "marketName": "1st half - 1x2 (60)"
+     },
+     {
+         "marketID": "872",
+         "marketName": "Trifecta (872)"
+     },
+     {
+         "marketID": "636",
+         "marketName": "1st half - {$competitor1} goal range (636)"
+     },
+     {
+         "marketID": "595",
+         "marketName": "10 minutes - {$competitor2} sending off from {from} to {to} (595)"
+     },
+     {
+         "marketID": "87",
+         "marketName": "2nd half - handicap {hcp} (87)"
+     },
+     {
+         "marketID": "928",
+         "marketName": "{%player} total earned runs (incl. extra innings) (928)"
+     },
+     {
+         "marketID": "149",
+         "marketName": "1st half - booking 1x2 (149)"
+     },
+     {
+         "marketID": "864",
+         "marketName": "Draw or any clean sheet (864)"
+     },
+     {
+         "marketID": "827",
+         "marketName": "Bonus ball sum total (827)"
+     },
+     {
+         "marketID": "629",
+         "marketName": "{!mapnr} map round {roundnr} - {$competitor1} total kills (629)"
+     },
+     {
+         "marketID": "993",
+         "marketName": "Multi wides spread (993)"
+     },
+     {
+         "marketID": "166",
+         "marketName": "Total corners (166)"
+     },
+     {
+         "marketID": "767",
+         "marketName": "Player receptions (incl. overtime) (767)"
+     },
+     {
+         "marketID": "903",
+         "marketName": "Next score (incl. overtime) (903)"
+     },
+     {
+         "marketID": "1030",
+         "marketName": "Holes {from} to {to} - 2 ball (1x2) most birdies (1030)"
+     },
+     {
+         "marketID": "186",
+         "marketName": "Winner (186)"
+     },
+     {
+         "marketID": "410",
+         "marketName": "Handicap (incl. overtime and penalties) (410)"
+     },
+     {
+         "marketID": "529",
+         "marketName": "{!periodnr} period - double chance (529)"
+     },
+     {
+         "marketID": "702",
+         "marketName": "Top batter total (702)"
+     },
+     {
+         "marketID": "1127",
+         "marketName": "{!inningnr} innings - {%player1} to score {milestone1} & {%player2} to score {milestone2} (1127)"
+     },
+     {
+         "marketID": "730",
+         "marketName": "{!mapnr} map - tower handicap (730)"
+     },
+     {
+         "marketID": "409",
+         "marketName": "Winning margin (incl. overtime and penalties) (409)"
+     },
+     {
+         "marketID": "985",
+         "marketName": "{!inningnr} innings - {$competitor2} total {upsnr} ups spread (985)"
+     },
+     {
+         "marketID": "59",
+         "marketName": "Both halves under {total} (59)"
+     },
+     {
+         "marketID": "1227",
+         "marketName": "{!inningnr} innings overs 0 to {overnr} - {$competitor1} run range (1227)"
+     },
+     {
+         "marketID": "359",
+         "marketName": "{!inningnr} innings over {overnr} - {$competitor1} odd/even (359)"
+     },
+     {
+         "marketID": "1110",
+         "marketName": "Winner (1110)"
+     },
+     {
+         "marketID": "814",
+         "marketName": "{!mapnr} map - player with most deaths (814)"
+     },
+     {
+         "marketID": "3",
+         "marketName": "Which team will win the final (3)"
+     },
+     {
+         "marketID": "729",
+         "marketName": "{!mapnr} map - aegis handicap (729)"
+     },
+     {
+         "marketID": "908",
+         "marketName": "Free text multiwinner market (908)"
+     },
+     {
+         "marketID": "836",
+         "marketName": "{$competitor2} windex (836)"
+     },
+     {
+         "marketID": "458",
+         "marketName": "{!periodnr} period - which team wins the rest (458)"
+     },
+     {
+         "marketID": "1033",
+         "marketName": "Holes {from} to {to} - 3 ball most birdies (1033)"
+     },
+     {
+         "marketID": "558",
+         "marketName": "{!mapnr} map - {!xth} inhibitor (558)"
+     },
+     {
+         "marketID": "466",
+         "marketName": "Overtime - {$competitor2} no bet (466)"
+     },
+     {
+         "marketID": "1061",
+         "marketName": "{!drivenr} drive play {playnr} - {%competitor} play type (1061)"
+     },
+     {
+         "marketID": "278",
+         "marketName": "Innings 1 to 5 - {$competitor2} total (278)"
+     },
+     {
+         "marketID": "212",
+         "marketName": "{!setnr} set game {gamenr} - to deuce (212)"
+     },
+     {
+         "marketID": "94",
+         "marketName": "2nd half - odd/even (94)"
+     },
+     {
+         "marketID": "608",
+         "marketName": "{!inningnr} innings - odd/even (608)"
+     },
+     {
+         "marketID": "349",
+         "marketName": "{!inningnr} innings - {$competitor1} total at {!dismissalnr} dismissal (349)"
+     },
+     {
+         "marketID": "1119",
+         "marketName": "Race to {pointnr} points (1119)"
+     },
+     {
+         "marketID": "821",
+         "marketName": "Draw sum odd/even (821)"
+     },
+     {
+         "marketID": "511",
+         "marketName": "{!framenr} frame - {$competitor2} break 50+ (511)"
+     },
+     {
+         "marketID": "400",
+         "marketName": "{$competitor2} goal range (400)"
+     },
+     {
+         "marketID": "167",
+         "marketName": "{$competitor1} total corners (167)"
+     },
+     {
+         "marketID": "695",
+         "marketName": "Total ducks (695)"
+     },
+     {
+         "marketID": "615",
+         "marketName": "{!quarternr} quarter - total (incl. overtime) (615)"
+     },
+     {
+         "marketID": "1175",
+         "marketName": "1st quarter 1x2 & 1st quarter total (1175)"
+     },
+     {
+         "marketID": "759",
+         "marketName": "Player passing yards (incl. overtime) (759)"
+     },
+     {
+         "marketID": "828",
+         "marketName": "Bonus ball single digit (828)"
+     },
+     {
+         "marketID": "231",
+         "marketName": "2nd half - handicap (incl. overtime) (231)"
+     },
+     {
+         "marketID": "628",
+         "marketName": "{!mapnr} map round {roundnr} - {!killnr} kill (628)"
+     },
+     {
+         "marketID": "158",
+         "marketName": "1st half - booking point range (158)"
+     },
+     {
+         "marketID": "138",
+         "marketName": "Total booking points (138)"
+     },
+     {
+         "marketID": "901",
+         "marketName": "{$competitor2} {!c2goalnr} goalscorer (901)"
+     },
+     {
+         "marketID": "609",
+         "marketName": "Team with highest scoring quarter (609)"
+     },
+     {
+         "marketID": "623",
+         "marketName": "{!mapnr} map - will there be an ace (incl. overtime) (623)"
+     },
+     {
+         "marketID": "856",
+         "marketName": "Draw or over {total} (856)"
+     },
+     {
+         "marketID": "456",
+         "marketName": "{!periodnr} period - correct score (456)"
+     },
+     {
+         "marketID": "940",
+         "marketName": "{!fieldgoalnr} field goal made (incl. overtime) (940)"
+     },
+     {
+         "marketID": "586",
+         "marketName": "15 minutes - booking 1x2 from {from} to {to} (586)"
+     },
+     {
+         "marketID": "194",
+         "marketName": "Any set to nil (194)"
+     },
+     {
+         "marketID": "808",
+         "marketName": "{$event} group {group} - group winner (808)"
+     },
+     {
+         "marketID": "277",
+         "marketName": "Innings 1 to 5 - {$competitor1} total (277)"
+     },
+     {
+         "marketID": "77",
+         "marketName": "1st half - {$competitor2} clean sheet (77)"
+     },
+     {
+         "marketID": "65",
+         "marketName": "1st half - handicap {hcp} (65)"
+     },
+     {
+         "marketID": "988",
+         "marketName": "{!inningnr} innings overs 0 to {overnr} - {$competitor1} supremacy spread (988)"
+     },
+     {
+         "marketID": "736",
+         "marketName": "{!mapnr} map 1st half - winner (736)"
+     },
+     {
+         "marketID": "366",
+         "marketName": "Leg handicap (366)"
+     },
+     {
+         "marketID": "885",
+         "marketName": "1 minute - total bookings from {from} to {to} (885)"
+     },
+     {
+         "marketID": "675",
+         "marketName": "{!inningnr} innings - {$competitor2} top batter (675)"
+     },
+     {
+         "marketID": "429",
+         "marketName": "{!periodnr} period 1x2 & 1x2 (429)"
+     },
+     {
+         "marketID": "304",
+         "marketName": "{!quarternr} quarter - odd/even (304)"
+     },
+     {
+         "marketID": "1091",
+         "marketName": "Top {winners} (1091)"
+     },
+     {
+         "marketID": "387",
+         "marketName": "{!setnr} set - most 180s (387)"
+     },
+     {
+         "marketID": "383",
+         "marketName": "180s handicap (383)"
+     },
+     {
+         "marketID": "306",
+         "marketName": "How many sets will be decided by extra points (306)"
+     },
+     {
+         "marketID": "1025",
+         "marketName": "Hole {holenr} - any player under par (1025)"
+     },
+     {
+         "marketID": "50",
+         "marketName": "{$competitor1} to win either half (50)"
+     },
+     {
+         "marketID": "1133",
+         "marketName": "{!inningsnr} innings  over {overnr} - deliveries {deliverynr1} & {deliverynr2} {$competitor2} over {total} (1133)"
+     },
+     {
+         "marketID": "292",
+         "marketName": "Winner & total (incl. overtime) (292)"
+     },
+     {
+         "marketID": "1060",
+         "marketName": "{$competitor2} {!c2scorenr} scoring type (1060)"
+     },
+     {
+         "marketID": "1147",
+         "marketName": "{%player} to score {milestone} & take a wicket & a catch (1147)"
+     },
+     {
+         "marketID": "1232",
+         "marketName": "Hit {!selectednr} bonus ball (1232)"
+     },
+     {
+         "marketID": "931",
+         "marketName": "Total touchdowns (incl. overtime) (931)"
+     },
+     {
+         "marketID": "667",
+         "marketName": "{!inningnr} innings - {$competitor2} total extras (667)"
+     },
+     {
+         "marketID": "921",
+         "marketName": "{%player} total points (incl. overtime) (921)"
+     },
+     {
+         "marketID": "79",
+         "marketName": "1st half - 1x2 & total (79)"
+     },
+     {
+         "marketID": "703",
+         "marketName": "Rabbit total (703)"
+     },
+     {
+         "marketID": "689",
+         "marketName": "Keeper head2head (1x2) (689)"
+     },
+     {
+         "marketID": "319",
+         "marketName": "{!setnr} set - {$competitor2} total (319)"
+     },
+     {
+         "marketID": "504",
+         "marketName": "{!framenr} frame - player with highest break (504)"
+     },
+     {
+         "marketID": "688",
+         "marketName": "All-rounder head2head (1x2) (688)"
+     },
+     {
+         "marketID": "1145",
+         "marketName": "{!inningnr} innings - {%player1} or {%player2} to survive a review (1145)"
+     },
+     {
+         "marketID": "1040",
+         "marketName": "Total hits (incl. extra innings) (1040)"
+     },
+     {
+         "marketID": "800",
+         "marketName": "{$event} matchday {matchday} - most goals home or away teams (800)"
+     },
+     {
+         "marketID": "222",
+         "marketName": "{!scorenr} scoring type (incl. overtime) (222)"
+     },
+     {
+         "marketID": "825",
+         "marketName": "Bonus ball sum odd/even (825)"
+     },
+     {
+         "marketID": "104",
+         "marketName": "15 minutes - total from {from} to {to} (104)"
+     },
+     {
+         "marketID": "415",
+         "marketName": "{$competitor2} total (incl. overtime and penalties) (415)"
+     },
+     {
+         "marketID": "637",
+         "marketName": "1st half - {$competitor2} goal range (637)"
+     },
+     {
+         "marketID": "1055",
+         "marketName": "Winner & total (1055)"
+     },
+     {
+         "marketID": "647",
+         "marketName": "Most fours (647)"
+     },
+     {
+         "marketID": "122",
+         "marketName": "Will there be a penalty shootout (122)"
+     },
+     {
+         "marketID": "360",
+         "marketName": "{!inningnr} innings over {overnr} - {$competitor2} odd/even (360)"
+     },
+     {
+         "marketID": "239",
+         "marketName": "How many games will be decided by extra points (239)"
+     },
+     {
+         "marketID": "1046",
+         "marketName": "Innings 1 to 5 - total hits (1046)"
+     },
+     {
+         "marketID": "21",
+         "marketName": "Exact goals (21)"
+     },
+     {
+         "marketID": "575",
+         "marketName": "10 minutes - total corners from {from} to {to} (575)"
+     },
+     {
+         "marketID": "479",
+         "marketName": "{$competitor1} total tries (479)"
+     },
+     {
+         "marketID": "871",
+         "marketName": "Quinella (871)"
+     },
+     {
+         "marketID": "929",
+         "marketName": "{%player} total saves (incl. overtime) (929)"
+     },
+     {
+         "marketID": "622",
+         "marketName": "{!mapnr} map - total headshots (incl. overtime) (622)"
+     },
+     {
+         "marketID": "592",
+         "marketName": "10 minutes - total bookings from {from} to {to} (592)"
+     },
+     {
+         "marketID": "594",
+         "marketName": "10 minutes - {$competitor1} sending off from {from} to {to} (594)"
+     },
+     {
+         "marketID": "314",
+         "marketName": "Total sets (314)"
+     },
+     {
+         "marketID": "470",
+         "marketName": "1st half - winning margin (470)"
+     },
+     {
+         "marketID": "1174",
+         "marketName": "Handicap (including OT) & Total (including OT) (1174)"
+     },
+     {
+         "marketID": "813",
+         "marketName": "{!mapnr} map - player with most kills (813)"
+     },
+     {
+         "marketID": "878",
+         "marketName": "{!inningnr} innings - {$competitor2} total (878)"
+     },
+     {
+         "marketID": "922",
+         "marketName": "{%player} total assists (incl. overtime) (922)"
+     },
+     {
+         "marketID": "1014",
+         "marketName": "{%competitor} total 2+ over par (1014)"
+     },
+     {
+         "marketID": "106",
+         "marketName": "10 minutes - {!goalnr} goal from {from} to {to} (106)"
+     },
+     {
+         "marketID": "585",
+         "marketName": "5 minutes - odd/even corners from {from} to {to} (585)"
+     },
+     {
+         "marketID": "487",
+         "marketName": "1st half - total tries (487)"
+     },
+     {
+         "marketID": "1241",
+         "marketName": "Head2head - Round {roundnr} (1241)"
+     },
+     {
+         "marketID": "915",
+         "marketName": "{%player} total pass completions (incl. overtime) (915)"
+     },
+     {
+         "marketID": "132",
+         "marketName": "Penalty shootout - {$competitor1} odd/even (132)"
+     },
+     {
+         "marketID": "264",
+         "marketName": "Odd/even (incl. extra innings) (264)"
+     },
+     {
+         "marketID": "347",
+         "marketName": "{!inningnr} innings - team with highest scoring over (347)"
+     },
+     {
+         "marketID": "744",
+         "marketName": "Innings {from} to {to} - handicap (744)"
+     },
+     {
+         "marketID": "4",
+         "marketName": "Which team will win the 3rd place final (4)"
+     },
+     {
+         "marketID": "717",
+         "marketName": "Batter head2head (handicap) (717)"
+     },
+     {
+         "marketID": "437",
+         "marketName": "{$competitor1} to win any period (437)"
+     },
+     {
+         "marketID": "587",
+         "marketName": "15 minutes - total bookings from {from} to {to} (587)"
+     },
+     {
+         "marketID": "155",
+         "marketName": "1st half - exact bookings (155)"
+     },
+     {
+         "marketID": "1106",
+         "marketName": "{%team} total overtakings (1106)"
+     },
+     {
+         "marketID": "408",
+         "marketName": "Handicap {hcp} (incl. overtime and penalties) (408)"
+     },
+     {
+         "marketID": "291",
+         "marketName": "{!pointnr} point (incl. overtime) (291)"
+     },
+     {
+         "marketID": "641",
+         "marketName": "{!inningnr} innings over {overnr} - {$competitor1} dismissal (641)"
+     },
+     {
+         "marketID": "146",
+         "marketName": "Sending off (146)"
+     },
+     {
+         "marketID": "258",
+         "marketName": "Total (incl. extra innings) (258)"
+     },
+     {
+         "marketID": "1068",
+         "marketName": "Will there be a grand slam (incl. extra innings) (1068)"
+     },
+     {
+         "marketID": "286",
+         "marketName": "Innings {from} to {to} - {$competitor2} total (286)"
+     },
+     {
+         "marketID": "851",
+         "marketName": "{$competitor2} to win exactly 1 set (851)"
+     },
+     {
+         "marketID": "1105",
+         "marketName": "{!stopnr} pit stop (teams) (1105)"
+     },
+     {
+         "marketID": "448",
+         "marketName": "{!periodnr} period - {$competitor2} total (448)"
+     },
+     {
+         "marketID": "567",
+         "marketName": "15 minutes - corner handicap from {from} to {to} (567)"
+     },
+     {
+         "marketID": "423",
+         "marketName": "{!goalnr} goal & winner (incl. overtime and penalties) (423)"
+     },
+     {
+         "marketID": "436",
+         "marketName": "{$competitor2} to win all periods (436)"
+     },
+     {
+         "marketID": "422",
+         "marketName": "{$competitor2} clean sheet (incl. overtime and penalties) (422)"
+     },
+     {
+         "marketID": "1013",
+         "marketName": "{%competitor} total bogeys (1013)"
+     },
+     {
+         "marketID": "1083",
+         "marketName": "Pitch range of {%player} {!appearancenr} time at bat (1083)"
+     },
+     {
+         "marketID": "1082",
+         "marketName": "{!inningnr} inning - {$competitor2} to record a double or triple play (1082)"
+     },
+     {
+         "marketID": "115",
+         "marketName": "Overtime - {!goalnr} goal (115)"
+     },
+     {
+         "marketID": "785",
+         "marketName": "Pitcher strikeouts (incl. extra innings) (785)"
+     },
+     {
+         "marketID": "1022",
+         "marketName": "Hole {holenr} - 3 ball (1022)"
+     },
+     {
+         "marketID": "601",
+         "marketName": "Race to {cornernr} corners (601)"
+     },
+     {
+         "marketID": "441",
+         "marketName": "All periods over {total} (441)"
+     },
+     {
+         "marketID": "822",
+         "marketName": "Draw sum total (822)"
+     },
+     {
+         "marketID": "1000",
+         "marketName": "{!inningnr} innings overs {overnrX} x {overnrY} - {$competitor1} multi run spread (1000)"
+     },
+     {
+         "marketID": "772",
+         "marketName": "Player rebounds (incl. overtime) (772)"
+     },
+     {
+         "marketID": "1104",
+         "marketName": "{!retirementnr} to retire (teams) (1104)"
+     },
+     {
+         "marketID": "342",
+         "marketName": "Will there be a tie (342)"
+     },
+     {
+         "marketID": "493",
+         "marketName": "Frame handicap (493)"
+     },
+     {
+         "marketID": "24",
+         "marketName": "{$competitor2} exact goals (24)"
+     },
+     {
+         "marketID": "477",
+         "marketName": "Try handicap (477)"
+     },
+     {
+         "marketID": "614",
+         "marketName": "{!quarternr} quarter - handicap (incl. overtime) (614)"
+     },
+     {
+         "marketID": "93",
+         "marketName": "2nd half - exact goals (93)"
+     },
+     {
+         "marketID": "771",
+         "marketName": "Player blocks (incl. overtime) (771)"
+     },
+     {
+         "marketID": "779",
+         "marketName": "Player touches (779)"
+     },
+     {
+         "marketID": "177",
+         "marketName": "1st half - total corners (177)"
+     },
+     {
+         "marketID": "195",
+         "marketName": "Will there be a tiebreak (195)"
+     },
+     {
+         "marketID": "968",
+         "marketName": "Anytime goalscorer (968)"
+     },
+     {
+         "marketID": "1240",
+         "marketName": "Head2head - Run {runnr} (1240)"
+     },
+     {
+         "marketID": "283",
+         "marketName": "Innings 1 to 5th top - {$competitor2} total (283)"
+     },
+     {
+         "marketID": "1124",
+         "marketName": "Innings 1 to 5 - Winner (1124)"
+     },
+     {
+         "marketID": "640",
+         "marketName": "Total sixes (640)"
+     },
+     {
+         "marketID": "1138",
+         "marketName": "{!inningnr} innings over {overnr} - {!deliverynr} delivery {$competitor1} to be a wicket (1138)"
+     },
+     {
+         "marketID": "716",
+         "marketName": "{!inningnr} innings over {overnr} - {$competitor2} run range (716)"
+     },
+     {
+         "marketID": "1213",
+         "marketName": "End of round {roundnr} - Leader (1213)"
+     },
+     {
+         "marketID": "1021",
+         "marketName": "{%competitor} odd/even strokes (1021)"
+     },
+     {
+         "marketID": "705",
+         "marketName": "{!inningnr} innings - {$competitor2} total wides bowled (705)"
+     },
+     {
+         "marketID": "842",
+         "marketName": "{!inningnr} innings - {$competitor2} total spread at {!dismissalnr} dismissal (842)"
+     },
+     {
+         "marketID": "786",
+         "marketName": "Pitcher earned runs (incl. extra innings) (786)"
+     },
+     {
+         "marketID": "187",
+         "marketName": "Game handicap (187)"
+     },
+     {
+         "marketID": "1090",
+         "marketName": "{!quarternr} quarter - {!pointnr} point (1090)"
+     },
+     {
+         "marketID": "293",
+         "marketName": "2nd half - 1x2 (incl. overtime) (293)"
+     },
+     {
+         "marketID": "223",
+         "marketName": "Handicap (incl. overtime) (223)"
+     },
+     {
+         "marketID": "572",
+         "marketName": "10 minutes - corner 1x2 from {from} to {to} (572)"
+     },
+     {
+         "marketID": "361",
+         "marketName": "1st over - odd/even (361)"
+     },
+     {
+         "marketID": "1260",
+         "marketName": "{!legnr} leg checkout total (1260)"
+     },
+     {
+         "marketID": "1262",
+         "marketName": "Score after {legnr} legs (1262)"
+     },
+     {
+         "marketID": "1244",
+         "marketName": "King of the Oche (Match Treble) (1244)"
+     },
+     {
+         "marketID": "1252",
+         "marketName": "Match winner & highest checkout (1252)"
+     },
+     {
+         "marketID": "1254",
+         "marketName": "Match winner & most 180s (1254)"
+     },
+     {
+         "marketID": "1264",
+         "marketName": "170 checkout in match (1264)"
+     },
+     {
+         "marketID": "1256",
+         "marketName": "Highest checkout & most 180s (1256)"
+     },
+     {
+         "marketID": "1248",
+         "marketName": "Highest checkout in match (1248)"
+     },
+     {
+         "marketID": "1250",
+         "marketName": "Total {points} + checkouts (1250)"
+     },
+     {
+         "marketID": "1246",
+         "marketName": "Player with highest checkout (1246)"
+     },
+     {
+         "marketID": "1258",
+         "marketName": "To lead after {!legnr} leg (1258)"
+     },
+     {
+         "marketID": "1268",
+         "marketName": "End of Q{qualifyingperiod} - Leader (1268)"
+     },
+     {
+         "marketID": "1277",
+         "marketName": "{!setnr} set - {$competitor1} total breaks (1277)"
+     },
+     {
+         "marketID": "1272",
+         "marketName": "{!setnr} set - {$competitor2} total points (1272)"
+     },
+     {
+         "marketID": "1275",
+         "marketName": "{!setnr} set - {$competitor2} total aces (1275)"
+     },
+     {
+         "marketID": "1273",
+         "marketName": "{!setnr} set - {$competitor2} total breaks (1273)"
+     },
+     {
+         "marketID": "1270",
+         "marketName": "{!setnr} set - {!acenr} ace (1270)"
+     },
+     {
+         "marketID": "1271",
+         "marketName": "{!setnr} set - {$competitor1} total points (1271)"
+     },
+     {
+         "marketID": "1269",
+         "marketName": "{!setnr} set game {gamenr} - ace (1269)"
+     },
+     {
+         "marketID": "1274",
+         "marketName": "{!setnr} set - {$competitor1} total aces (1274)"
+     },
+     {
+         "marketID": "1276",
+         "marketName": "{!setnr} set - most aces (1276)"
+     },
+     {
+         "marketID": "1280",
+         "marketName": "{!setnr} set - correct score after 6 games (1280)"
+     },
+     {
+         "marketID": "1278",
+         "marketName": "Both players to win a set (1278)"
+     },
+     {
+         "marketID": "1279",
+         "marketName": "{!setnr} set - correct score after 4 games (1279)"
+     },
+     {
+         "marketID": "1281",
+         "marketName": "{!setnr} set - {!breaknr} break (1281)"
+     },
+     {
+         "marketID": "1282",
+         "marketName": "{!setnr} set game {gamenr} - break point (1282)"
+     },
+     {
+         "marketID": "1283",
+         "marketName": "Booking handicap (1283)"
+     },
+     {
+         "marketID": "1284",
+         "marketName": "Overtime 1st half - total (1284)"
+     },
+     {
+         "marketID": "1288",
+         "marketName": "{$competitor2} total breaks (1288)"
+     },
+     {
+         "marketID": "1294",
+         "marketName": "{!setnr} set game {gamenr} - {!pointnr} point total shots (1294)"
+     },
+     {
+         "marketID": "1289",
+         "marketName": "{$competitor1} total aces (1289)"
+     },
+     {
+         "marketID": "1287",
+         "marketName": "{$competitor1} total breaks (1287)"
+     },
+     {
+         "marketID": "1291",
+         "marketName": "Most aces (1291)"
+     },
+     {
+         "marketID": "1290",
+         "marketName": "{$competitor2} total aces (1290)"
+     },
+     {
+         "marketID": "1293",
+         "marketName": "{!setnr} set game {gamenr} - {!pointnr} point outcome (1293)"
+     },
+     {
+         "marketID": "1292",
+         "marketName": "{!setnr} set game {gamenr} - {!pointnr} point serve outcome (1292)"
+     },
+     {
+         "marketID": "1285",
+         "marketName": "{$competitor1} total points (1285)"
+     },
+     {
+         "marketID": "1295",
+         "marketName": "{!setnr} set game {gamenr} - {!pointnr} point last stroke (1295)"
+     },
+     {
+         "marketID": "1286",
+         "marketName": "{$competitor2} total points (1286)"
+     },
+     {
+         "marketID": "1298",
+         "marketName": "Yellow card 1x2 (1298)"
+     },
+     {
+         "marketID": "1296",
+         "marketName": "Total yellow cards (1296)"
+     },
+     {
+         "marketID": "1299",
+         "marketName": "Yellow card handicap (1299)"
+     },
+     {
+         "marketID": "1297",
+         "marketName": "Total red cards (1297)"
+     },
+     {
+         "marketID": "1300",
+         "marketName": "{%player} total points (incl. overtime) (1300)"
+     },
+     {
+         "marketID": "1309",
+         "marketName": "4 minutes - {points} point score draw no bet from {from} to {to} remaining (1309)"
+     },
+     {
+         "marketID": "1311",
+         "marketName": "4 minutes - draw no bet from {from} to {to} remaining (1311)"
+     },
+     {
+         "marketID": "1303",
+         "marketName": "{%player} total 3-point field goals (incl. overtime) (1303)"
+     },
+     {
+         "marketID": "1301",
+         "marketName": "{%player} total assists (incl. overtime) (1301)"
+     },
+     {
+         "marketID": "1310",
+         "marketName": "2 minutes - draw no bet from {from} to {to} remaining (1310)"
+     },
+     {
+         "marketID": "1304",
+         "marketName": "{%player} total points + rebounds + assists (incl. overtime) (1304)"
+     },
+     {
+         "marketID": "1308",
+         "marketName": "2 minutes - {points} point score draw no bet from {from} to {to} remaining (1308)"
+     },
+     {
+         "marketID": "1307",
+         "marketName": "{!quarternr} quarter - {points} point score draw no bet (1307)"
+     },
+     {
+         "marketID": "1312",
+         "marketName": "{!possessionnr} possession outcome (1312)"
+     },
+     {
+         "marketID": "1306",
+         "marketName": "2nd half - {points} point score draw no bet (1306)"
+     },
+     {
+         "marketID": "1302",
+         "marketName": "{%player} total rebounds (incl. overtime) (1302)"
+     },
+     {
+         "marketID": "1305",
+         "marketName": "1st half - {points} point score draw no bet (1305)"
+     },
+     {
+         "marketID": "1316",
+         "marketName": "{$competitor2} total double faults (1316)"
+     },
+     {
+         "marketID": "1315",
+         "marketName": "{$competitor1} total double faults (1315)"
+     },
+     {
+         "marketID": "1193",
+         "marketName": "Highest scoring quarter - total (1193)"
+     },
+     {
+         "marketID": "1201",
+         "marketName": "Team to win both halves (1201)"
+     },
+     {
+         "marketID": "1197",
+         "marketName": "Any team to win both halves (1197)"
+     },
+     {
+         "marketID": "1195",
+         "marketName": "Lowest scoring quarter - total (1195)"
+     },
+     {
+         "marketID": "1203",
+         "marketName": "Team to win all quarters (1203)"
+     },
+     {
+         "marketID": "1199",
+         "marketName": "Any team to win all quarters (1199)"
+     },
+     {
+         "marketID": "1313",
+         "marketName": "{$competitor1} to win all quarters (1313)"
+     },
+     {
+         "marketID": "1314",
+         "marketName": "{$competitor2} to win all quarters (1314)"
+     },
+     {
+         "marketID": "1338",
+         "marketName": "4 minutes - total from {from} to {to} remaining (1338)"
+     },
+     {
+         "marketID": "1339",
+         "marketName": "4 minutes - {$competitor1} total from {from} to {to} remaining (1339)"
+     },
+     {
+         "marketID": "1344",
+         "marketName": "{$competitor1} {!fieldgoalnr} field goal type after score {score} (1344)"
+     },
+     {
+         "marketID": "1340",
+         "marketName": "4 minutes - 1x2 from {from} to {to} remaining (1340)"
+     },
+     {
+         "marketID": "1346",
+         "marketName": "{!fieldgoalnr} field goal after score {score} (1346)"
+     },
+     {
+         "marketID": "1341",
+         "marketName": "4 minutes - {$competitor2} total from {from} to {to} remaining (1341)"
+     },
+     {
+         "marketID": "1342",
+         "marketName": "{!possessionnr} possession outcome after score {score} (1342)"
+     },
+     {
+         "marketID": "1345",
+         "marketName": "{$competitor2} {!fieldgoalnr} field goal type after score {score} (1345)"
+     },
+     {
+         "marketID": "1343",
+         "marketName": "{!fieldgoalnr} field goal type after score {score} (1343)"
+     },
+     {
+         "marketID": "1347",
+         "marketName": "{!gamenr} game rally {rallynr} - total bounces (1347)"
+     },
+     {
+         "marketID": "1349",
+         "marketName": "{!gamenr} game rally {rallynr} - net hit (1349)"
+     },
+     {
+         "marketID": "1348",
+         "marketName": "{!gamenr} game rally {rallynr} - odd/even bounces (1348)"
+     },
+     {
+         "marketID": "1330",
+         "marketName": "{!gamenr} game - {$competitor1} total (1330)"
+     },
+     {
+         "marketID": "1331",
+         "marketName": "{!gamenr} game - {$competitor2} total (1331)"
+     },
+     {
+         "marketID": "1351",
+         "marketName": "{$competitor2} {!possessionnr} possession outcome after score {score} (1351)"
+     },
+     {
+         "marketID": "1350",
+         "marketName": "{$competitor1} {!possessionnr} possession outcome after score {score} (1350)"
+     },
+     {
+         "marketID": "1337",
+         "marketName": "{!setnr} set - {$competitor2} total double faults (1337)"
+     },
+     {
+         "marketID": "1336",
+         "marketName": "{!setnr} set - {$competitor1} total double faults (1336)"
+     },
+     {
+         "marketID": "1370",
+         "marketName": "{%player} home run (incl. extra innings) (1370)"
+     },
+     {
+         "marketID": "1373",
+         "marketName": "{%player} total runs (incl. extra innings) (1373)"
+     },
+     {
+         "marketID": "1372",
+         "marketName": "{%player} on base 2+ (incl. extra innings) (1372)"
+     },
+     {
+         "marketID": "1371",
+         "marketName": "{%player} on base (incl. extra innings) (1371)"
+     },
+     {
+         "marketID": "1356",
+         "marketName": "{!gamenr} game - correct score (1356)"
+     },
+     {
+         "marketID": "1353",
+         "marketName": "{!gamenr} game - winning margin (1353)"
+     },
+     {
+         "marketID": "1375",
+         "marketName": "{%player} {!appearancenr} plate appearance - grouped result (1375)"
+     },
+     {
+         "marketID": "1374",
+         "marketName": "{%player} {!appearancenr} plate appearance - exact result (1374)"
+     },
+     {
+         "marketID": "1377",
+         "marketName": "{%player} {!appearancenr} plate appearance - total pitches seen (1377)"
+     },
+     {
+         "marketID": "1376",
+         "marketName": "{%player} {!appearancenr} plate appearance - on base (1376)"
+     },
+     {
+         "marketID": "1379",
+         "marketName": "{%player} {!pitchnr} pitch - fastball (1379)"
+     },
+     {
+         "marketID": "1381",
+         "marketName": "{%player} {!pitchnr} pitch - result (1381)"
+     },
+     {
+         "marketID": "1378",
+         "marketName": "{%player} {!pitchnr} pitch - total speed (1378)"
+     },
+     {
+         "marketID": "1380",
+         "marketName": "{%player} {!pitchnr} pitch - strike (1380)"
+     },
+     {
+         "marketID": "1365",
+         "marketName": "{%player} triple double (incl. overtime) (1365)"
+     },
+     {
+         "marketID": "1366",
+         "marketName": "{%player} milestone {milestone} points (incl. overtime) (1366)"
+     },
+     {
+         "marketID": "1367",
+         "marketName": "{%player} milestone {milestone} assists (incl. overtime) (1367)"
+     },
+     {
+         "marketID": "1368",
+         "marketName": "{%player} milestone {milestone} 3 point field goals (incl. overtime) (1368)"
+     },
+     {
+         "marketID": "1364",
+         "marketName": "{%player} double double (incl. overtime) (1364)"
+     },
+     {
+         "marketID": "1363",
+         "marketName": "{%player} total steals (incl. overtime) (1363)"
+     },
+     {
+         "marketID": "1362",
+         "marketName": "{%player} total blocks (incl. overtime) (1362)"
+     },
+     {
+         "marketID": "1369",
+         "marketName": "{%player} milestone {milestone} points + rebounds + assists (incl. overtime) (1369)"
+     },
+     {
+         "marketID": "1360",
+         "marketName": "{%player} total points + assists (incl. overtime) (1360)"
+     },
+     {
+         "marketID": "1361",
+         "marketName": "{%player} total points + rebounds (incl. overtime) (1361)"
+     },
+     {
+         "marketID": "1352",
+         "marketName": "{%player} total rebounds + assists (incl. overtime) (1352)"
+     },
+     {
+         "marketID": "1386",
+         "marketName": "{!quarternr} quarter - {%player} total points (1386)"
+     },
+     {
+         "marketID": "1384",
+         "marketName": "{!quarternr} quarter 5 minutes - {$competitor1} total from {from} to {to} remaining (1384)"
+     },
+     {
+         "marketID": "1387",
+         "marketName": "{!quarternr} quarter - {%player} total assists (1387)"
+     },
+     {
+         "marketID": "1395",
+         "marketName": "Total double faults (1395)"
+     },
+     {
+         "marketID": "1385",
+         "marketName": "{!quarternr} quarter 5 minutes - {$competitor2} total from {from} to {to} remaining (1385)"
+     },
+     {
+         "marketID": "1396",
+         "marketName": "{!setnr} set - total double faults (1396)"
+     },
+     {
+         "marketID": "1382",
+         "marketName": "{!quarternr} quarter 5 minutes - 1x2 from {from} to {to} remaining (1382)"
+     },
+     {
+         "marketID": "1354",
+         "marketName": "{!setnr} set - total aces (1354)"
+     },
+     {
+         "marketID": "1355",
+         "marketName": "Total aces (1355)"
+     },
+     {
+         "marketID": "1383",
+         "marketName": "{!quarternr} quarter 5 minutes - total from {from} to {to} remaining (1383)"
+     },
+     {
+         "marketID": "1389",
+         "marketName": "{!quarternr} quarter - {%player} total 3-point field goals (1389)"
+     },
+     {
+         "marketID": "1388",
+         "marketName": "{!quarternr} quarter - {%player} total rebounds (1388)"
+     },
+     {
+         "marketID": "1401",
+         "marketName": "{%player} {!appearancenr} plate appearance - hit (1401)"
+     },
+     {
+         "marketID": "1400",
+         "marketName": "{%player} {!appearancenr} plate appearance  - total pitches (1400)"
+     },
+     {
+         "marketID": "1402",
+         "marketName": "{%player} {!appearancenr} plate appearance  - home run (1402)"
+     },
+     {
+         "marketID": "1403",
+         "marketName": "{%player} {!appearancenr} plate appearance - reach base (1403)"
+     },
+     {
+         "marketID": "1398",
+         "marketName": "{!setnr} set - total breaks (1398)"
+     },
+     {
+         "marketID": "1397",
+         "marketName": "Total breaks (1397)"
+     },
+     {
+         "marketID": "1414",
+         "marketName": "Player {count}+ shots on target from outside of the box (1414)"
+     },
+     {
+         "marketID": "1415",
+         "marketName": "Player {count}+ assists (1415)"
+     },
+     {
+         "marketID": "1407",
+         "marketName": "Player to be sent off (1407)"
+     },
+     {
+         "marketID": "1412",
+         "marketName": "Player {count}+ shots (1412)"
+     },
+     {
+         "marketID": "1405",
+         "marketName": "Player to score or assist (1405)"
+     },
+     {
+         "marketID": "1404",
+         "marketName": "Player to score from outside of the box (1404)"
+     },
+     {
+         "marketID": "1406",
+         "marketName": "Player to be carded (1406)"
+     },
+     {
+         "marketID": "1413",
+         "marketName": "Player {count}+ shots on target (1413)"
+     },
+     {
+         "marketID": "1422",
+         "marketName": "{!roundnr} round - winner (1422)"
+     },
+     {
+         "marketID": "1423",
+         "marketName": "Duel winner (1423)"
+     },
+     {
+         "marketID": "1417",
+         "marketName": "Round handicap (1417)"
+     },
+     {
+         "marketID": "1420",
+         "marketName": "{$competitor1} total round wins (1420)"
+     },
+     {
+         "marketID": "1421",
+         "marketName": "{$competitor2} total round wins (1421)"
+     },
+     {
+         "marketID": "1419",
+         "marketName": "Winner & total rounds (1419)"
+     },
+     {
+         "marketID": "1418",
+         "marketName": "Total rounds (1418)"
+     },
+     {
+         "marketID": "1472",
+         "marketName": "{!inningnr} innings - {%player1} + {%player2} to score {milestone} (1472)"
+     },
+     {
+         "marketID": "1444",
+         "marketName": "{!inningnr} innings - batter head to head (1444)"
+     },
+     {
+         "marketID": "1416",
+         "marketName": "Match Runs - total (1416)"
+     },
+     {
+         "marketID": "1475",
+         "marketName": "{$competitor2} highest 1st partnership & 1st over & overs 0 to {overnr} (1475)"
+     },
+     {
+         "marketID": "1473",
+         "marketName": "{!inningnr} innings - {%player1} + {%player2} + {%player3} to score {milestone} (1473)"
+     },
+     {
+         "marketID": "1443",
+         "marketName": "First Innings - total (1443)"
+     },
+     {
+         "marketID": "1474",
+         "marketName": "{$competitor1} highest 1st partnership & 1st over & overs 0 to {overnr} (1474)"
+     },
+     {
+         "marketID": "1464",
+         "marketName": "{!drivenr} drive - {%competitor} {count}+ yards rush (1464)"
+     },
+     {
+         "marketID": "1450",
+         "marketName": "{!drivenr} drive play {playnr} - {%competitor} passing touchdown (1450)"
+     },
+     {
+         "marketID": "1453",
+         "marketName": "{!drivenr} drive - {%competitor} total first downs (1453)"
+     },
+     {
+         "marketID": "1489",
+         "marketName": "Player {count}+ carries (incl. Overtime) (1489)"
+     },
+     {
+         "marketID": "1486",
+         "marketName": "Player {count}+ receiving yards (incl. Overtime) (1486)"
+     },
+     {
+         "marketID": "1463",
+         "marketName": "{!drivenr} drive - {%competitor} {count}+ yards completed pass (1463)"
+     },
+     {
+         "marketID": "1452",
+         "marketName": "{!drivenr} drive - {%competitor} total yards gained (1452)"
+     },
+     {
+         "marketID": "1488",
+         "marketName": "Player {count}+ receptions (incl. Overtime) (1488)"
+     },
+     {
+         "marketID": "1448",
+         "marketName": "{!drivenr} drive play {playnr} - {%competitor} touchdown (1448)"
+     },
+     {
+         "marketID": "1465",
+         "marketName": "{!drivenr} drive - {%competitor} possession outcome (1465)"
+     },
+     {
+         "marketID": "1462",
+         "marketName": "{!drivenr} drive - {%competitor} drive to cross opp {count} yard line (1462)"
+     },
+     {
+         "marketID": "1451",
+         "marketName": "{!drivenr} drive - {%competitor} total plays (1451)"
+     },
+     {
+         "marketID": "1485",
+         "marketName": "Player {count}+ rushing yards (incl. Overtime) (1485)"
+     },
+     {
+         "marketID": "1490",
+         "marketName": "Player {count}+ touchdowns (incl. Overtime) (1490)"
+     },
+     {
+         "marketID": "1487",
+         "marketName": "Player {count}+ completions (incl. Overtime) (1487)"
+     },
+     {
+         "marketID": "1449",
+         "marketName": "{!drivenr} drive play {playnr} - {%competitor} rushing touchdown (1449)"
+     },
+     {
+         "marketID": "1484",
+         "marketName": "Player {count}+ passing yards (incl. Overtime) (1484)"
+     },
+     {
+         "marketID": "1500",
+         "marketName": "{!quarternr} quarter 4 minutes - 1x2 from {from} to {to} remaining (1500)"
+     },
+     {
+         "marketID": "1506",
+         "marketName": "{!quarternr} quarter 4 minutes - {$competitor1} total from {from} to {to} remaining (1506)"
+     },
+     {
+         "marketID": "1501",
+         "marketName": "{!quarternr} quarter 4 minutes - total from {from} to {to} remaining (1501)"
+     },
+     {
+         "marketID": "1507",
+         "marketName": "{!quarternr} quarter 4 minutes - {$competitor2} total from {from} to {to} remaining (1507)"
+     },
+     {
+         "marketID": "1503",
+         "marketName": "{!periodnr} period 5 minutes - a goal to be scored from {from} to {to} remaining (1503)"
+     },
+     {
+         "marketID": "1491",
+         "marketName": "{%player} to score {!goalnr} goal (incl. overtime) (1491)"
+     },
+     {
+         "marketID": "1498",
+         "marketName": "{!periodnr} period - next faceoff winner after {from} (1498)"
+     },
+     {
+         "marketID": "1493",
+         "marketName": "{%player} total goals (incl. overtime) (1493)"
+     },
+     {
+         "marketID": "1499",
+         "marketName": "{!periodnr} period - 1st faceoff winner (1499)"
+     },
+     {
+         "marketID": "1504",
+         "marketName": "{!periodnr} period 5 minutes - {$competitor1} to score a goal from {from} to {to} remaining (1504)"
+     },
+     {
+         "marketID": "1505",
+         "marketName": "{!periodnr} period 5 minutes - {$competitor2} to score a goal from {from} to {to} remaining (1505)"
+     },
+     {
+         "marketID": "1492",
+         "marketName": "{%player} to score last goal (incl. overtime) (1492)"
+     },
+     {
+         "marketID": "1502",
+         "marketName": "{!periodnr} period 5 minutes - 1x2 from {from} to {to} remaining (1502)"
+     },
+     {
+         "marketID": "1483",
+         "marketName": "{!setnr} set game {gamenr} - {!pointnr} point error type (1483)"
+     },
+     {
+         "marketID": "1509",
+         "marketName": "{$competitor2} total head strikes landed (1509)"
+     },
+     {
+         "marketID": "1511",
+         "marketName": "{!roundnr} round - {$competitor2} total head strikes landed (1511)"
+     },
+     {
+         "marketID": "1521",
+         "marketName": "{$competitor1} strikes landed range (1521)"
+     },
+     {
+         "marketID": "1536",
+         "marketName": "{!roundnr} round - {$competitor2} knockdowns (1536)"
+     },
+     {
+         "marketID": "1564",
+         "marketName": "{!roundnr} round - {$competitor2} strikes landed range (1564)"
+     },
+     {
+         "marketID": "1535",
+         "marketName": "{!roundnr} round - {$competitor1} knockdowns (1535)"
+     },
+     {
+         "marketID": "1510",
+         "marketName": "{!roundnr} round - {$competitor1} total head strikes landed (1510)"
+     },
+     {
+         "marketID": "1508",
+         "marketName": "{$competitor1} total head strikes landed (1508)"
+     },
+     {
+         "marketID": "1563",
+         "marketName": "{!roundnr} round - {$competitor1} strikes landed range (1563)"
+     },
+     {
+         "marketID": "1520",
+         "marketName": "{$competitor2} strikes landed range (1520)"
+     },
+     {
+         "marketID": "1543",
+         "marketName": "{%player} to record most 3 point field goals (incl. overtime) (1543)"
+     },
+     {
+         "marketID": "1548",
+         "marketName": "Next team to score {pointnr} points after score {score} (1548)"
+     },
+     {
+         "marketID": "1549",
+         "marketName": "{%player1} + {%player2} total points (incl. overtime) (1549)"
+     },
+     {
+         "marketID": "1538",
+         "marketName": "{$competitor2} {!possessionnr} exact possession outcome after score {score} (1538)"
+     },
+     {
+         "marketID": "1537",
+         "marketName": "{$competitor1} {!possessionnr} exact possession outcome after score {score} (1537)"
+     },
+     {
+         "marketID": "1554",
+         "marketName": "{%player1} vs {%player2} - assists (incl. overtime) (1554)"
+     },
+     {
+         "marketID": "1542",
+         "marketName": "{%player} to record most rebounds (incl. overtime) (1542)"
+     },
+     {
+         "marketID": "1540",
+         "marketName": "{%player} to record most points (incl. overtime) (1540)"
+     },
+     {
+         "marketID": "1555",
+         "marketName": "{%player1} vs {%player2} - rebounds (incl. overtime) (1555)"
+     },
+     {
+         "marketID": "1539",
+         "marketName": "{%player} milestone {milestone} rebounds (incl. overtime) (1539)"
+     },
+     {
+         "marketID": "1553",
+         "marketName": "{%player1} vs {%player2} - points (incl. overtime) (1553)"
+     },
+     {
+         "marketID": "1552",
+         "marketName": "{%player1} + {%player2} total 3-point field goals (incl. overtime) (1552)"
+     },
+     {
+         "marketID": "1541",
+         "marketName": "{%player} to record most assists (incl. overtime) (1541)"
+     },
+     {
+         "marketID": "1551",
+         "marketName": "{%player1} + {%player2} total rebounds (incl. overtime) (1551)"
+     },
+     {
+         "marketID": "1556",
+         "marketName": "{%player1} vs {%player2} - 3-point field goals (incl. overtime) (1556)"
+     },
+     {
+         "marketID": "1550",
+         "marketName": "{%player1} + {%player2} total assists (incl. overtime) (1550)"
+     },
+     {
+         "marketID": "1458",
+         "marketName": "{!inningnr} innings - {%player} run range (1458)"
+     },
+     {
+         "marketID": "1481",
+         "marketName": "{!inningnr} innings - {$competitor2} runs for {!dismissalnr} dismissal partnership run range (1481)"
+     },
+     {
+         "marketID": "1480",
+         "marketName": "{!inningnr} innings - {$competitor1} runs for {!dismissalnr} dismissal partnership run range (1480)"
+     },
+     {
+         "marketID": "1468",
+         "marketName": "{!inningnr} innings - {$competitor1} total -last digit (1468)"
+     },
+     {
+         "marketID": "1469",
+         "marketName": "{!inningnr} innings - {$competitor2} total -last digit (1469)"
+     },
+     {
+         "marketID": "1459",
+         "marketName": "{!inningnr} innings - {%player} total -last digit (1459)"
+     },
+     {
+         "marketID": "1562",
+         "marketName": "{!inningnr} inning {!overnr} over - {!deliverynr} delivery odd/even (1562)"
+     },
+     {
+         "marketID": "1565",
+         "marketName": "{!inningnr} inning {!overnr} over - {!deliverynr} delivery total (1565)"
+     },
+     {
+         "marketID": "1558",
+         "marketName": "{!inningnr} inning {!overnr} over - {!deliverynr} delivery exact runs (1558)"
+     },
+     {
+         "marketID": "1559",
+         "marketName": "{!inningnr} inning {!overnr} over - {!deliverynr} delivery red/black (1559)"
+     },
+     {
+         "marketID": "1561",
+         "marketName": "{!inningnr} inning {!overnr} over - {!deliverynr} delivery wicket (1561)"
+     }
+ ]
+}

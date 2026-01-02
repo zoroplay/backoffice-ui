@@ -4,7 +4,7 @@ export const transactions: Transaction[] = [
   {
     date: "2025-09-16",
     transactionId: "TXN12345",
-    user: "john_doe",
+    username: "john_doe",
     operationType: "Deposit",
     description: "User deposited funds",
     amount: 200,
@@ -14,7 +14,7 @@ export const transactions: Transaction[] = [
   {
     date: "2025-09-15",
     transactionId: "TXN67890",
-    user: "jane_smith",
+    username: "jane_smith",
     operationType: "Bet Winnings",
     description: "Winnings credited",
     amount: 500,

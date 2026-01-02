@@ -1,0 +1,832 @@
+{
+ "sports": [
+     {
+         "sportID": 1,
+         "sportName": "Soccer"
+     },
+     {
+         "sportID": 2,
+         "sportName": "Basketball"
+     },
+     {
+         "sportID": 3,
+         "sportName": "Baseball"
+     },
+     {
+         "sportID": 4,
+         "sportName": "Ice Hockey"
+     },
+     {
+         "sportID": 5,
+         "sportName": "Tennis"
+     },
+     {
+         "sportID": 6,
+         "sportName": "Handball"
+     },
+     {
+         "sportID": 7,
+         "sportName": "Floorball"
+     },
+     {
+         "sportID": 8,
+         "sportName": "Trotting"
+     },
+     {
+         "sportID": 9,
+         "sportName": "Golf"
+     },
+     {
+         "sportID": 10,
+         "sportName": "Boxing"
+     },
+     {
+         "sportID": 11,
+         "sportName": "Motorsport"
+     },
+     {
+         "sportID": 12,
+         "sportName": "Rugby"
+     },
+     {
+         "sportID": 13,
+         "sportName": "Aussie Rules"
+     },
+     {
+         "sportID": 14,
+         "sportName": "Winter Sports"
+     },
+     {
+         "sportID": 15,
+         "sportName": "Bandy"
+     },
+     {
+         "sportID": 16,
+         "sportName": "American Football"
+     },
+     {
+         "sportID": 17,
+         "sportName": "Cycling"
+     },
+     {
+         "sportID": 18,
+         "sportName": "Specials"
+     },
+     {
+         "sportID": 19,
+         "sportName": "Snooker"
+     },
+     {
+         "sportID": 20,
+         "sportName": "Table Tennis"
+     },
+     {
+         "sportID": 21,
+         "sportName": "Cricket"
+     },
+     {
+         "sportID": 22,
+         "sportName": "Darts"
+     },
+     {
+         "sportID": 23,
+         "sportName": "Volleyball"
+     },
+     {
+         "sportID": 24,
+         "sportName": "Field hockey"
+     },
+     {
+         "sportID": 25,
+         "sportName": "Pool"
+     },
+     {
+         "sportID": 26,
+         "sportName": "Waterpolo"
+     },
+     {
+         "sportID": 27,
+         "sportName": "Gaelic sports"
+     },
+     {
+         "sportID": 28,
+         "sportName": "Curling"
+     },
+     {
+         "sportID": 29,
+         "sportName": "Futsal"
+     },
+     {
+         "sportID": 30,
+         "sportName": "Olympics"
+     },
+     {
+         "sportID": 31,
+         "sportName": "Badminton"
+     },
+     {
+         "sportID": 32,
+         "sportName": "Bowls"
+     },
+     {
+         "sportID": 33,
+         "sportName": "Chess"
+     },
+     {
+         "sportID": 34,
+         "sportName": "Beach Volley"
+     },
+     {
+         "sportID": 35,
+         "sportName": "Netball"
+     },
+     {
+         "sportID": 36,
+         "sportName": "Athletics"
+     },
+     {
+         "sportID": 37,
+         "sportName": "Squash"
+     },
+     {
+         "sportID": 38,
+         "sportName": "Rink Hockey"
+     },
+     {
+         "sportID": 39,
+         "sportName": "Lacrosse"
+     },
+     {
+         "sportID": 40,
+         "sportName": "Formula 1"
+     },
+     {
+         "sportID": 41,
+         "sportName": "Bikes"
+     },
+     {
+         "sportID": 42,
+         "sportName": "DTM"
+     },
+     {
+         "sportID": 43,
+         "sportName": "Alpine Skiing"
+     },
+     {
+         "sportID": 44,
+         "sportName": "Biathlon"
+     },
+     {
+         "sportID": 45,
+         "sportName": "Bobsleigh"
+     },
+     {
+         "sportID": 46,
+         "sportName": "Cross-Country"
+     },
+     {
+         "sportID": 47,
+         "sportName": "Nordic Combined"
+     },
+     {
+         "sportID": 48,
+         "sportName": "Ski Jumping"
+     },
+     {
+         "sportID": 49,
+         "sportName": "Snowboard"
+     },
+     {
+         "sportID": 50,
+         "sportName": "Speed Skating"
+     },
+     {
+         "sportID": 51,
+         "sportName": "Luge"
+     },
+     {
+         "sportID": 52,
+         "sportName": "Swimming"
+     },
+     {
+         "sportID": 53,
+         "sportName": "Finnish Baseball"
+     },
+     {
+         "sportID": 54,
+         "sportName": "Softball"
+     },
+     {
+         "sportID": 55,
+         "sportName": "Horse racing"
+     },
+     {
+         "sportID": 56,
+         "sportName": "Schwingen"
+     },
+     {
+         "sportID": 57,
+         "sportName": "Inline Hockey"
+     },
+     {
+         "sportID": 58,
+         "sportName": "Greyhound"
+     },
+     {
+         "sportID": 59,
+         "sportName": "Rugby League"
+     },
+     {
+         "sportID": 60,
+         "sportName": "Beach Soccer"
+     },
+     {
+         "sportID": 61,
+         "sportName": "Pesapallo"
+     },
+     {
+         "sportID": 62,
+         "sportName": "Streethockey"
+     },
+     {
+         "sportID": 63,
+         "sportName": "World Championship"
+     },
+     {
+         "sportID": 64,
+         "sportName": "Rowing"
+     },
+     {
+         "sportID": 65,
+         "sportName": "Freestyle"
+     },
+     {
+         "sportID": 66,
+         "sportName": "Snowboardcross/Parallel"
+     },
+     {
+         "sportID": 67,
+         "sportName": "MotoGP"
+     },
+     {
+         "sportID": 68,
+         "sportName": "Moto2"
+     },
+     {
+         "sportID": 69,
+         "sportName": "Moto3"
+     },
+     {
+         "sportID": 70,
+         "sportName": "Nascar Cup Series"
+     },
+     {
+         "sportID": 71,
+         "sportName": "Padel"
+     },
+     {
+         "sportID": 72,
+         "sportName": "Canoeing"
+     },
+     {
+         "sportID": 73,
+         "sportName": "Horseball"
+     },
+     {
+         "sportID": 74,
+         "sportName": "Aquatics"
+     },
+     {
+         "sportID": 75,
+         "sportName": "Archery"
+     },
+     {
+         "sportID": 76,
+         "sportName": "Equestrian"
+     },
+     {
+         "sportID": 77,
+         "sportName": "Fencing"
+     },
+     {
+         "sportID": 78,
+         "sportName": "Gymnastics"
+     },
+     {
+         "sportID": 79,
+         "sportName": "Judo"
+     },
+     {
+         "sportID": 80,
+         "sportName": "Modern Pentathlon"
+     },
+     {
+         "sportID": 81,
+         "sportName": "Sailing"
+     },
+     {
+         "sportID": 82,
+         "sportName": "Shooting"
+     },
+     {
+         "sportID": 83,
+         "sportName": "Taekwondo"
+     },
+     {
+         "sportID": 84,
+         "sportName": "Triathlon"
+     },
+     {
+         "sportID": 85,
+         "sportName": "Weightlifting"
+     },
+     {
+         "sportID": 86,
+         "sportName": "Wrestling"
+     },
+     {
+         "sportID": 87,
+         "sportName": "Olympics Youth"
+     },
+     {
+         "sportID": 88,
+         "sportName": "Mountain Bike"
+     },
+     {
+         "sportID": 89,
+         "sportName": "Riding"
+     },
+     {
+         "sportID": 90,
+         "sportName": "Surfing"
+     },
+     {
+         "sportID": 91,
+         "sportName": "BMX racing"
+     },
+     {
+         "sportID": 92,
+         "sportName": "Canoe slalom"
+     },
+     {
+         "sportID": 93,
+         "sportName": "Rhythmic gymnastics"
+     },
+     {
+         "sportID": 94,
+         "sportName": "Trampoline Gymnastics"
+     },
+     {
+         "sportID": 95,
+         "sportName": "Artistic Swimming"
+     },
+     {
+         "sportID": 96,
+         "sportName": "Diving"
+     },
+     {
+         "sportID": 97,
+         "sportName": "Track cycling"
+     },
+     {
+         "sportID": 98,
+         "sportName": "Beach Tennis"
+     },
+     {
+         "sportID": 99,
+         "sportName": "Sumo"
+     },
+     {
+         "sportID": 100,
+         "sportName": "Superbike"
+     },
+     {
+         "sportID": 101,
+         "sportName": "Rally"
+     },
+     {
+         "sportID": 102,
+         "sportName": "Figure Skating"
+     },
+     {
+         "sportID": 103,
+         "sportName": "Freestyle Skiing"
+     },
+     {
+         "sportID": 104,
+         "sportName": "Skeleton"
+     },
+     {
+         "sportID": 105,
+         "sportName": "Short Track"
+     },
+     {
+         "sportID": 106,
+         "sportName": "Soccer Mythical"
+     },
+     {
+         "sportID": 107,
+         "sportName": "eSport"
+     },
+     {
+         "sportID": 108,
+         "sportName": "World Lottery"
+     },
+     {
+         "sportID": 109,
+         "sportName": "ESport Counter-Strike"
+     },
+     {
+         "sportID": 110,
+         "sportName": "ESport League of Legends"
+     },
+     {
+         "sportID": 111,
+         "sportName": "ESport Dota"
+     },
+     {
+         "sportID": 112,
+         "sportName": "ESport StarCraft"
+     },
+     {
+         "sportID": 113,
+         "sportName": "ESport Hearthstone"
+     },
+     {
+         "sportID": 114,
+         "sportName": "ESport Heroes of the Storm"
+     },
+     {
+         "sportID": 115,
+         "sportName": "ESport World of Tanks"
+     },
+     {
+         "sportID": 116,
+         "sportName": "Polo"
+     },
+     {
+         "sportID": 117,
+         "sportName": "MMA"
+     },
+     {
+         "sportID": 118,
+         "sportName": "ESport Call of Duty"
+     },
+     {
+         "sportID": 119,
+         "sportName": "ESport Smite"
+     },
+     {
+         "sportID": 120,
+         "sportName": "ESport Vainglory"
+     },
+     {
+         "sportID": 121,
+         "sportName": "ESport Overwatch"
+     },
+     {
+         "sportID": 122,
+         "sportName": "ESport WarCraft III"
+     },
+     {
+         "sportID": 123,
+         "sportName": "ESport Crossfire"
+     },
+     {
+         "sportID": 124,
+         "sportName": "ESport Halo"
+     },
+     {
+         "sportID": 125,
+         "sportName": "ESport Rainbow Six"
+     },
+     {
+         "sportID": 126,
+         "sportName": "Sepak Takraw"
+     },
+     {
+         "sportID": 127,
+         "sportName": "ESport Street Fighter V"
+     },
+     {
+         "sportID": 128,
+         "sportName": "ESport Rocket League"
+     },
+     {
+         "sportID": 129,
+         "sportName": "Indy Racing"
+     },
+     {
+         "sportID": 130,
+         "sportName": "Basque Pelota"
+     },
+     {
+         "sportID": 131,
+         "sportName": "Speedway"
+     },
+     {
+         "sportID": 132,
+         "sportName": "ESport Gears of War"
+     },
+     {
+         "sportID": 133,
+         "sportName": "ESport Clash Royale"
+     },
+     {
+         "sportID": 134,
+         "sportName": "ESport King of Glory"
+     },
+     {
+         "sportID": 135,
+         "sportName": "Gaelic Football"
+     },
+     {
+         "sportID": 136,
+         "sportName": "Gaelic Hurling"
+     },
+     {
+         "sportID": 137,
+         "sportName": "eSoccer"
+     },
+     {
+         "sportID": 138,
+         "sportName": "Kabaddi"
+     },
+     {
+         "sportID": 139,
+         "sportName": "ESport Quake"
+     },
+     {
+         "sportID": 140,
+         "sportName": "ESport PlayerUnknowns Battlegrounds"
+     },
+     {
+         "sportID": 141,
+         "sportName": "Cycling Cycle Ball"
+     },
+     {
+         "sportID": 142,
+         "sportName": "Formula E"
+     },
+     {
+         "sportID": 143,
+         "sportName": "7BallRun"
+     },
+     {
+         "sportID": 144,
+         "sportName": "Motocross"
+     },
+     {
+         "sportID": 145,
+         "sportName": "Sprint Car Racing"
+     },
+     {
+         "sportID": 146,
+         "sportName": "Speed Boat Racing"
+     },
+     {
+         "sportID": 147,
+         "sportName": "Drag Racing"
+     },
+     {
+         "sportID": 149,
+         "sportName": "Modified Racing"
+     },
+     {
+         "sportID": 150,
+         "sportName": "Off Road"
+     },
+     {
+         "sportID": 151,
+         "sportName": "Truck & Tractor Pulling"
+     },
+     {
+         "sportID": 152,
+         "sportName": "ESport World of Warcraft"
+     },
+     {
+         "sportID": 153,
+         "sportName": "eBasketball"
+     },
+     {
+         "sportID": 154,
+         "sportName": "ESport Dragon Ball FighterZ"
+     },
+     {
+         "sportID": 155,
+         "sportName": "Basketball 3x3"
+     },
+     {
+         "sportID": 156,
+         "sportName": "ESport Tekken"
+     },
+     {
+         "sportID": 157,
+         "sportName": "Beach Handball"
+     },
+     {
+         "sportID": 158,
+         "sportName": "ESport Arena of Valor"
+     },
+     {
+         "sportID": 159,
+         "sportName": "ESport TF2"
+     },
+     {
+         "sportID": 160,
+         "sportName": "ESport SSBM"
+     },
+     {
+         "sportID": 161,
+         "sportName": "ESport Paladins"
+     },
+     {
+         "sportID": 162,
+         "sportName": "ESport Artifact"
+     },
+     {
+         "sportID": 163,
+         "sportName": "Indoor Soccer"
+     },
+     {
+         "sportID": 164,
+         "sportName": "ESport Apex Legends"
+     },
+     {
+         "sportID": 165,
+         "sportName": "Indy Lights"
+     },
+     {
+         "sportID": 166,
+         "sportName": "ESport Pro Evolution Soccer"
+     },
+     {
+         "sportID": 167,
+         "sportName": "ESport Madden NFL"
+     },
+     {
+         "sportID": 168,
+         "sportName": "ESport Brawl Stars"
+     },
+     {
+         "sportID": 169,
+         "sportName": "Petanque"
+     },
+     {
+         "sportID": 170,
+         "sportName": "ESport Fortnite"
+     },
+     {
+         "sportID": 171,
+         "sportName": "ESport MTG"
+     },
+     {
+         "sportID": 172,
+         "sportName": "Fishing"
+     },
+     {
+         "sportID": 173,
+         "sportName": "Esport Dota Underlords"
+     },
+     {
+         "sportID": 174,
+         "sportName": "Esport Teamfight Tactics"
+     },
+     {
+         "sportID": 175,
+         "sportName": "Esport Auto Chess"
+     },
+     {
+         "sportID": 176,
+         "sportName": "Esport Fighting Games"
+     },
+     {
+         "sportID": 177,
+         "sportName": "DEPRECATED sc"
+     },
+     {
+         "sportID": 178,
+         "sportName": "ESport Motorsport"
+     },
+     {
+         "sportID": 179,
+         "sportName": "Cycling BMX Freestyle"
+     },
+     {
+         "sportID": 180,
+         "sportName": "Cycling BMX Racing"
+     },
+     {
+         "sportID": 181,
+         "sportName": "Karate"
+     },
+     {
+         "sportID": 182,
+         "sportName": "Marathon Swimming"
+     },
+     {
+         "sportID": 183,
+         "sportName": "Skateboarding"
+     },
+     {
+         "sportID": 184,
+         "sportName": "Sport Climbing"
+     },
+     {
+         "sportID": 185,
+         "sportName": "Nascar Camping World Truck"
+     },
+     {
+         "sportID": 186,
+         "sportName": "Nascar Xfinity Series"
+     },
+     {
+         "sportID": 187,
+         "sportName": "NHRA"
+     },
+     {
+         "sportID": 188,
+         "sportName": "Touring Car Racing"
+     },
+     {
+         "sportID": 189,
+         "sportName": "Formula 2"
+     },
+     {
+         "sportID": 190,
+         "sportName": "Motorcycle Racing"
+     },
+     {
+         "sportID": 191,
+         "sportName": "Stock Car Racing"
+     },
+     {
+         "sportID": 192,
+         "sportName": "Air Racing"
+     },
+     {
+         "sportID": 193,
+         "sportName": "Endurance Racing"
+     },
+     {
+         "sportID": 194,
+         "sportName": "ESport Valorant"
+     },
+     {
+         "sportID": 195,
+         "sportName": "eIce Hockey"
+     },
+     {
+         "sportID": 196,
+         "sportName": "eTennis"
+     },
+     {
+         "sportID": 197,
+         "sportName": "eCricket"
+     },
+     {
+         "sportID": 198,
+         "sportName": "eVolleyball"
+     },
+     {
+         "sportID": 199,
+         "sportName": "ESport Wild Rift"
+     },
+     {
+         "sportID": 200,
+         "sportName": "T-Basket"
+     },
+     {
+         "sportID": 201,
+         "sportName": "Racquetball"
+     },
+     {
+         "sportID": 202,
+         "sportName": "Muay Thai"
+     },
+     {
+         "sportID": 203,
+         "sportName": "Soccer Specials"
+     },
+     {
+         "sportID": 204,
+         "sportName": "Breaking"
+     },
+     {
+         "sportID": 205,
+         "sportName": "Cornhole"
+     },
+     {
+         "sportID": 206,
+         "sportName": "Pickleball"
+     },
+     {
+         "sportID": 207,
+         "sportName": "Cyclo-Cross"
+     },
+     {
+         "sportID": 208,
+         "sportName": "Ski Mountaineering"
+     }
+ ]
+}

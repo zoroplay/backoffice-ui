@@ -47,17 +47,19 @@ export default function SignInForm() {
     try {
       const response = await POSTREQUEST("/auth/login?source=admin", data);
       console.log("Login data:", response);
+
       // if (response?.data?.status === 200) {
-      toast.success("Login successful");
-      router.push("/dashboard"); // Navigate to the dashboard
-      localStorage.setItem(
-        "token",
-        JSON.stringify(response?.data?.data?.token)
-      );
-      localStorage.setItem("authData", JSON.stringify(response?.data));
-      // }
-      if (response?.data?.status === 404) {
+        toast.success("Login successful");
+        localStorage.setItem(
+          "token",
+          JSON.stringify(response?.data?.data?.token)
+        );
+        localStorage.setItem("authData", JSON.stringify(response?.data));
+        router.push("/dashboard"); // Navigate to the dashboard
+       if (response?.data?.status === 404) {
         toast.error(response?.data?.error || "Invalid Email or Password");
+      } else {
+        toast.error(response?.data?.error || "Login failed");
       }
     } catch (err) {
       console.error("Login error:", err);
