@@ -2,7 +2,7 @@ services:
   app:
     image: ghcr.io/zoroplay/bo-ui:latest
     ports:
-      - "8089:3003"
+      - "8090:3003"
     environment:
       - NODE_ENV=production
       - PORT=3003
