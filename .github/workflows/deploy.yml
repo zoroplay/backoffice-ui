@@ -175,11 +175,17 @@ jobs:
           NEXT_VERSION=$(cat .VERSION | tr -d "[:space:]\"'" | xargs)
           echo "Deploying version: $NEXT_VERSION"
           
-          # Copy repository .env file
-          cp .env .env.backup 2>/dev/null || echo "No existing .env file to backup"
-          
           # Update docker-compose with new image version
           sed -i "s|image: ghcr.io.*|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$NEXT_VERSION|g" docker-compose.yml
+          
+          # Create .env file from secrets
+          cat > .env << 'EOF'
+          NEXT_PUBLIC_BASE_URL=${{ secrets.NEXT_PUBLIC_BASE_URL }}
+          NEXT_PUBLIC_CLIENT_ID=${{ secrets.NEXT_PUBLIC_CLIENT_ID }}
+          NEXT_PUBLIC_CLIENT_CODE=${{ secrets.NEXT_PUBLIC_CLIENT_CODE }}
+          NEXT_PUBLIC_SITE_KEY=${{ secrets.NEXT_PUBLIC_SITE_KEY }}
+          SBE_SITE_KEY=${{ secrets.SBE_SITE_KEY }}
+          EOF
 
       - name: Deploy to GCP server
         run: |
@@ -187,9 +193,9 @@ jobs:
           ssh -o StrictHostKeyChecking=no ${{ secrets.GCP_SERVER_USER }}@${{ secrets.GCP_SERVER_IP }} 'mkdir -p ~/bo-ui/'
           
           # Copy files to server
-          
           scp -o StrictHostKeyChecking=no docker-compose.yml ${{ secrets.GCP_SERVER_USER }}@${{ secrets.GCP_SERVER_IP }}:~/bo-ui/
           scp -o StrictHostKeyChecking=no deploy.sh ${{ secrets.GCP_SERVER_USER }}@${{ secrets.GCP_SERVER_IP }}:~/bo-ui/
+          scp -o StrictHostKeyChecking=no .env ${{ secrets.GCP_SERVER_USER }}@${{ secrets.GCP_SERVER_IP }}:~/bo-ui/
           
           # Login to GitHub Container Registry on server and execute deployment
           ssh -o StrictHostKeyChecking=no ${{ secrets.GCP_SERVER_USER }}@${{ secrets.GCP_SERVER_IP }} '
