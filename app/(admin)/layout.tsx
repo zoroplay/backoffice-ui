@@ -12,6 +12,8 @@ import "react-date-range/dist/styles.css"; // main style file
 import "react-date-range/dist/theme/default.css";
 import "../globals.css";
 
+export const dynamic = 'force-dynamic';
+
 const outfit = Outfit({
   variable: "--font-outfit-sans",
   subsets: ["latin"],
