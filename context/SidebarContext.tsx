@@ -19,6 +19,21 @@ const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
 export const useSidebar = () => {
   const context = useContext(SidebarContext);
   if (!context) {
+    // Return default values during SSR instead of throwing
+    if (typeof window === 'undefined') {
+      return {
+        isExpanded: true,
+        isMobileOpen: false,
+        isHovered: false,
+        activeItem: null,
+        openSubmenu: null,
+        toggleSidebar: () => {},
+        toggleMobileSidebar: () => {},
+        setIsHovered: () => {},
+        setActiveItem: () => {},
+        toggleSubmenu: () => {},
+      };
+    }
     throw new Error("useSidebar must be used within a SidebarProvider");
   }
   return context;

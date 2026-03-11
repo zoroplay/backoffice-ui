@@ -71,6 +71,17 @@ export function useSearch() {
   const context = useContext(SearchContext);
 
   if (!context) {
+    // Return default values during SSR instead of throwing
+    if (typeof window === 'undefined') {
+      return {
+        query: '',
+        setQuery: () => {},
+        resetQuery: () => {},
+        placeholder: DEFAULT_PLACEHOLDER,
+        setPlaceholder: () => {},
+        resetPlaceholder: () => {},
+      };
+    }
     throw new Error("useSearch must be used within a SearchProvider");
   }
 
