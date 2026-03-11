@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ColumnDef } from "@tanstack/react-table";
 import {
@@ -38,7 +38,7 @@ import type { UserRecord } from "../users/types";
 
 const USERS_STORAGE_KEY = "backoffice-users";
 
-function RolesPage() {
+function RolesPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -644,5 +644,15 @@ function RolesPage() {
   );
 }
 
-export default withAuth(RolesPage);
+export default withAuth(function RolesPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-gray-500">Loading...</div>
+      </div>
+    }>
+      <RolesPageContent />
+    </Suspense>
+  );
+});
 
