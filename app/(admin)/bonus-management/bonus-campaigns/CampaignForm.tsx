@@ -138,7 +138,7 @@ const CampaignForm: React.FC<CampaignFormProps> = ({ onSave, onCancel, editData 
               options={bonusOptions}
               placeholder="Select bonus"
               value={chooseBonus}
-              onChange={(val) => setChooseBonus(val)}
+              onChange={(val) => setChooseBonus(val as BonusOption | null)}
             />
           </div>
 
