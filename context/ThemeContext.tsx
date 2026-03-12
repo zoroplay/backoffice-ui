@@ -53,15 +53,12 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
 export const useTheme = () => {
   const context = useContext(ThemeContext);
   if (context === undefined) {
-    // Return default values during SSR instead of throwing
-    if (typeof window === 'undefined') {
-      return {
-        theme: 'light' as Theme,
-        toggleTheme: () => {},
-        setTheme: () => {},
-      };
-    }
-    throw new Error("useTheme must be used within a ThemeProvider");
+    // Return default values if not in provider (SSR or missing provider)
+    return {
+      theme: 'light' as Theme,
+      toggleTheme: () => {},
+      setTheme: () => {},
+    };
   }
   return context;
 };
