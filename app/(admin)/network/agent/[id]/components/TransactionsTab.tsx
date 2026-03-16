@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useState, useMemo } from "react";
 import type { SingleValue } from "react-select";
 import { DataTable } from "@/components/tables/DataTable";
 import type { Range } from "react-date-range";
-import { columns, Transaction } from "@/app/(admin)/report/money_transactions/columns";
+import { columns, Transaction } from "@/app/(admin)/report/money-transactions/columns";
 import { useSearch } from "@/context/SearchContext";
 import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
 import { Info } from "lucide-react";

@@ -6,11 +6,11 @@ import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { DataTable } from "@/components/tables/DataTable";
 import type { Range } from "react-date-range";
 import { columns, Transaction } from "./columns";
-import { transactions } from "./data";
 import { withAuth } from "@/utils/withAuth";
 import { useSearch } from "@/context/SearchContext";
 import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
 import { Infotext } from "@/components/common/Info";
+import { normalizeApiError, reportsApi } from "@/lib/api";
 
 const defaultDateRange: Range = {
   startDate: new Date(new Date().setDate(new Date().getDate() - 30)), 
@@ -51,11 +51,14 @@ function MoneyTransactions() {
   );
 
   const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
-  const [filteredData, setFilteredData] = useState<Transaction[]>(transactions);
+  const [rows, setRows] = useState<Transaction[]>([]);
+  const [filteredData, setFilteredData] = useState<Transaction[]>([]);
   const [appliedOperationFilter, setAppliedOperationFilter] = useState<
     OperationOption | null
   >(null);
   const [appliedDateRange, setAppliedDateRange] = useState<Range | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { query, setPlaceholder, resetPlaceholder, resetQuery } = useSearch();
 
   const handleOperationChange = useCallback(
@@ -73,6 +76,46 @@ function MoneyTransactions() {
     };
   }, [resetPlaceholder, setPlaceholder]);
 
+  const fmt = (d?: Date, endOfDay = false) => {
+    if (!d) return "";
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const yyyy = d.getFullYear();
+    return `${dd}-${mm}-${yyyy} ${endOfDay ? "23:59:59" : "00:00:00"}`;
+  };
+
+  const toNumber = (value: unknown): number => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+
+  const toTransaction = (row: Record<string, unknown>): Transaction => ({
+    date: String(row.date ?? row.createdAt ?? row.transactionDate ?? ""),
+    transactionId: String(
+      row.transactionId ?? row.transaction_id ?? row.reference ?? ""
+    ),
+    username: String(row.username ?? row.userName ?? row.user ?? ""),
+    operationType: String(row.operationType ?? row.type ?? row.operation ?? ""),
+    description: String(row.description ?? row.narration ?? row.remark ?? ""),
+    amount: toNumber(row.amount),
+    prevBalance: toNumber(row.prevBalance ?? row.previousBalance),
+    balance: toNumber(row.balance ?? row.currentBalance),
+  });
+
+  const getRowsFromResponse = (res: unknown): Transaction[] => {
+    const root = (res as { data?: unknown })?.data ?? res;
+    const list =
+      (Array.isArray(root) && root) ||
+      ((root as { data?: unknown })?.data as unknown[]) ||
+      ((root as { rows?: unknown })?.rows as unknown[]) ||
+      ((root as { results?: unknown })?.results as unknown[]) ||
+      ((root as { items?: unknown })?.items as unknown[]) ||
+      [];
+
+    if (!Array.isArray(list)) return [];
+    return list.map((row) => toTransaction((row as Record<string, unknown>) ?? {}));
+  };
+
   // ----------------------
   // Filtering logic
   // ----------------------
@@ -80,11 +123,12 @@ function MoneyTransactions() {
     (
       value: string,
       operation = appliedOperationFilter,
-      range = appliedDateRange
+      range = appliedDateRange,
+      sourceRows: Transaction[] = rows
     ) => {
       const normalizedSearch = value.trim().toLowerCase();
 
-      return transactions.filter((row: Transaction) => {
+      return sourceRows.filter((row: Transaction) => {
         const matchesSearch =
           !normalizedSearch ||
           searchableFields.some((field) =>
@@ -113,22 +157,49 @@ function MoneyTransactions() {
         return matchesSearch && matchesOperation && matchesDate;
       });
     },
-    [appliedDateRange, appliedOperationFilter]
+    [appliedDateRange, appliedOperationFilter, rows]
   );
 
   useEffect(() => {
     setFilteredData(filterTransactions(query));
   }, [filterTransactions, query]);
 
-  const applyFilters = () => {
+  const applyFilters = async () => {
+    setIsLoading(true);
+    setError(null);
+
     const nextAppliedOperation = operationFilter;
     const nextAppliedDateRange = dateRange;
+    const payload = {
+      from: fmt(dateRange.startDate ?? undefined, false),
+      to: fmt(dateRange.endDate ?? undefined, true),
+      operationType: operationFilter?.value ?? "",
+      search: query.trim(),
+    } as const;
 
-    setAppliedOperationFilter(nextAppliedOperation);
-    setAppliedDateRange(nextAppliedDateRange);
-    setFilteredData(
-      filterTransactions(query, nextAppliedOperation, nextAppliedDateRange)
-    );
+    try {
+      const res = await reportsApi.getMoneyTransactions(payload, 1);
+      const nextRows = getRowsFromResponse(res);
+
+      setRows(nextRows);
+      setAppliedOperationFilter(nextAppliedOperation);
+      setAppliedDateRange(nextAppliedDateRange);
+      setFilteredData(
+        filterTransactions(
+          query,
+          nextAppliedOperation,
+          nextAppliedDateRange,
+          nextRows
+        )
+      );
+    } catch (err) {
+      const apiErr = normalizeApiError(err);
+      setError(apiErr.message ?? "Failed to fetch money transactions");
+      setRows([]);
+      setFilteredData([]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const clearFilters = () => {
@@ -136,7 +207,9 @@ function MoneyTransactions() {
     setDateRange(defaultDateRange);
     setAppliedOperationFilter(null);
     setAppliedDateRange(null);
-    setFilteredData(transactions);
+    setRows([]);
+    setFilteredData([]);
+    setError(null);
     resetQuery();
   };
 
@@ -150,6 +223,7 @@ function MoneyTransactions() {
       <TableFilterToolbar<OperationOption>
         dateRange={dateRange}
         onDateRangeChange={(range) => setDateRange(range)}
+        isLoading={isLoading}
         actions={{
           onSearch: applyFilters,
           onClear: clearFilters,
@@ -163,7 +237,18 @@ function MoneyTransactions() {
         }}
       />
 
-      <DataTable columns={columns} data={filteredData} />
+      {isLoading ? (
+        <div className="flex justify-center py-8 text-gray-500">Loading...</div>
+      ) : (
+        <>
+          {error && (
+            <div className="rounded-md bg-red-50 p-3 text-sm text-red-700">
+              {error}
+            </div>
+          )}
+          <DataTable columns={columns} data={filteredData} />
+        </>
+      )}
     </div>
   );
 }

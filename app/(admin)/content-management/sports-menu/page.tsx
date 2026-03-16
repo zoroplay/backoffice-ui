@@ -249,7 +249,7 @@ const SportsMenuPage: React.FC = () => {
     <div className="space-y-6 p-4">
       <PageBreadcrumb pageTitle="Sports Menu" />
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+      <div className="flex flex-col gap-6">
         <div className="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
           <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-gray-800">
             <div>
@@ -444,22 +444,22 @@ const SportsMenuPage: React.FC = () => {
         <div className="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
           <Tabs defaultValue="sports" className="space-y-6">
             <div className="px-6 pt-6 pb-0">
-              <TabsList className="mb-6 h-auto w-full rounded-xl border border-dashed border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 p-1.5 shadow-sm dark:border-gray-700 dark:from-gray-900/40 dark:to-gray-900/20">
+              <TabsList className="mb-6 grid grid-cols-3 h-fit w-full rounded-xl border border-gray-200 bg-gray-50 p-1 shadow-sm dark:border-gray-700 dark:bg-gray-900/40">
               <TabsTrigger
                 value="sports"
-                className="inline-flex items-center gap-2 rounded-lg p-3 text-sm font-medium text-gray-600 transition-all duration-200 hover:bg-gray-50 hover:text-brand-500 data-[state=active]:ring-1 data-[state=active]:ring-brand-200 data-[state=active]:bg-white data-[state=active]:text-brand-600 data-[state=active]:shadow-sm dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-brand-300 dark:data-[state=active]:ring-brand-700 dark:data-[state=active]:bg-gray-900 dark:data-[state=active]:text-brand-300"
+                className="flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium text-gray-600 transition-all duration-200 hover:bg-white/50 hover:text-brand-500 data-[state=active]:bg-white data-[state=active]:text-brand-600 data-[state=active]:shadow-sm data-[state=active]:ring-1 data-[state=active]:ring-gray-200 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-brand-300 dark:data-[state=active]:bg-gray-800 dark:data-[state=active]:ring-gray-700"
               >
                 Sports Mgmt.
               </TabsTrigger>
               <TabsTrigger
                 value="categories"
-                className="inline-flex items-center gap-2 rounded-lg p-3 text-sm font-medium text-gray-600 transition-all duration-200 hover:bg-gray-50 hover:text-indigo-500 data-[state=active]:ring-1 data-[state=active]:ring-indigo-200 data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-indigo-300 dark:data-[state=active]:ring-indigo-700 dark:data-[state=active]:bg-gray-900 dark:data-[state=active]:text-indigo-300"
+                className="flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium text-gray-600 transition-all duration-200 hover:bg-white/50 hover:text-indigo-500 data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm data-[state=active]:ring-1 data-[state=active]:ring-gray-200 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-indigo-300 dark:data-[state=active]:bg-gray-800 dark:data-[state=active]:ring-gray-700"
               >
                 Category Mgmt.
               </TabsTrigger>
               <TabsTrigger
                 value="tournaments"
-                className="inline-flex items-center gap-2 rounded-lg p-3 text-sm font-medium text-gray-600 transition-all duration-200 hover:bg-gray-50 hover:text-emerald-500 data-[state=active]:ring-1 data-[state=active]:ring-emerald-200 data-[state=active]:bg-white data-[state=active]:text-emerald-600 data-[state=active]:shadow-sm dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-emerald-300 dark:data-[state=active]:ring-emerald-700 dark:data-[state=active]:bg-gray-900 dark:data-[state=active]:text-emerald-300"
+                className="flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium text-gray-600 transition-all duration-200 hover:bg-white/50 hover:text-emerald-500 data-[state=active]:bg-white data-[state=active]:text-emerald-600 data-[state=active]:shadow-sm data-[state=active]:ring-1 data-[state=active]:ring-gray-200 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-emerald-300 dark:data-[state=active]:bg-gray-800 dark:data-[state=active]:ring-gray-700"
               >
                 Tournament Mgmt.
               </TabsTrigger>
@@ -474,65 +474,68 @@ const SportsMenuPage: React.FC = () => {
                 }}
                 className="space-y-5"
               >
-                <div className="space-y-2">
-                  <Label htmlFor="sportName">Name *</Label>
-                  <Input
-                    id="sportName"
-                    placeholder="Enter sport name"
-                    value={sportForm.name}
-                    onChange={(event) =>
-                      setSportForm((prev) => ({ ...prev, name: event.target.value }))
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="sportOrder">Order Position</Label>
-                  <Input
-                    id="sportOrder"
-                    type="number"
-                    placeholder="e.g. 1"
-                    value={sportForm.order}
-                    onChange={(event) =>
-                      setSportForm((prev) => ({ ...prev, order: event.target.value }))
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Status</Label>
-                  <Select<SelectOption<Status>, false>
-                    styles={reactSelectStyles(theme)}
-                    options={statusOptions}
-                    value={sportForm.status}
-                    onChange={(option: SingleValue<SelectOption<Status>>) =>
-                      setSportForm((prev) => ({ ...prev, status: option ?? null }))
-                    }
-                  />
-                </div>
-                <div className="flex items-center justify-between rounded-lg border border-dashed border-gray-200 px-3 py-2 dark:border-gray-700">
-                  <div>
-                    <p className="text-sm font-medium text-gray-800 dark:text-gray-200">Feature on homepage</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Toggle whether this sport shows on the public landing page.
-                    </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="sportName">Name *</Label>
+                    <Input
+                      id="sportName"
+                      placeholder="Enter sport name"
+                      value={sportForm.name}
+                      onChange={(event) =>
+                        setSportForm((prev) => ({ ...prev, name: event.target.value }))
+                      }
+                    />
                   </div>
-                  <Switch
-                    label=""
-                    defaultChecked={sportForm.featured}
-                    onChange={(checked) =>
-                      setSportForm((prev) => ({ ...prev, featured: checked }))
-                    }
-                  />
+                  <div className="space-y-2">
+                    <Label htmlFor="sportOrder">Order Position</Label>
+                    <Input
+                      id="sportOrder"
+                      type="number"
+                      placeholder="e.g. 1"
+                      value={sportForm.order}
+                      onChange={(event) =>
+                        setSportForm((prev) => ({ ...prev, order: event.target.value }))
+                      }
+                    />
+                  </div>
                 </div>
-                <div className="flex gap-3">
-                  <Button type="submit" className="bg-brand-500 text-white hover:bg-brand-600">
-                    Save
-                  </Button>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                  <div className="space-y-2">
+                    <Label>Status</Label>
+                    <Select<SelectOption<Status>, false>
+                      styles={reactSelectStyles(theme)}
+                      options={statusOptions}
+                      value={sportForm.status}
+                      onChange={(option: SingleValue<SelectOption<Status>>) =>
+                        setSportForm((prev) => ({ ...prev, status: option ?? null }))
+                      }
+                    />
+                  </div>
+                  <div className="flex items-center justify-between rounded-lg border border-dashed border-gray-200 px-3 py-2 dark:border-gray-700 h-11 self-end">
+                    <div>
+                      <p className="text-xs font-medium text-gray-800 dark:text-gray-200 uppercase">Feature on homepage</p>
+                    </div>
+                    <Switch
+                      label=""
+                      defaultChecked={sportForm.featured}
+                      onChange={(checked) =>
+                        setSportForm((prev) => ({ ...prev, featured: checked }))
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-2">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setSportForm(buildInitialSportForm())}
                   >
                     Reset
+                  </Button>
+                  <Button type="submit" className="bg-brand-500 text-white hover:bg-brand-600">
+                    Save Changes
                   </Button>
                 </div>
               </Form>
@@ -546,62 +549,68 @@ const SportsMenuPage: React.FC = () => {
                 }}
                 className="space-y-5"
               >
-                <div className="space-y-2">
-                  <Label>Sports *</Label>
-                  <Select<SelectOption, false>
-                    styles={reactSelectStyles(theme)}
-                    options={sportOptions}
-                    value={categoryForm.sport}
-                    placeholder="Select sport"
-                    onChange={(option: SingleValue<SelectOption>) =>
-                      setCategoryForm((prev) => ({ ...prev, sport: option ?? null }))
-                    }
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label>Sports *</Label>
+                    <Select<SelectOption, false>
+                      styles={reactSelectStyles(theme)}
+                      options={sportOptions}
+                      value={categoryForm.sport}
+                      placeholder="Select sport"
+                      onChange={(option: SingleValue<SelectOption>) =>
+                        setCategoryForm((prev) => ({ ...prev, sport: option ?? null }))
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="categoryName">Name *</Label>
+                    <Input
+                      id="categoryName"
+                      placeholder="Enter category name"
+                      value={categoryForm.name}
+                      onChange={(event) =>
+                        setCategoryForm((prev) => ({ ...prev, name: event.target.value }))
+                      }
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="categoryName">Name *</Label>
-                  <Input
-                    id="categoryName"
-                    placeholder="Enter category name"
-                    value={categoryForm.name}
-                    onChange={(event) =>
-                      setCategoryForm((prev) => ({ ...prev, name: event.target.value }))
-                    }
-                  />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="categoryOrder">Order Position</Label>
+                    <Input
+                      id="categoryOrder"
+                      type="number"
+                      placeholder="e.g. 100"
+                      value={categoryForm.order}
+                      onChange={(event) =>
+                        setCategoryForm((prev) => ({ ...prev, order: event.target.value }))
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Status</Label>
+                    <Select<SelectOption<Status>, false>
+                      styles={reactSelectStyles(theme)}
+                      options={statusOptions}
+                      value={categoryForm.status}
+                      onChange={(option: SingleValue<SelectOption<Status>>) =>
+                        setCategoryForm((prev) => ({ ...prev, status: option ?? null }))
+                      }
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="categoryOrder">Order Position</Label>
-                  <Input
-                    id="categoryOrder"
-                    type="number"
-                    placeholder="e.g. 100"
-                    value={categoryForm.order}
-                    onChange={(event) =>
-                      setCategoryForm((prev) => ({ ...prev, order: event.target.value }))
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Status</Label>
-                  <Select<SelectOption<Status>, false>
-                    styles={reactSelectStyles(theme)}
-                    options={statusOptions}
-                    value={categoryForm.status}
-                    onChange={(option: SingleValue<SelectOption<Status>>) =>
-                      setCategoryForm((prev) => ({ ...prev, status: option ?? null }))
-                    }
-                  />
-                </div>
-                <div className="flex gap-3">
-                  <Button type="submit" className="bg-brand-500 text-white hover:bg-brand-600">
-                    Save
-                  </Button>
+
+                <div className="flex justify-end gap-3 pt-2">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setCategoryForm(buildInitialCategoryForm())}
                   >
                     Reset
+                  </Button>
+                  <Button type="submit" className="bg-brand-500 text-white hover:bg-brand-600">
+                    Save Changes
                   </Button>
                 </div>
               </Form>
@@ -615,80 +624,84 @@ const SportsMenuPage: React.FC = () => {
                 }}
                 className="space-y-5"
               >
-                <div className="space-y-2">
-                  <Label>Sports *</Label>
-                  <Select<SelectOption, false>
-                    styles={reactSelectStyles(theme)}
-                    options={sportOptions}
-                    value={tournamentForm.sport}
-                    placeholder="Select sport"
-                    onChange={handleTournamentSportChange}
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label>Sports *</Label>
+                    <Select<SelectOption, false>
+                      styles={reactSelectStyles(theme)}
+                      options={sportOptions}
+                      value={tournamentForm.sport}
+                      placeholder="Select sport"
+                      onChange={handleTournamentSportChange}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="tournamentName">Name *</Label>
+                    <Input
+                      id="tournamentName"
+                      placeholder="Enter tournament name"
+                      value={tournamentForm.name}
+                      onChange={(event) =>
+                        setTournamentForm((prev) => ({ ...prev, name: event.target.value }))
+                      }
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label>Categories *</Label>
-                  <Select<SelectOption, false>
-                    styles={reactSelectStyles(theme)}
-                    options={categoryOptions}
-                    value={tournamentForm.category}
-                    placeholder="Select category"
-                    onChange={handleTournamentCategoryChange}
-                    isDisabled={!tournamentForm.sport}
-                  />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label>Categories *</Label>
+                    <Select<SelectOption, false>
+                      styles={reactSelectStyles(theme)}
+                      options={categoryOptions}
+                      value={tournamentForm.category}
+                      placeholder="Select category"
+                      onChange={handleTournamentCategoryChange}
+                      isDisabled={!tournamentForm.sport}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="tournamentOrder">Order Position</Label>
+                    <Input
+                      id="tournamentOrder"
+                      type="number"
+                      placeholder="e.g. 200"
+                      value={tournamentForm.order}
+                      onChange={(event) =>
+                        setTournamentForm((prev) => ({ ...prev, order: event.target.value }))
+                      }
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="tournamentName">Name *</Label>
-                  <Input
-                    id="tournamentName"
-                    placeholder="Enter tournament name"
-                    value={tournamentForm.name}
-                    onChange={(event) =>
-                      setTournamentForm((prev) => ({ ...prev, name: event.target.value }))
-                    }
-                  />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label>Status</Label>
+                    <Select<SelectOption<Status>, false>
+                      styles={reactSelectStyles(theme)}
+                      options={statusOptions}
+                      value={tournamentForm.status}
+                      onChange={(option: SingleValue<SelectOption<Status>>) =>
+                        setTournamentForm((prev) => ({ ...prev, status: option ?? null }))
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="tournamentImage">Select Image</Label>
+                    <FileInput id="tournamentImage" accept="image/*" onChange={handleImageUpload} />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="tournamentOrder">Order Position</Label>
-                  <Input
-                    id="tournamentOrder"
-                    type="number"
-                    placeholder="e.g. 200"
-                    value={tournamentForm.order}
-                    onChange={(event) =>
-                      setTournamentForm((prev) => ({ ...prev, order: event.target.value }))
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Status</Label>
-                  <Select<SelectOption<Status>, false>
-                    styles={reactSelectStyles(theme)}
-                    options={statusOptions}
-                    value={tournamentForm.status}
-                    onChange={(option: SingleValue<SelectOption<Status>>) =>
-                      setTournamentForm((prev) => ({ ...prev, status: option ?? null }))
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="tournamentImage">Select Image</Label>
-                  <FileInput id="tournamentImage" accept="image/*" onChange={handleImageUpload} />
-                  {tournamentForm.imageSource && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Image selected (mock preview not rendered).
-                    </p>
-                  )}
-                </div>
-                <div className="flex gap-3">
-                  <Button type="submit" className="bg-brand-500 text-white hover:bg-brand-600">
-                    Save
-                  </Button>
+
+                <div className="flex justify-end gap-3 pt-2">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setTournamentForm(buildInitialTournamentForm())}
                   >
                     Reset
+                  </Button>
+                  <Button type="submit" className="bg-brand-500 text-white hover:bg-brand-600">
+                    Save Changes
                   </Button>
                 </div>
               </Form>

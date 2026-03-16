@@ -4,8 +4,8 @@ import Button from "@/components/ui/button/Button"
 import { Search, XCircle } from "lucide-react"
 
 interface FilterActionsProps {
-  onSearch: () => void
-  onClear: () => void
+  onSearch: () => void | Promise<void>
+  onClear: () => void | Promise<void>
   isLoading?: boolean
 }
 
@@ -14,7 +14,10 @@ export function FilterActions({ onSearch, onClear, isLoading }: FilterActionsPro
     <div className="flex gap-2">
       {/* Search button */}
       <Button
-        onClick={onSearch}
+        type="button"
+        onClick={() => {
+          void onSearch();
+        }}
         disabled={isLoading}
         startIcon={<Search size={16} />}
       >
@@ -24,7 +27,10 @@ export function FilterActions({ onSearch, onClear, isLoading }: FilterActionsPro
       {/* Clear button */}
       <Button
         variant="outline"
-        onClick={onClear}
+        type="button"
+        onClick={() => {
+          void onClear();
+        }}
         disabled={isLoading}
         startIcon={<XCircle size={16} />}
       >

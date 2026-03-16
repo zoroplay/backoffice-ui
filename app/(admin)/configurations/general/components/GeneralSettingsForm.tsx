@@ -86,7 +86,7 @@ function NumberField({
         <input
           type="number"
           className={cn(inputClassName, prefix && "flex-1", suffix && "flex-1")}
-          value={value}
+          value={value ?? ""}
           min={min}
           step={step}
           onChange={(event) => onChange(name, event.target.value)}
@@ -114,13 +114,13 @@ function RangeField({ label, from, to, onChange, helper }: RangeFieldProps) {
         <input
           type="number"
           className={inputClassName}
-          value={from}
+          value={from ?? ""}
           onChange={(event) => onChange({ from: event.target.value, to })}
         />
         <input
           type="number"
           className={inputClassName}
-          value={to}
+          value={to ?? ""}
           onChange={(event) => onChange({ from, to: event.target.value })}
         />
       </div>
@@ -195,6 +195,7 @@ export function GeneralSettingsForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Logo Upload Section */} 
       <section className="grid gap-6 lg:grid-cols-[0.45fr,1fr]">
           <div className="space-y-4 grid grid-cols-1 gap-4 md:grid-cols-2">
           <LogoUploader
@@ -371,7 +372,7 @@ export function GeneralSettingsForm({
                 </label>
                 <input
                   className={inputClassName + " w-full"}
-                  value={formValues.trackierApiKey}
+                  value={formValues.trackierApiKey ?? ""}
                   onChange={(event) =>
                     handleChange("trackierApiKey", event.target.value)
                   }
@@ -383,9 +384,47 @@ export function GeneralSettingsForm({
                 </label>
                 <input
                   className={inputClassName}
-                  value={formValues.trackierAuthCode}
+                  value={formValues.trackierAuthCode ?? ""}
                   onChange={(event) =>
                     handleChange("trackierAuthCode", event.target.value)
+                  }
+                />
+              </div>
+            </div>
+             <div className="mt-6 grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+                  Affiliate API Key:
+                </label>
+                <input
+                  className={inputClassName + " w-full"}
+                  value={formValues.affiliateApiKey ?? ""}
+                  onChange={(event) =>
+                    handleChange("affiliateApiKey", event.target.value)
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+                  Affiliate Auth Code:
+                </label>
+                <input
+                  className={inputClassName}
+                  value={formValues.affiliateAuthCode ?? ""}
+                  onChange={(event) =>
+                    handleChange("affiliateAuthCode", event.target.value)
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+                  Affiliate Brand ID:
+                </label>
+                <input
+                  className={inputClassName}
+                  value={formValues.affiliateBrandId ?? ""}
+                  onChange={(event) =>
+                    handleChange("affiliateBrandId", event.target.value)
                   }
                 />
               </div>
@@ -444,7 +483,7 @@ export function GeneralSettingsForm({
             </label>
             <input
               className={inputClassName}
-              value={formValues.currencySymbol}
+              value={formValues.currencySymbol ?? ""}
               onChange={(event) => handleChange("currencySymbol", event.target.value)}
             />
           </div>
@@ -454,7 +493,7 @@ export function GeneralSettingsForm({
             </label>
             <input
               className={inputClassName}
-              value={formValues.dialCode}
+              value={formValues.dialCode ?? ""}
               onChange={(event) => handleChange("dialCode", event.target.value)}
             />
           </div>
@@ -485,7 +524,7 @@ export function GeneralSettingsForm({
               <input
                 type="date"
                 className={inputClassName}
-                value={formValues.powerBonusStartDate.slice(0, 10)}
+                value={(formValues.powerBonusStartDate ?? "").slice(0, 10)}
                 onChange={(event) =>
                   handleChange("powerBonusStartDate", event.target.value)
                 }

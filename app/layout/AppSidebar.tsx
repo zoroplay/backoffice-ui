@@ -50,21 +50,23 @@ const navItems: NavItem[] = [
         path: "/report/gaming_activities",
         pro: false,
       },
-      { name: "Network Sales", path: "/report/network_sales", pro: false },
+      { name: "Network Sales", path: "/report/network-sales", pro: false },
+      { name: "Online Sales", path: "/report/online-sales", pro: false },
       {
         name: "Net Cash Report",
-        path: "/report/net_cash_report",
+        path: "/report/net-cash-report",
         pro: false,
       },
-      { name: "Retail Cash Report", path: "/report/retail_cash_report", pro: false, },
+
+      { name: "Retail Cash Report", path: "/report/retail-cash-report", pro: false, },
       {
         name: "Money Transactions",
-        path: "/report/money_transactions",
+        path: "/report/money-transactions",
         pro: false,
       },
       {
         name: "Tax Report",
-        path: "/report/tax_report",
+        path: "/report/tax-report",
         pro: false
       },
     ],
@@ -76,7 +78,7 @@ const navItems: NavItem[] = [
     subItems: [
       { name: "Quick Bet Search", path: "/tickets/quick_bet", pro: false },
       { name: "Ticket On Hold", path: "/tickets/ticket-on-hold", pro: false },
-      { name: "Open Bet (Sports)", path: "/tickets/open_bet", pro: false },
+      { name: "Open Bet (Sports)", path: "/tickets/open-bet", pro: false },
       { name: "Bets History", path: "/tickets/bets-history", pro: false },
       { name: "Pending Cashout Bets", path: "/tickets/pending-cashout-bets", pro: false },
 
@@ -125,22 +127,21 @@ const navItems: NavItem[] = [
       { name: "Bonus Campaigns", path: "/bonus-management/bonus-campaigns", pro: false },
       { name: "Multibet Bonus", path: "/bonus-management/multibet-bonus", pro: false },
       { name: "Grant Mass Bonuses", path: "/bonus-management/grant-mass-bonuses", pro: false },
-      // { name: "Mass Free Spins", path: "/bonus-management/mass-free-spins", pro: false },
       { name: "Cashout", path: "/bonus-management/cashout", pro: false },
       { name: "Player Bonuses Report", path: "/bonus-management/player-bonuses-report", pro: false },
       { name: "Power Bonus Report", path: "/bonus-management/power-bonus-report", pro: false },
     ],
   },
 
-  {
-    icon: <ShootingStarIcon />,
-    name: "Jackpots",
-    subItems: [
-      { name: "Weekly Jackpots", path: "/jackpots/weekly-jackpots", pro: false },
-      { name: "Ticket Jackpots", path: "/jackpots/ticket-jackpots", pro: false },
-      { name: "Tickets", path: "/jackpots/jackpot-tickets", pro: false },
-    ]
-  },
+  // {
+  //   icon: <ShootingStarIcon />,
+  //   name: "Jackpots",
+  //   subItems: [
+  //     { name: "Weekly Jackpots", path: "/jackpots/weekly-jackpots", pro: false },
+  //     { name: "Ticket Jackpots", path: "/jackpots/ticket-jackpots", pro: false },
+  //     { name: "Tickets", path: "/jackpots/jackpot-tickets", pro: false },
+  //   ]
+  // },
 
   {
     icon: <ChatIcon />,
@@ -180,6 +181,7 @@ const navItems: NavItem[] = [
     name: "Content Management",
     subItems: [
       { name: "Site Menu", path: "/content-management/site-menu", pro: false },
+      { name: "Messaging", path: "/content-management/messaging", pro: false },
       { name: "Sports Menu", path: "/content-management/sports-menu", pro: false },
       { name: "Pages", path: "/content-management/pages", pro: false },
       { name: "Banners", path: "/content-management/banners", pro: false },
@@ -217,6 +219,7 @@ const othersItems: NavItem[] = [
     name: "Configurations",
     subItems: [
       { name: "General", path: "/configurations/general", pro: false },
+      { name: "Payment Method", path: "/configurations/payment-methods", pro: false },
       { name: "Tipster Settings", path: "/configurations/tipster-settings", pro: false },
       { name: "Exposure Monitor Settings", path: "/configurations/exposure-monitor-settings", pro: false },
     ]
@@ -225,35 +228,8 @@ const othersItems: NavItem[] = [
     icon: <LockIcon />,
     name: "Change Password",
     path: "/change-password",
-  },
-  // {
-  //   icon: <PieChartIcon />,
-  //   name: "Charts",
-  //   subItems: [
-  //     { name: "Line Chart", path: "/line-chart", pro: false },
-  //     { name: "Bar Chart", path: "/bar-chart", pro: false },
-  //   ],
-  // },
-  // {
-  //   icon: <BoxCubeIcon />,
-  //   name: "UI Elements",
-  //   subItems: [
-  //     { name: "Alerts", path: "/alerts", pro: false },
-  //     { name: "Avatar", path: "/avatars", pro: false },
-  //     { name: "Badge", path: "/badge", pro: false },
-  //     { name: "Buttons", path: "/buttons", pro: false },
-  //     { name: "Images", path: "/images", pro: false },
-  //     { name: "Videos", path: "/videos", pro: false },
-  //   ],
-  // },
-  // {
-  //   icon: <PlugInIcon />,
-  //   name: "Authentication",
-  //   subItems: [
-  //     { name: "Sign In", path: "/signin", pro: false },
-  //     { name: "Sign Up", path: "/signup", pro: false },
-  //   ],
-  // },
+    },
+    
 ];
 
 const AppSidebar: React.FC = () => {
@@ -335,7 +311,7 @@ const AppSidebar: React.FC = () => {
             >
               <ul className="mt-2 space-y-1 ml-9">
                 {nav.subItems.map((subItem) => (
-                  <li key={subItem.name}>
+                  <li key={subItem.path}>
                     <Link
                       href={subItem.path}
                       className={`menu-dropdown-item ${isActive(subItem.path)

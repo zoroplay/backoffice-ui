@@ -13,8 +13,8 @@ import { useTheme } from "@/context/ThemeContext";
 import { reactSelectStyles } from "@/utils/reactSelectStyles";
 
 type TableFilterToolbarActions = {
-  onSearch: () => void;
-  onClear: () => void;
+  onSearch: () => void | Promise<void>;
+  onClear: () => void | Promise<void>;
 };
 
 type TableFilterToolbarSelectProps<
@@ -34,6 +34,7 @@ type TableFilterToolbarProps<
   dateRange?: Range;
   onDateRangeChange?: (range: Range) => void;
   actions?: TableFilterToolbarActions;
+  isLoading?: boolean;
   selectProps?: TableFilterToolbarSelectProps<Option, IsMulti, Group> | null;
   className?: string;
   children?: React.ReactNode;
@@ -47,6 +48,7 @@ function TableFilterToolbar<
   dateRange,
   onDateRangeChange,
   actions,
+  isLoading,
   selectProps,
   className,
   children,
@@ -114,7 +116,11 @@ function TableFilterToolbar<
       {children}
 
       {actions ? (
-        <FilterActions onSearch={actions.onSearch} onClear={actions.onClear} />
+        <FilterActions
+          onSearch={actions.onSearch}
+          onClear={actions.onClear}
+          isLoading={isLoading}
+        />
       ) : null}
     </div>
   );

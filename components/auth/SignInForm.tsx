@@ -8,7 +8,7 @@ import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import Button from "@/components/ui/button/Button";
 import { EyeCloseIcon, EyeIcon } from "@/app/icons";
-import { POSTREQUEST } from "@/utils/base_request";
+import { authApi } from "@/lib/api/modules/auth";
 import { toast } from "sonner";
 
 // Define the validation schema using Zod
@@ -40,30 +40,33 @@ export default function SignInForm() {
   };
 
   const handleLogin = async (data: LoginFormInputs) => {
-    console.log("Form submitted");
-    console.log("Login Form data:", data);
     setLoading(true);
 
     try {
-      const response = await POSTREQUEST("/auth/login?source=admin", data);
-      console.log("Login data:", response);
+      const response = await authApi.login(data);
+      const token =
+        (response as { data?: { token?: string }; token?: string })?.data?.token ||
+        (response as { token?: string })?.token;
 
-      // if (response?.data?.status === 200) {
+      if (token) {
         toast.success("Login successful");
-        localStorage.setItem(
-          "token",
-          JSON.stringify(response?.data?.data?.token)
-        );
-        localStorage.setItem("authData", JSON.stringify(response?.data));
-        router.push("/dashboard"); // Navigate to the dashboard
-       if (response?.data?.status === 404) {
-        toast.error(response?.data?.error || "Invalid Email or Password");
-      } else {
-        toast.error(response?.data?.error || "Login failed");
+        localStorage.setItem("token", token);
+        localStorage.setItem("authData", JSON.stringify(response));
+        router.push("/dashboard");
+        return;
       }
+
+      const message =
+        (response as { error?: string; message?: string })?.error ||
+        (response as { error?: string; message?: string })?.message ||
+        "Login failed";
+      toast.error(message);
     } catch (err) {
-      console.error("Login error:", err);
-      toast.error("An error occurred");
+      const message =
+        (err as { error?: string; message?: string })?.error ||
+        (err as { error?: string; message?: string })?.message ||
+        "An error occurred";
+      toast.error(message);
     } finally {
       setLoading(false);
     }

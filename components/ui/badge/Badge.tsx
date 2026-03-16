@@ -1,7 +1,7 @@
 import React from "react";
 
 export type BadgeVariant = "light" | "solid";
-export type BadgeSize = "sm" | "md";
+export type BadgeSize = "xs" | "sm" | "md";
 export type BadgeColor =
   | "primary"
   | "success"
@@ -24,7 +24,7 @@ interface BadgeProps {
 const Badge: React.FC<BadgeProps> = ({
   variant = "light",
   color = "primary",
-  size = "md",
+  size = "xs",
   startIcon,
   endIcon,
   children,
@@ -34,8 +34,9 @@ const Badge: React.FC<BadgeProps> = ({
     "inline-flex items-center px-2.5 py-0.5 justify-center gap-1 rounded-full font-medium";
 
   const sizeStyles = {
-    sm: "text-theme-xs",
-    md: "text-sm",
+    xs: "text-xs",
+    sm: "text-sm",
+    md: "text-base",
   };
 
   const variants = {

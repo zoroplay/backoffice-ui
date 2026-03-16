@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useState, useMemo } from "react";
 import { DataTable } from "@/components/tables/DataTable";
-import { columns, OpenBet } from "@/app/(admin)/tickets/open_bet/column";
+import { columns, OpenBet } from "@/app/(admin)/tickets/open-bet/column";
 import { openBets } from "@/app/(admin)/tickets/open_bet/data";
 import type { SingleValue } from "react-select";
 import type { Range } from "react-date-range";

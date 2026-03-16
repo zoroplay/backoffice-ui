@@ -5,8 +5,14 @@ export const columns: ColumnDef<RetailCashRecord>[] = [
   {
     accessorKey: "date",
     header: "Date",
-    cell: ({ row }) =>
-      new Date(row.original.date).toLocaleDateString("en-GB"), // dd/mm/yyyy
+    cell: ({ row }) => {
+      const rawDate = row.original.date;
+      if (!rawDate) return "-";
+      const parsed = new Date(rawDate);
+      return Number.isNaN(parsed.getTime())
+        ? "-"
+        : parsed.toLocaleDateString("en-GB");
+    },
   },
   {
     accessorKey: "username",

@@ -4,7 +4,6 @@ import React, { useCallback, useEffect, useState, useMemo } from "react";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { DataTable } from "@/components/tables/DataTable";
 import { createColumns, BetHistory } from "./columns";
-import { betHistory } from "./data";
 import type { MultiValue, GroupBase } from "react-select";
 import type { Range } from "react-date-range";
 import { withAuth } from "@/utils/withAuth";
@@ -12,6 +11,7 @@ import { useSearch } from "@/context/SearchContext";
 import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
 import BetDetailsModal from "./components/BetDetailsModal";
 import { Infotext } from "@/components/common/Info";
+import { betsApi, normalizeApiError } from "@/lib/api";
 
 //  Default last 30 days range
 const defaultDateRange: Range = {
@@ -19,18 +19,6 @@ const defaultDateRange: Range = {
   endDate: new Date(),
   key: "selection",
 };
-
-// ----------------------
-// Options
-// ----------------------
-type SearchField = { value: keyof BetHistory; label: string };
-
-const searchOptions: SearchField[] = [
-  { value: "betslipId", label: "Betslip ID" },
-  { value: "placedBy", label: "Username" },
-  { value: "sport", label: "Sport" },
-  { value: "league", label: "League" },
-];
 
 const searchableFields: Array<keyof BetHistory> = [
   "betslipId",
@@ -123,7 +111,8 @@ const filterOptionGroupMap = operationOptions.reduce<Map<string, string>>(
 );
 
 function BetsHistoryPage() {
-  const [filteredData, setFilteredData] = useState<BetHistory[]>(betHistory);
+  const [rows, setRows] = useState<BetHistory[]>([]);
+  const [filteredData, setFilteredData] = useState<BetHistory[]>([]);
   const [operationFilters, setOperationFilters] = useState<FilterOption[]>([]);
   const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
   const [appliedOperationFilters, setAppliedOperationFilters] =
@@ -131,7 +120,81 @@ function BetsHistoryPage() {
   const [appliedDateRange, setAppliedDateRange] = useState<Range | null>(null);
   const [selectedBet, setSelectedBet] = useState<BetHistory | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { query, setPlaceholder, resetPlaceholder, resetQuery } = useSearch();
+
+  const fmt = (d?: Date, endOfDay = false) => {
+    if (!d) return "";
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const yyyy = d.getFullYear();
+    return `${dd}-${mm}-${yyyy} ${endOfDay ? "23:59:59" : "00:00:00"}`;
+  };
+
+  const toNumber = (value: unknown): number => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+
+  const normalizeStatus = (value: unknown): BetHistory["betStatus"] => {
+    const status = String(value ?? "").toLowerCase();
+    if (status === "won") return "Won";
+    if (status === "lost") return "Lost";
+    if (status === "cancelled" || status === "canceled") return "Cancelled";
+    return "Pending";
+  };
+
+  const toBetHistory = (row: Record<string, unknown>): BetHistory => {
+    const stake = toNumber(row.stake);
+    const returns = toNumber(
+      row.returns ?? row.potentialWinnings ?? row.potential_winnings
+    );
+    const winLossRaw = row.winLoss ?? row.win_loss ?? row.profitLoss;
+    const winLossNum = toNumber(winLossRaw);
+    const winLoss =
+      typeof winLossRaw === "string"
+        ? winLossRaw
+        : winLossNum > 0
+          ? `+${winLossNum}`
+          : winLossNum < 0
+            ? `${winLossNum}`
+            : "-";
+
+    return {
+      betslipId: String(row.betslipId ?? row.betslip_id ?? row.couponId ?? ""),
+      betType: String(row.betType ?? row.type ?? row.ticketType ?? ""),
+      placedOn: String(row.placedOn ?? row.createdAt ?? row.date ?? ""),
+      placedBy: String(row.placedBy ?? row.username ?? row.user ?? ""),
+      betStatus: normalizeStatus(row.betStatus ?? row.status),
+      odds: toNumber(row.odds),
+      stake,
+      returns,
+      winLoss,
+      sport: String(row.sport ?? row.sportName ?? ""),
+      league: String(row.league ?? row.tournament ?? ""),
+      event: String(row.event ?? row.eventName ?? ""),
+      market: String(row.market ?? row.marketName ?? ""),
+      lostEvents: toNumber(row.lostEvents ?? row.lost_events),
+      clientType: String(row.clientType ?? row.channel ?? "Online") as BetHistory["clientType"],
+      bonus: toNumber(row.bonus),
+      settledAt: String(row.settledAt ?? row.settled_at ?? "-"),
+    };
+  };
+
+  const getRowsFromResponse = (res: unknown): BetHistory[] => {
+    const root = (res as { data?: unknown })?.data ?? res;
+    const list =
+      (Array.isArray(root) && root) ||
+      ((root as { data?: unknown })?.data as unknown[]) ||
+      ((root as { rows?: unknown })?.rows as unknown[]) ||
+      ((root as { results?: unknown })?.results as unknown[]) ||
+      ((root as { tickets?: unknown })?.tickets as unknown[]) ||
+      [];
+
+    if (!Array.isArray(list)) return [];
+    return list.map((row) => toBetHistory((row as Record<string, unknown>) ?? {}));
+  };
 
   const handleOperationChange = useCallback(
     (value: MultiValue<FilterOption>) => {
@@ -197,11 +260,12 @@ function BetsHistoryPage() {
     (
       value: string,
       operations: { value: string; label: string }[] = appliedOperationFilters,
-      range: Range | null = appliedDateRange
+      range: Range | null = appliedDateRange,
+      sourceRows: BetHistory[] = rows
     ) => {
       const searchTerm = value.trim().toLowerCase();
 
-      return betHistory.filter((row) => {
+      return sourceRows.filter((row) => {
         let match = true;
 
         if (searchTerm) {
@@ -272,20 +336,42 @@ function BetsHistoryPage() {
         return match;
       });
     },
-    [appliedDateRange, appliedOperationFilters]
+    [appliedDateRange, appliedOperationFilters, rows]
   );
 
   useEffect(() => {
     setFilteredData(filterBets(query));
   }, [filterBets, query]);
 
-  const applyFilters = () => {
+  const applyFilters = async () => {
+    setIsLoading(true);
+    setError(null);
+
     const nextOperations = operationFilters;
     const nextDateRange = dateRange;
+    const payload = {
+      from: fmt(dateRange.startDate ?? undefined, false),
+      to: fmt(dateRange.endDate ?? undefined, true),
+      search: query.trim(),
+      filters: nextOperations.map((option) => option.value),
+    } as const;
 
-    setAppliedOperationFilters(nextOperations);
-    setAppliedDateRange(nextDateRange);
-    setFilteredData(filterBets(query, nextOperations, nextDateRange));
+    try {
+      const res = await betsApi.getBetHistory(payload, 1);
+      const nextRows = getRowsFromResponse(res);
+
+      setRows(nextRows);
+      setAppliedOperationFilters(nextOperations);
+      setAppliedDateRange(nextDateRange);
+      setFilteredData(filterBets(query, nextOperations, nextDateRange, nextRows));
+    } catch (err) {
+      const apiErr = normalizeApiError(err);
+      setError(apiErr.message ?? "Failed to fetch bet history");
+      setRows([]);
+      setFilteredData([]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const clearFilters = () => {
@@ -293,7 +379,9 @@ function BetsHistoryPage() {
     setDateRange(defaultDateRange);
     setAppliedOperationFilters([]);
     setAppliedDateRange(null);
-    setFilteredData(betHistory);
+    setRows([]);
+    setFilteredData([]);
+    setError(null);
     resetQuery();
   };
 
@@ -324,7 +412,18 @@ function BetsHistoryPage() {
       />
 
       {/* Table */}
-      <DataTable columns={columns} data={filteredData} />
+      {isLoading ? (
+        <div className="flex justify-center py-8 text-gray-500">Loading...</div>
+      ) : (
+        <>
+          {error && (
+            <div className="rounded-md bg-red-50 p-3 text-sm text-red-700">
+              {error}
+            </div>
+          )}
+          <DataTable columns={columns} data={filteredData} />
+        </>
+      )}
 
       {/* Bet Details Modal */}
       <BetDetailsModal

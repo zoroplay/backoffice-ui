@@ -68,8 +68,7 @@ export const defaultGeneralSettings: GeneralSettings = {
   tipsterTicketEligibility: "5",
   allowDepositCommission: "no",
   enableWebAffiliate: "no",
-  enableTax: "yes",
-  trackierApiKey: "920358f173d1ba960821b",
+  enableTax: "yes",  
   country: "Nigeria",
   currencySymbol: "₦",
   dialCode: "+234",
@@ -85,7 +84,11 @@ export const defaultGeneralSettings: GeneralSettings = {
   allowWithdrawalCommission: "no",
   exciseTax: "11",
   withholdingTax: "7.5",
+  trackierApiKey: "920358f173d1ba960821b",
   trackierAuthCode: "S2aS04S6NLdjrjfiK5WOxg",
+  affiliateAuthCode: "",
+  affiliateApiKey: "",
+  affiliateBrandId: "",
 };
 
 export const generalSettingsSummary: GeneralSettingsSummary[] = [

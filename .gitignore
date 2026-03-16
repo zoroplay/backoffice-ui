@@ -45,3 +45,4 @@ next-env.d.ts
 ./qodo
 *storybook.log
 storybook-static
+API.md

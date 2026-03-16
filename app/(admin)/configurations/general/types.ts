@@ -37,6 +37,9 @@ export type GeneralSettings = {
   exciseTax: string;
   withholdingTax: string;
   trackierAuthCode: string;
+  affiliateAuthCode: string;
+  affiliateApiKey: string;
+  affiliateBrandId: string;
 };
 
 export type GeneralSettingsSummary = {

@@ -84,15 +84,7 @@ export default function GeneralConfigurationsPage() {
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Centralise brand assets, payment thresholds, and automation rules in one tidy control panel.
             </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Badge variant="light" color="info" size="sm">
-              Last updated 2 days ago
-            </Badge>
-            <Badge variant="light" color="primary" size="sm">
-              Production Workspace
-            </Badge>
-          </div>
+          </div>         
         </div>
 
         <div className="mt-6 grid gap-4 md:grid-cols-3">
@@ -144,6 +136,8 @@ export default function GeneralConfigurationsPage() {
               </p>
             </div>
           </div>
+
+          {/* Configuration Playbook Section */} 
           <div className="mt-4 grid gap-3 text-sm text-gray-600 dark:text-gray-300">
             <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50/70 p-4 dark:border-gray-800 dark:bg-gray-900/40">
               <p className="font-semibold text-gray-800 dark:text-gray-100">
@@ -172,7 +166,8 @@ export default function GeneralConfigurationsPage() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950">
+          {/* Recent Adjustments Section */}
+        <div className="rounded-2xl border  bg-white p-6 shadow-sm dark:bg-gray-950">
           <div className="flex items-center gap-3">
             <CalendarCog className="h-5 w-5 text-indigo-500" />
             <div>
@@ -182,9 +177,9 @@ export default function GeneralConfigurationsPage() {
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Track the latest edits to keep governance tidy.
               </p>
-            </div>
+            </div> 
           </div>
-          <div className="mt-4 overflow-hidden rounded-xl border border-gray-100 dark:border-gray-800">
+          <div className="mt-4 overflow-hidden rounded-xl">
             <DataTable columns={recentChangesColumns} data={recentChanges} />
           </div>
         </div>
