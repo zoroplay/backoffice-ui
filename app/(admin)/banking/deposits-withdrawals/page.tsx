@@ -1,27 +1,23 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { MultiValue, type GroupBase } from "react-select";
 import type { Range } from "react-date-range";
 import { TrendingDown, TrendingUp } from "lucide-react";
 
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import {
-  defaultDateRange,
-} from "@/components/common/DateRangeFilter";
+import { defaultDateRange } from "@/components/common/DateRangeFilter";
 import { DataTable } from "@/components/tables/DataTable";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { withAuth } from "@/utils/withAuth";
-import { useTheme } from "@/context/ThemeContext";
 import { useSearch } from "@/context/SearchContext";
+import { cashflowApi, normalizeApiError } from "@/lib/api";
+import Button from "@/components/ui/button/Button";
 
 import { withdrawalColumns } from "./withdrawals-columns";
 import { depositColumns } from "./deposits-columns";
-import {
-  withdrawals,
-  Withdrawal,
-} from "./withdrawals-data";
-import { deposits, Deposit } from "./deposits-data";
+import { Withdrawal } from "./withdrawals-data";
+import { Deposit } from "./deposits-data";
 import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
 import { Infotext } from "@/components/common/Info";
 
@@ -49,255 +45,260 @@ const filterOptions: Array<{ label: string; options: FilterOption[] }> = [
       { value: "PaymentMethod:Card", label: "Card" },
     ],
   },
-  {
-    label: "Location",
-    options: [
-      { value: "Location:Lagos", label: "Lagos" },
-      { value: "Location:Abuja", label: "Abuja" },
-      { value: "Location:Port Harcourt", label: "Port Harcourt" },
-      { value: "Location:Kano", label: "Kano" },
-    ],
-  },
-  {
-    label: "Bank",
-    options: [
-      { value: "Bank:Access Bank", label: "Access Bank" },
-      { value: "Bank:GTBank", label: "GTBank" },
-      { value: "Bank:Zenith Bank", label: "Zenith Bank" },
-      { value: "Bank:UBA", label: "UBA" },
-      { value: "Bank:First Bank", label: "First Bank" },
-    ],
-  },
 ];
 
-const searchableWithdrawalFields: Array<keyof Withdrawal> = [
-  "username",
-  "transactionId",
-  "nameOnFile",
-  "accountName",
-];
+const toDDMMYYYY = (date?: Date, endOfDay = false) => {
+  if (!date) return "";
+  const d = new Date(date);
+  if (endOfDay) {
+    d.setHours(23, 59, 59, 0);
+  } else {
+    d.setHours(0, 0, 0, 0);
+  }
+  const day = `${d.getDate()}`.padStart(2, "0");
+  const month = `${d.getMonth() + 1}`.padStart(2, "0");
+  const year = d.getFullYear();
+  const hours = `${d.getHours()}`.padStart(2, "0");
+  const minutes = `${d.getMinutes()}`.padStart(2, "0");
+  const seconds = `${d.getSeconds()}`.padStart(2, "0");
+  return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
+};
 
-const searchableDepositFields: Array<keyof Deposit> = [
-  "username",
-  "transactionId",
-  "fullName",
-];
+const toYYYYMMDD = (date?: Date, endOfDay = false) => {
+  if (!date) return "";
+  const d = new Date(date);
+  if (endOfDay) {
+    d.setHours(23, 59, 59, 0);
+  } else {
+    d.setHours(0, 0, 0, 0);
+  }
+  const day = `${d.getDate()}`.padStart(2, "0");
+  const month = `${d.getMonth() + 1}`.padStart(2, "0");
+  const year = d.getFullYear();
+  const hours = `${d.getHours()}`.padStart(2, "0");
+  const minutes = `${d.getMinutes()}`.padStart(2, "0");
+  const seconds = `${d.getSeconds()}`.padStart(2, "0");
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+};
+
+const mapStatus = (status: unknown): "Pending" | "Approved" | "Declined" | "Processing" | "Completed" => {
+  const numeric = Number(status);
+  if (numeric === 1) return "Completed";
+  if (numeric === 2) return "Approved";
+  if (numeric === 3) return "Declined";
+  if (numeric === 4) return "Processing";
+  const text = String(status ?? "").toLowerCase();
+  if (text.includes("approved")) return "Approved";
+  if (text.includes("declined") || text.includes("rejected")) return "Declined";
+  if (text.includes("processing")) return "Processing";
+  if (text.includes("completed") || text.includes("success")) return "Completed";
+  return "Pending";
+};
 
 function DepositsWithdrawalsPage() {
-  const { theme } = useTheme();
-  const [activeTab, setActiveTab] = useState("withdrawals");
-
-  // Filters state
+  const [activeTab, setActiveTab] = useState<"withdrawals" | "deposits">("withdrawals");
   const [selectedFilters, setSelectedFilters] = useState<FilterOption[]>([]);
   const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
-  const [filteredData, setFilteredData] = useState<(Withdrawal | Deposit)[]>(
-    withdrawals
-  );
-
-  // Applied filters state
   const [appliedFilters, setAppliedFilters] = useState<FilterOption[]>([]);
   const [appliedDateRange, setAppliedDateRange] = useState<Range>(defaultDateRange);
+  const [appliedQuery, setAppliedQuery] = useState("");
+  const [hasSearched, setHasSearched] = useState(false);
+  const [rows, setRows] = useState<(Withdrawal | Deposit)[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [totalRows, setTotalRows] = useState(0);
+  const [lastPage, setLastPage] = useState(1);
+  const [totalAmount, setTotalAmount] = useState(0);
 
   const { query, setPlaceholder, resetPlaceholder, resetQuery } = useSearch();
 
   useEffect(() => {
     const placeholderText =
       activeTab === "withdrawals"
-        ? "Search by Username, Transaction ID, Name on File, or Account Name"
-        : "Search by Username, Transaction ID, or Full Name";
+        ? "Search by username or transaction ID"
+        : "Search by username or transaction ID";
     setPlaceholder(placeholderText);
-
-    return () => {
-      resetPlaceholder();
-    };
+    return () => resetPlaceholder();
   }, [activeTab, resetPlaceholder, setPlaceholder]);
 
-  const filterWithdrawals = useCallback(
-    (
-      searchQuery: string,
-      filters: FilterOption[] = appliedFilters,
-      range: Range = appliedDateRange
-    ) => {
-      const searchTerm = searchQuery.trim().toLowerCase();
+  const fetchData = useCallback(async () => {
+    if (!hasSearched) {
+      return;
+    }
 
-      return withdrawals.filter((row) => {
-        // Global search
-        if (searchTerm) {
-          const matchesSearch = searchableWithdrawalFields.some((field) =>
-            String(row[field] ?? "")
-              .toLowerCase()
-              .includes(searchTerm)
-          );
-          if (!matchesSearch) {
-            return false;
-          }
-        }
+    const selections = appliedFilters.reduce<Record<string, string>>((acc, option) => {
+      const [category, value] = option.value.split(":");
+      if (category && value) acc[category] = value;
+      return acc;
+    }, {});
 
-        // Parse multi-select filters
-        const selections = (filters ?? []).reduce<Record<string, string>>((acc, option) => {
-          if (!option?.value) {
-            return acc;
-          }
+    const from = toDDMMYYYY(appliedDateRange.startDate);
+    const to = toDDMMYYYY(appliedDateRange.endDate, true);
 
-          const [category, value] = option.value.split(":");
-          if (category && value) {
-            acc[category] = value;
-          }
-
-          return acc;
-        }, {});
-
-        // Transaction Status filter
-        const matchesStatus = selections.Status
-          ? row.status.toLowerCase() === selections.Status.toLowerCase()
-          : true;
-
-        // Payment Method filter
-        const matchesMethod = selections.PaymentMethod
-          ? row.paymentMethod.toLowerCase() === selections.PaymentMethod.toLowerCase()
-          : true;
-
-        // Location filter
-        const matchesLocation = selections.Location
-          ? row.location.toLowerCase() === selections.Location.toLowerCase()
-          : true;
-
-        // Bank filter
-        const matchesBank = selections.Bank
-          ? row.bank.toLowerCase() === selections.Bank.toLowerCase()
-          : true;
-
-        // Date range filter
-        const matchesDate =
-          range && range.startDate && range.endDate
-            ? (() => {
-              const rowDate = new Date(row.dateRequested);
-              const start = new Date(range.startDate);
-              const end = new Date(range.endDate);
-
-              rowDate.setHours(0, 0, 0, 0);
-              start.setHours(0, 0, 0, 0);
-              end.setHours(23, 59, 59, 999);
-
-              return rowDate >= start && rowDate <= end;
-            })()
-            : true;
-
-        return (
-          matchesStatus &&
-          matchesMethod &&
-          matchesLocation &&
-          matchesBank &&
-          matchesDate
+    setIsLoading(true);
+    setError(null);
+    try {
+      if (activeTab === "withdrawals") {
+        const response = await cashflowApi.searchWithdrawals(
+          {
+            period: "today",
+            from,
+            to,
+            status: selections.Status ?? "",
+            paymentMethod: selections.PaymentMethod ?? "",
+            type: "Withdrawal",
+            username: "",
+            transactionId: "",
+            keyword: appliedQuery,
+            clientId: 4,
+          },
+          page
         );
-      });
-    },
-    [appliedDateRange, appliedFilters]
-  );
 
-  const filterDeposits = useCallback(
-    (
-      searchQuery: string,
-      filters: FilterOption[] = appliedFilters,
-      range: Range = appliedDateRange
-    ) => {
-      const searchTerm = searchQuery.trim().toLowerCase();
-
-      return deposits.filter((row) => {
-        // Global search
-        if (searchTerm) {
-          const matchesSearch = searchableDepositFields.some((field) =>
-            String(row[field] ?? "")
-              .toLowerCase()
-              .includes(searchTerm)
-          );
-          if (!matchesSearch) {
-            return false;
-          }
+        const root = response as {
+          data?: {
+            rows?: unknown[];
+            total?: number;
+            totalAmount?: number;
+            lastPage?: number;
+            page?: number;
+            newPage?: number;
+            prevPage?: number;
+          };
+        };
+        const rowsData = Array.isArray(root?.data?.rows) ? root.data.rows : [];
+        const mapped: Withdrawal[] = rowsData.map((item, index) => {
+          const row = (item as Record<string, unknown>) ?? {};
+          const amount = Number(row.amount ?? 0);
+          return {
+            id: String(row.id ?? index),
+            dateRequested: String(row.created_at ?? row.updated_at ?? ""),
+            username: String(row.username ?? ""),
+            nameOnFile: String(row.account_name ?? row.username ?? ""),
+            amount: Number.isFinite(amount) ? amount : 0,
+            accountNumber: String(row.account_number ?? "-"),
+            accountName: String(row.account_name ?? "-"),
+            bank: String(row.bank ?? row.channel ?? "-"),
+            updatedBy: String(row.updated_by ?? "System"),
+            status: mapStatus(row.status),
+            paymentMethod: String(row.channel ?? ""),
+            location: String(row.location ?? ""),
+            transactionId: String(row.transaction_no ?? row.id ?? ""),
+          };
+        });
+        const nextLastPage = Math.max(1, Number(root?.data?.lastPage ?? 1) || 1);
+        const nextPage = Math.max(1, Number(root?.data?.page ?? page) || page);
+        setRows(mapped);
+        setTotalRows(Number(root?.data?.total ?? mapped.length));
+        setLastPage(nextLastPage);
+        if (nextPage !== page) {
+          setPage(Math.min(nextPage, nextLastPage));
         }
-
-        // Parse multi-select filters
-        const selections = (filters ?? []).reduce<Record<string, string>>((acc, option) => {
-          if (!option?.value) {
-            return acc;
-          }
-
-          const [category, value] = option.value.split(":");
-          if (category && value) {
-            acc[category] = value;
-          }
-
-          return acc;
-        }, {});
-
-        // Transaction Status filter
-        const matchesStatus = selections.Status
-          ? row.status.toLowerCase() === selections.Status.toLowerCase()
-          : true;
-
-        // Payment Method filter
-        const matchesMethod = selections.PaymentMethod
-          ? row.paymentMethod.toLowerCase() === selections.PaymentMethod.toLowerCase()
-          : true;
-
-        // Location filter
-        const matchesLocation = selections.Location
-          ? row.location.toLowerCase() === selections.Location.toLowerCase()
-          : true;
-
-        // Bank filter
-        const matchesBank = selections.Bank
-          ? row.bank.toLowerCase() === selections.Bank.toLowerCase()
-          : true;
-
-        // Date range filter
-        const matchesDate =
-          range && range.startDate && range.endDate
-            ? (() => {
-              const rowDate = new Date(row.createdDate);
-              const start = new Date(range.startDate);
-              const end = new Date(range.endDate);
-
-              rowDate.setHours(0, 0, 0, 0);
-              start.setHours(0, 0, 0, 0);
-              end.setHours(23, 59, 59, 999);
-
-              return rowDate >= start && rowDate <= end;
-            })()
-            : true;
-
-        return (
-          matchesStatus &&
-          matchesMethod &&
-          matchesLocation &&
-          matchesBank &&
-          matchesDate
+        setTotalAmount(Number(root?.data?.totalAmount ?? 0));
+      } else {
+        const startDate = toYYYYMMDD(appliedDateRange.startDate);
+        const endDate = toYYYYMMDD(appliedDateRange.endDate, true);
+        const response = await cashflowApi.searchDeposits(
+          {
+            period: "last_30_days",
+            from,
+            to,
+            status: selections.Status ?? "",
+            paymentMethod: selections.PaymentMethod ?? "",
+            type: "Deposit",
+            username: "",
+            transactionId: "",
+            keyword: appliedQuery,
+            clientId: 4,
+            startDate,
+            endDate,
+          },
+          page
         );
-      });
-    },
-    [appliedDateRange, appliedFilters]
-  );
+
+        const root = response as {
+          data?: {
+            rows?: unknown[];
+            total?: number;
+            totalAmount?: number;
+            lastPage?: number;
+            page?: number;
+            newPage?: number;
+            prevPage?: number;
+          };
+        };
+        const rowsData = Array.isArray(root?.data?.rows) ? root.data.rows : [];
+        const mapped: Deposit[] = rowsData.map((item, index) => {
+          const row = (item as Record<string, unknown>) ?? {};
+          const amount = Number(row.amount ?? 0);
+          const rawSource = String(row.source ?? "").toLowerCase();
+          const clientType: Deposit["clientType"] =
+            rawSource.includes("agent")
+              ? "Agent"
+              : rawSource.includes("vip")
+              ? "VIP"
+              : rawSource.includes("premium")
+              ? "Premium"
+              : "Regular";
+
+          return {
+            id: String(row.id ?? index),
+            createdDate: String(row.created_at ?? ""),
+            lastUpdatedDate:
+              typeof row.updated_at === "string" && row.updated_at.trim()
+                ? row.updated_at
+                : "-",
+            transactionId: String(row.transaction_no ?? row.id ?? ""),
+            paymentMethod: String(row.channel ?? row.paymentMethod ?? ""),
+            bank: String(row.bank ?? row.channel ?? "-"),
+            username: String(row.username ?? ""),
+            fullName: "",
+            amount: Number.isFinite(amount) ? amount : 0,
+            transactionNote: String(row.description ?? ""),
+            status: mapStatus(row.status),
+            clientType,
+            handledBy: String(row.handledBy ?? "System"),
+            action: String(row.action ?? "Processed"),
+            approve: mapStatus(row.status) === "Completed",
+            declineReason: String(row.declineReason ?? ""),
+            reviewStatus: "Under Review",
+            location: String(row.location ?? ""),
+          };
+        });
+        const nextLastPage = Math.max(1, Number(root?.data?.lastPage ?? 1) || 1);
+        const nextPage = Math.max(1, Number(root?.data?.page ?? page) || page);
+        setRows(mapped);
+        setTotalRows(Number(root?.data?.total ?? mapped.length));
+        setLastPage(nextLastPage);
+        if (nextPage !== page) {
+          setPage(Math.min(nextPage, nextLastPage));
+        }
+        setTotalAmount(Number(root?.data?.totalAmount ?? 0));
+      }
+    } catch (err) {
+      const apiError = normalizeApiError(err);
+      setError(apiError.message ?? "Failed to fetch records");
+      setRows([]);
+      setTotalRows(0);
+      setLastPage(1);
+      setTotalAmount(0);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [activeTab, appliedDateRange.endDate, appliedDateRange.startDate, appliedFilters, appliedQuery, hasSearched, page]);
 
   useEffect(() => {
-    if (activeTab === "withdrawals") {
-      setFilteredData(filterWithdrawals(query));
-    } else {
-      setFilteredData(filterDeposits(query));
-    }
-  }, [activeTab, filterDeposits, filterWithdrawals, query]);
+    void fetchData();
+  }, [fetchData]);
 
   const applyFilters = () => {
-    const nextFilters = selectedFilters;
     const nextRange = dateRange.startDate && dateRange.endDate ? dateRange : defaultDateRange;
-
-    setAppliedFilters(nextFilters);
+    setAppliedFilters(selectedFilters);
     setAppliedDateRange(nextRange);
-
-    if (activeTab === "withdrawals") {
-      setFilteredData(filterWithdrawals(query, nextFilters, nextRange));
-    } else {
-      setFilteredData(filterDeposits(query, nextFilters, nextRange));
-    }
+    setAppliedQuery(query.trim());
+    setHasSearched(true);
+    setPage(1);
   };
 
   const clearFilters = () => {
@@ -305,33 +306,34 @@ function DepositsWithdrawalsPage() {
     setDateRange(defaultDateRange);
     setAppliedFilters([]);
     setAppliedDateRange(defaultDateRange);
-
-    if (activeTab === "withdrawals") {
-      setFilteredData(withdrawals);
-    } else {
-      setFilteredData(deposits);
-    }
-
+    setAppliedQuery("");
+    setHasSearched(false);
+    setPage(1);
+    setRows([]);
+    setTotalRows(0);
+    setLastPage(1);
+    setTotalAmount(0);
+    setError(null);
     resetQuery();
   };
 
-  // Handle filter selection with one-per-group constraint
   const handleFilterChange = useCallback((selected: MultiValue<FilterOption>) => {
-    // Group selections by category and keep only the last one per category
     const categoryMap = new Map<string, FilterOption>();
-
     selected.forEach((option) => {
       const [category] = option.value.split(":");
-      if (category) {
-        // Keep only the last option for each category
-        categoryMap.set(category, option);
-      }
+      if (category) categoryMap.set(category, option);
     });
-
-    // Convert back to array, ensuring only one option per category
-    const filteredSelection = Array.from(categoryMap.values());
-    setSelectedFilters(filteredSelection);
+    setSelectedFilters(Array.from(categoryMap.values()));
   }, []);
+
+  const amountLabel = useMemo(
+    () =>
+      `₦${totalAmount.toLocaleString("en-NG", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
+      })}`,
+    [totalAmount]
+  );
 
   return (
     <div className="space-y-6 p-4">
@@ -339,7 +341,10 @@ function DepositsWithdrawalsPage() {
 
       <Tabs
         value={activeTab}
-        onValueChange={setActiveTab}
+        onValueChange={(value) => {
+          setActiveTab(value as "withdrawals" | "deposits");
+          setPage(1);
+        }}
         defaultValue="withdrawals"
         className="w-full"
       >
@@ -360,7 +365,28 @@ function DepositsWithdrawalsPage() {
           </TabsTrigger>
         </TabsList>
 
-        <Infotext text={`Use the global search to filter by ${activeTab === "withdrawals" ? "Username, Transaction ID, Name on File, or Account Name" : "Username, Transaction ID, or Full Name"}, or use the filters below to narrow down the results.`} />
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
+            <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              Total Amount
+            </p>
+            <p className="mt-2 text-2xl font-semibold text-gray-900 dark:text-gray-100">
+              {amountLabel}
+            </p>
+          </div>
+          <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
+            <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              Total Records
+            </p>
+            <p className="mt-2 text-2xl font-semibold text-gray-900 dark:text-gray-100">
+              {totalRows}
+            </p>
+          </div>
+        </div>
+
+        <Infotext
+          text={`Use the global search to filter by username or transaction ID, and use filters to narrow status/payment method.`}
+        />
 
         <TableFilterToolbar<FilterOption, true, GroupBase<FilterOption>>
           dateRange={dateRange}
@@ -369,28 +395,76 @@ function DepositsWithdrawalsPage() {
             onSearch: applyFilters,
             onClear: clearFilters,
           }}
+          isLoading={isLoading}
           selectProps={{
             containerClassName: "max-w-[26rem]",
             options: filterOptions,
-            placeholder: "Filter by Transaction Status, Payment Method, Location, or Bank",
+            placeholder: "Filter by Status or Payment Method",
             value: selectedFilters,
             onChange: handleFilterChange,
             isMulti: true,
           }}
         />
 
-        {/* Tab Content */}
+        {error ? (
+          <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            {error}
+          </div>
+        ) : null}
+
         <TabsContent value="withdrawals" className="mt-4">
-          <DataTable columns={withdrawalColumns} data={filteredData as Withdrawal[]} />
+          {!hasSearched ? (
+            <div className="flex justify-center py-8 text-gray-500">Search to see data.</div>
+          ) : (
+            <DataTable columns={withdrawalColumns} data={rows as Withdrawal[]} loading={isLoading} hidePagination />
+          )}
         </TabsContent>
 
         <TabsContent value="deposits" className="mt-4">
-          <DataTable columns={depositColumns} data={filteredData as Deposit[]} />
+          {!hasSearched ? (
+            <div className="flex justify-center py-8 text-gray-500">Search to see data.</div>
+          ) : (
+            <DataTable columns={depositColumns} data={rows as Deposit[]} loading={isLoading} hidePagination />
+          )}
         </TabsContent>
       </Tabs>
+
+      <div className="flex items-center justify-end gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setPage(1)}
+          disabled={page <= 1 || isLoading}
+        >
+          First
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+          disabled={page <= 1 || isLoading}
+        >
+          Previous
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setPage((prev) => Math.min(lastPage, prev + 1))}
+          disabled={page >= lastPage || isLoading}
+        >
+          Next
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setPage(lastPage)}
+          disabled={page >= lastPage || isLoading}
+        >
+          Last
+        </Button>
+      </div>
     </div>
   );
 }
 
 export default withAuth(DepositsWithdrawalsPage);
-

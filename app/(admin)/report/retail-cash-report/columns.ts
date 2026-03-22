@@ -1,5 +1,14 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { RetailCashRecord } from "./data";
+
+export type RetailCashRecord = {
+  username: string;
+  deposits: number;
+  depositAmount: number;
+  withdrawals: number;
+  withdrawalAmount: number;
+  date?: string;
+};
+
 
 export const columns: ColumnDef<RetailCashRecord>[] = [
   {

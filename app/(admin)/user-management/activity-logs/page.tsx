@@ -1,13 +1,10 @@
 "use client";
 
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import {
-  Clock,
-  MonitorSmartphone,
-  Eye,
-} from "lucide-react";
+import { MonitorSmartphone, Eye } from "lucide-react";
 import { addDays, format } from "date-fns";
+import { toast } from "sonner";
 
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
@@ -18,9 +15,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { defaultDateRange } from "@/components/common/DateRangeFilter";
 import type { Range } from "react-date-range";
 import { withAuth } from "@/utils/withAuth";
+import { apiEnv, normalizeApiError, usersApi } from "@/lib/api";
 
 import LogDetailsModal from "./components/LogDetailsModal";
-import { activityLogsSeed } from "./data";
 import { useSearch } from "@/context/SearchContext";
 import { Infotext } from "@/components/common/Info";
 import type { ActivityFilters, ActivityLog } from "./types";
@@ -34,18 +31,165 @@ const defaultFilters: ActivityFilters = {
   },
 };
 
+type LooseRecord = Record<string, unknown>;
+
+const toStringValue = (value: unknown, fallback = ""): string => {
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  return fallback;
+};
+
+const toObjectValue = (value: unknown): Record<string, unknown> => {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+  return {};
+};
+
+const toIsoTimestamp = (value: unknown): string => {
+  if (typeof value === "string" || typeof value === "number" || value instanceof Date) {
+    const date = new Date(value);
+    if (!Number.isNaN(date.getTime())) return date.toISOString();
+  }
+  return new Date().toISOString();
+};
+
+const extractLogRows = (payload: unknown): LooseRecord[] => {
+  if (Array.isArray(payload)) {
+    return payload as LooseRecord[];
+  }
+
+  if (!payload || typeof payload !== "object") {
+    return [];
+  }
+
+  const root = payload as {
+    data?: unknown;
+    logs?: unknown;
+    rows?: unknown;
+  };
+
+  if (Array.isArray(root.data)) {
+    return root.data as LooseRecord[];
+  }
+
+  if (Array.isArray(root.logs)) {
+    return root.logs as LooseRecord[];
+  }
+
+  if (Array.isArray(root.rows)) {
+    return root.rows as LooseRecord[];
+  }
+
+  if (root.data && typeof root.data === "object") {
+    const nested = root.data as { data?: unknown; logs?: unknown; rows?: unknown };
+
+    if (Array.isArray(nested.data)) return nested.data as LooseRecord[];
+    if (Array.isArray(nested.logs)) return nested.logs as LooseRecord[];
+    if (Array.isArray(nested.rows)) return nested.rows as LooseRecord[];
+
+    return Object.values(root.data as Record<string, LooseRecord>);
+  }
+
+  return [];
+};
+
+const mapApiLogToActivityLog = (entry: LooseRecord, index: number): ActivityLog => {
+  const response = toObjectValue(
+    entry.response ?? entry.responseBody ?? entry.result ?? entry.output
+  );
+  const payload = toObjectValue(
+    entry.payload ?? entry.request ?? entry.requestBody ?? entry.body ?? entry.input
+  );
+
+  if (response.status === undefined && (entry.status !== undefined || entry.success !== undefined)) {
+    response.status = entry.status ?? entry.success;
+  }
+
+  if (!response.message && typeof entry.message === "string") {
+    response.message = entry.message;
+  }
+
+  return {
+    id: toStringValue(entry.id ?? entry.logId ?? entry._id, `log-${index + 1}`),
+    username: toStringValue(
+      entry.username ?? entry.userName ?? entry.user ?? entry.actor ?? entry.createdBy,
+      "Unknown"
+    ),
+    action: toStringValue(
+      entry.action ?? entry.activity ?? entry.event ?? entry.description ?? entry.message,
+      "No action"
+    ),
+    ipAddress: toStringValue(
+      entry.ipAddress ?? entry.ip ?? entry.ip_address ?? entry.clientIp,
+      "-"
+    ),
+    timestamp: toIsoTimestamp(entry.timestamp ?? entry.createdAt ?? entry.date ?? entry.time),
+    userAgent: toStringValue(
+      entry.userAgent ?? entry.user_agent ?? entry.browser ?? entry.device,
+      "Unknown device"
+    ),
+    payload,
+    response,
+  };
+};
+
+const isErrorLog = (log: ActivityLog): boolean => {
+  const actionLooksLikeError = log.action.toLowerCase().includes("error");
+  const status = log.response?.status;
+  const statusText = toStringValue(status).toLowerCase();
+  const responseLooksLikeError =
+    status === false || statusText === "failed" || statusText === "error";
+
+  return actionLooksLikeError || responseLooksLikeError;
+};
+
+const isSameCalendarDay = (first: Date, second: Date): boolean =>
+  first.getFullYear() === second.getFullYear() &&
+  first.getMonth() === second.getMonth() &&
+  first.getDate() === second.getDate();
+
+const getPeriodFromDateRange = (range: ActivityFilters["dateRange"]): string => {
+  const today = new Date();
+  if (isSameCalendarDay(range.from, today) && isSameCalendarDay(range.to, today)) {
+    return "today";
+  }
+  return "custom";
+};
+
 function ActivityLogsPage() {
-  const [logs] = useState<ActivityLog[]>(activityLogsSeed);
+  const [logs, setLogs] = useState<ActivityLog[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [filters, setFilters] = useState<ActivityFilters>(defaultFilters);
-  const [appliedFilters, setAppliedFilters] =
-    useState<ActivityFilters>(defaultFilters);
-  const [activeTab, setActiveTab] = useState<
-    "all" | "success" | "errors"
-  >("all");
+  const [appliedFilters, setAppliedFilters] = useState<ActivityFilters>(defaultFilters);
+  const [activeTab, setActiveTab] = useState<"all" | "success" | "errors">("all");
 
   const [selectedLog, setSelectedLog] = useState<ActivityLog | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { query, setPlaceholder, resetPlaceholder, resetQuery } = useSearch();
+
+  const loadLogs = useCallback(async (nextFilters: ActivityFilters) => {
+    try {
+      setIsLoading(true);
+
+      const payload = await usersApi.getAllLogs({
+        page: 1,
+        period: getPeriodFromDateRange(nextFilters.dateRange),
+        from: nextFilters.dateRange.from.toISOString(),
+        to: nextFilters.dateRange.to.toISOString(),
+        clientId: Number(apiEnv.clientId),
+      });
+
+      const mappedLogs = extractLogRows(payload).map(mapApiLogToActivityLog);
+      setLogs(mappedLogs);
+    } catch (error) {
+      const apiError = normalizeApiError(error);
+      toast.error(apiError.message || "Failed to fetch activity logs");
+      setLogs([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     setPlaceholder("Search by username or IP address");
@@ -54,6 +198,10 @@ function ActivityLogsPage() {
       resetQuery();
     };
   }, [resetPlaceholder, resetQuery, setPlaceholder]);
+
+  useEffect(() => {
+    void loadLogs(appliedFilters);
+  }, [appliedFilters, loadLogs]);
 
   const handleChangeFilterValue = (
     field: keyof ActivityFilters,
@@ -95,7 +243,7 @@ function ActivityLogsPage() {
       const searchTerm = query.trim().toLowerCase();
       const matchesSearch = searchTerm
         ? log.username.toLowerCase().includes(searchTerm) ||
-        log.ipAddress.toLowerCase().includes(searchTerm)
+          log.ipAddress.toLowerCase().includes(searchTerm)
         : true;
       const matchesUsername = appliedFilters.username
         ? log.username.toLowerCase().includes(appliedFilters.username.toLowerCase())
@@ -107,16 +255,12 @@ function ActivityLogsPage() {
       const matchesDate =
         logDate >= appliedFilters.dateRange.from &&
         logDate <= appliedFilters.dateRange.to;
-      const isError =
-        log.action.toLowerCase().includes("error") ||
-        log.response?.status === false ||
-        log.response?.status === "failed";
       const matchesTab =
         activeTab === "all"
           ? true
           : activeTab === "errors"
-            ? isError
-            : !isError;
+            ? isErrorLog(log)
+            : !isErrorLog(log);
       return matchesSearch && matchesUsername && matchesIp && matchesDate && matchesTab;
     });
   }, [logs, appliedFilters, activeTab, query]);
@@ -196,9 +340,7 @@ function ActivityLogsPage() {
   }, []);
 
   const totalLogs = logs.length;
-  const errorLogs = logs.filter((log) =>
-    log.action.toLowerCase().includes("error")
-  ).length;
+  const errorLogs = logs.filter(isErrorLog).length;
 
   return (
     <div className="space-y-6 p-4">
@@ -224,16 +366,14 @@ function ActivityLogsPage() {
             <p className="mt-2 text-2xl font-semibold text-gray-900 dark:text-gray-100">
               {totalLogs}
             </p>
-            <p className="text-xs text-gray-400 dark:text-gray-500">
-              All time log retention
-            </p>
+            <p className="text-xs text-gray-400 dark:text-gray-500">All loaded records</p>
           </div>
           <div className="rounded-2xl border border-dashed border-emerald-200 bg-emerald-500/5 p-4 dark:border-emerald-500/30 dark:bg-emerald-500/10">
             <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600 dark:text-emerald-200">
               Success Events
             </p>
             <p className="mt-2 text-2xl font-semibold text-emerald-600 dark:text-emerald-200">
-              {totalLogs - errorLogs}
+              {Math.max(totalLogs - errorLogs, 0)}
             </p>
             <p className="text-xs text-emerald-500/80 dark:text-emerald-200/70">
               Completed without errors
@@ -255,7 +395,7 @@ function ActivityLogsPage() {
               Time Range
             </p>
             <p className="mt-2 text-2xl font-semibold text-brand-600 dark:text-brand-200">
-              {format(appliedFilters.dateRange.from, "MMM d")} -{" "}
+              {format(appliedFilters.dateRange.from, "MMM d")} - {" "}
               {format(appliedFilters.dateRange.to, "MMM d")}
             </p>
             <p className="text-xs text-brand-500/80 dark:text-brand-200/70">
@@ -264,7 +404,11 @@ function ActivityLogsPage() {
           </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)} className="mt-6">
+        <Tabs
+          value={activeTab}
+          onValueChange={(value) => setActiveTab(value as typeof activeTab)}
+          className="mt-6"
+        >
           <TabsList className="flex w-full flex-wrap items-center gap-2 rounded-full border border-gray-100 bg-white p-1 shadow-sm dark:border-gray-800 dark:bg-gray-950">
             <TabsTrigger
               value="all"
@@ -332,7 +476,7 @@ function ActivityLogsPage() {
                     : "Global search ready"}
                 </Badge>
               </div>
-              <DataTable columns={columns} data={filteredLogs} />
+              <DataTable columns={columns} data={filteredLogs} loading={isLoading} />
             </div>
           </TabsContent>
         </Tabs>
@@ -351,4 +495,3 @@ function ActivityLogsPage() {
 }
 
 export default withAuth(ActivityLogsPage);
-

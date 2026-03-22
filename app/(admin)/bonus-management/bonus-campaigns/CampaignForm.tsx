@@ -11,54 +11,65 @@ import { reactSelectStyles } from "@/utils/reactSelectStyles";
 import { useTheme } from "@/context/ThemeContext";
 import { BonusCampaign } from "./columns";
 
-interface CampaignFormProps {
-  onSave: (campaign: Omit<BonusCampaign, "id">) => void;
-  onCancel: () => void;
-  editData?: BonusCampaign | null;
-}
-
-type BonusOption = {
+export type CampaignBonusOption = {
   value: string;
   label: string;
 };
 
-const bonusOptions: BonusOption[] = [
-  { value: "welcome_bonus", label: "Welcome Bonus" },
-  { value: "weekend_special", label: "Weekend Special" },
-  { value: "first_deposit", label: "First Deposit Bonus" },
-  { value: "loyalty_bonus", label: "Loyalty Bonus" },
-  { value: "free_bet_friday", label: "Free Bet Friday" },
-  { value: "monthly_reload", label: "Monthly Reload" },
-  { value: "cashback_bonus", label: "Cashback Bonus" },
-  { value: "casino_welcome", label: "Casino Welcome Bonus" },
-  { value: "risk_free_bet", label: "Risk-Free Bet" },
-  { value: "games_booster", label: "Games Booster" },
-];
+export type CampaignFormValues = {
+  name: string;
+  bonusCode: string;
+  bonusId: number;
+  startDate: string;
+  endDate: string;
+  affiliateIds: string;
+  trackierCampaignId: string;
+};
 
-const CampaignForm: React.FC<CampaignFormProps> = ({ onSave, onCancel, editData }) => {
+interface CampaignFormProps {
+  onSave: (campaign: CampaignFormValues) => Promise<void> | void;
+  onCancel: () => void;
+  editData?: BonusCampaign | null;
+  bonusOptions: CampaignBonusOption[];
+}
+
+const CampaignForm: React.FC<CampaignFormProps> = ({
+  onSave,
+  onCancel,
+  editData,
+  bonusOptions,
+}) => {
   const { theme } = useTheme();
   const [campaignName, setCampaignName] = useState("");
   const [bonusCode, setBonusCode] = useState("");
-  const [chooseBonus, setChooseBonus] = useState<BonusOption | null>(null);
+  const [chooseBonus, setChooseBonus] = useState<CampaignBonusOption | null>(null);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [affiliateIds, setAffiliateIds] = useState("");
-  const [trackierCampaignIds, setTrackierCampaignIds] = useState("");
+  const [trackierCampaignId, setTrackierCampaignId] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Populate form if editing
   useEffect(() => {
     if (editData) {
+      const raw = (editData.raw ?? {}) as Record<string, unknown>;
+      const rawBonusId = Number(raw.bonusId);
+      const selectedOption =
+        bonusOptions.find((option) => Number(option.value) === rawBonusId) ??
+        (Number.isFinite(rawBonusId)
+          ? { value: String(rawBonusId), label: editData.chooseBonus }
+          : null);
+
       setCampaignName(editData.campaignName);
       setBonusCode(editData.bonusCode);
-      setChooseBonus({ value: editData.chooseBonus, label: editData.chooseBonus });
+      setChooseBonus(selectedOption);
       setStartDate(editData.startDate);
       setEndDate(editData.endDate);
       setAffiliateIds(editData.affiliateIds);
-      setTrackierCampaignIds(editData.trackierCampaignIds);
+      setTrackierCampaignId(editData.trackierCampaignIds);
     } else {
       resetForm();
     }
-  }, [editData]);
+  }, [editData, bonusOptions]);
 
   const resetForm = () => {
     setCampaignName("");
@@ -67,10 +78,10 @@ const CampaignForm: React.FC<CampaignFormProps> = ({ onSave, onCancel, editData 
     setStartDate("");
     setEndDate("");
     setAffiliateIds("");
-    setTrackierCampaignIds("");
+    setTrackierCampaignId("");
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!campaignName || !bonusCode || !chooseBonus || !startDate || !endDate) {
@@ -78,18 +89,21 @@ const CampaignForm: React.FC<CampaignFormProps> = ({ onSave, onCancel, editData 
       return;
     }
 
-    const newCampaign: Omit<BonusCampaign, "id"> = {
-      campaignName,
-      bonusCode,
-      chooseBonus: chooseBonus.label,
-      startDate,
-      endDate,
-      affiliateIds,
-      trackierCampaignIds,
-    };
-
-    onSave(newCampaign);
-    resetForm();
+    setIsSubmitting(true);
+    try {
+      await onSave({
+        name: campaignName,
+        bonusCode,
+        bonusId: Number(chooseBonus.value),
+        startDate,
+        endDate,
+        affiliateIds,
+        trackierCampaignId,
+      });
+      resetForm();
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleCancelClick = () => {
@@ -105,31 +119,28 @@ const CampaignForm: React.FC<CampaignFormProps> = ({ onSave, onCancel, editData 
 
       <Form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Name */}
           <div>
             <Label htmlFor="campaignName">Name</Label>
             <Input
               id="campaignName"
               type="text"
               placeholder="Enter campaign name"
-              defaultValue={campaignName}
+              value={campaignName}
               onChange={(e) => setCampaignName(e.target.value)}
             />
           </div>
 
-          {/* Bonus Code */}
           <div>
             <Label htmlFor="bonusCode">Bonus Code</Label>
             <Input
               id="bonusCode"
               type="text"
               placeholder="Enter bonus code"
-              defaultValue={bonusCode}
+              value={bonusCode}
               onChange={(e) => setBonusCode(e.target.value)}
             />
           </div>
 
-          {/* Choose Bonus */}
           <div>
             <Label htmlFor="chooseBonus">Choose Bonus</Label>
             <Select
@@ -142,56 +153,51 @@ const CampaignForm: React.FC<CampaignFormProps> = ({ onSave, onCancel, editData 
             />
           </div>
 
-          {/* Start Date */}
           <div>
             <Label htmlFor="startDate">Start Date</Label>
             <Input
               id="startDate"
               type="date"
-              defaultValue={startDate}
+              value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
             />
           </div>
 
-          {/* End Date */}
           <div>
             <Label htmlFor="endDate">End Date</Label>
             <Input
               id="endDate"
               type="date"
-              defaultValue={endDate}
+              value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
             />
           </div>
 
-          {/* Affiliate Ids */}
           <div>
             <Label htmlFor="affiliateIds">Affiliate Ids</Label>
             <Input
               id="affiliateIds"
               type="text"
-              placeholder="Enter affiliate IDs (comma separated)"
-              defaultValue={affiliateIds}
+              placeholder="Enter affiliate IDs"
+              value={affiliateIds}
               onChange={(e) => setAffiliateIds(e.target.value)}
             />
           </div>
 
-          {/* Trackier Campaign Ids */}
           <div className="md:col-span-3">
-            <Label htmlFor="trackierCampaignIds">Trackier Campaign Ids</Label>
+            <Label htmlFor="trackierCampaignId">Trackier Campaign Id</Label>
             <Input
-              id="trackierCampaignIds"
+              id="trackierCampaignId"
               type="text"
-              placeholder="Enter trackier campaign IDs"
-              defaultValue={trackierCampaignIds}
-              onChange={(e) => setTrackierCampaignIds(e.target.value)}
+              placeholder="Enter trackier campaign ID"
+              value={trackierCampaignId}
+              onChange={(e) => setTrackierCampaignId(e.target.value)}
             />
           </div>
         </div>
 
-        {/* Actions */}
         <div className="flex justify-start gap-3 mt-6">
-          <Button type="submit" className="bg-blue-500 hover:bg-blue-600 text-white">
+          <Button type="submit" disabled={isSubmitting} className="bg-blue-500 hover:bg-blue-600 text-white">
             Submit
           </Button>
           <Button variant="outline" onClick={handleCancelClick} type="button">
@@ -204,4 +210,3 @@ const CampaignForm: React.FC<CampaignFormProps> = ({ onSave, onCancel, editData 
 };
 
 export default CampaignForm;
-

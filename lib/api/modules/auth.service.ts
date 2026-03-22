@@ -1,4 +1,7 @@
 import { newApiClient, unwrapData } from "../client";
+import { apiEnv } from "../env";
+
+const clientId = apiEnv.clientId;
 
 export type LoginPayload = {
   username: string;
@@ -12,7 +15,7 @@ export const authApi = {
     );
   },
   me() {
-    return unwrapData(newApiClient.get("/user/account/details"));
+    return unwrapData(newApiClient.get(`/auth/details/${clientId}`));
   },
 };
 

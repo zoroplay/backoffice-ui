@@ -11,6 +11,7 @@ export type BonusCampaign = {
   chooseBonus: string;
   affiliateIds: string;
   trackierCampaignIds: string;
+  raw?: Record<string, unknown>;
 };
 
 export type CampaignActionsCallbacks = {

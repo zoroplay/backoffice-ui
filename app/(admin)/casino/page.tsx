@@ -1,21 +1,20 @@
-"use client";
+﻿"use client";
 
-import React, { useCallback, useMemo, useState } from "react";
-import type { ActionMeta, MultiValue } from "react-select";
+import React, { useCallback, useMemo, useState, useEffect } from "react";
+import type { MultiValue } from "react-select";
 import { Trophy, Layers, Building2, Megaphone } from "lucide-react";
+import { toast } from "sonner";
 
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
+import { LoadingState } from "@/components/common/LoadingState";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTheme } from "@/context/ThemeContext";
 import { withAuth } from "@/utils/withAuth";
+import { casinoApi, normalizeApiError } from "@/lib/api";
 
 import {
   casinoBanners as initialBanners,
-  casinoFilterOptions,
-  casinoGames as initialGames,
   casinoStatusOptions,
-  gameCategories as initialCategories,
-  gameProviders as initialProviders,
   bannerPositions,
   bannerTargets,
 } from "./data";
@@ -41,6 +40,7 @@ import type {
 } from "./types";
 
 type CasinoTabKey = "games" | "categories" | "providers" | "banners";
+type LooseRecord = Record<string, unknown>;
 
 const tabConfig: Array<{
   key: CasinoTabKey;
@@ -91,18 +91,136 @@ function enforceSingleSelections(
   return deduped;
 }
 
+const toText = (value: unknown, fallback = ""): string => {
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  return fallback;
+};
+
+const toNumber = (value: unknown, fallback = 0): number => {
+  const num = Number(value);
+  return Number.isFinite(num) ? num : fallback;
+};
+
+const toBool = (value: unknown, fallback = false): boolean => {
+  if (typeof value === "boolean") return value;
+  const normalized = toText(value).trim().toLowerCase();
+  if (["1", "true", "yes", "active", "enabled"].includes(normalized)) return true;
+  if (["0", "false", "no", "inactive", "disabled"].includes(normalized)) return false;
+  return fallback;
+};
+
+const toArray = <T,>(payload: unknown): T[] => {
+  if (Array.isArray(payload)) return payload as T[];
+  if (!payload || typeof payload !== "object") return [];
+
+  const root = payload as { data?: unknown };
+  if (Array.isArray(root.data)) return root.data as T[];
+  if (root.data && typeof root.data === "object") {
+    return Object.values(root.data as Record<string, T>);
+  }
+
+  return [];
+};
+
+const parseStatus = (value: unknown): CasinoGame["status"] => {
+  const normalized = toText(value).trim().toLowerCase();
+  if (normalized === "1" || normalized === "active") return "active";
+  if (normalized === "preview") return "preview";
+  return "inactive";
+};
+
+const parseVolatility = (value: unknown): CasinoGame["volatility"] => {
+  const normalized = toText(value, "Medium").trim().toLowerCase();
+  if (normalized === "low") return "Low";
+  if (normalized === "high") return "High";
+  if (normalized === "extreme") return "Extreme";
+  return "Medium";
+};
+
+const mapCategoryIds = (raw: LooseRecord): string[] => {
+  const source = raw.categories ?? raw.categoryIds ?? raw.category_ids ?? raw.subProviderIds;
+
+  if (Array.isArray(source)) {
+    return source
+      .map((entry) => {
+        if (typeof entry === "string" || typeof entry === "number") {
+          return String(entry);
+        }
+        if (entry && typeof entry === "object") {
+          const row = entry as LooseRecord;
+          return toText(row.id ?? row.slug ?? row.categoryId ?? row.sub_provider_slug, "");
+        }
+        return "";
+      })
+      .filter(Boolean);
+  }
+
+  const single = toText(raw.sub_provider_slug ?? raw.category ?? "");
+  return single ? [single] : [];
+};
+
+const mapGameRow = (raw: LooseRecord, index: number): CasinoGame => ({
+  id: toText(raw.id ?? raw.gameId ?? raw.slug, `game-${index}`),
+  name: toText(raw.name ?? raw.gameName, `Game ${index + 1}`),
+  slug: toText(raw.slug ?? raw.game_slug, `game-${index}`),
+  providerId: toText(raw.providerId ?? raw.provider_id ?? raw.provider ?? raw.providerSlug, ""),
+  categories: mapCategoryIds(raw),
+  tags: Array.isArray(raw.tags)
+    ? (raw.tags as unknown[]).map((tag) => toText(tag)).filter(Boolean)
+    : toText(raw.tags)
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter(Boolean),
+  status: parseStatus(raw.status),
+  isFeatured: toBool(raw.isFeatured ?? raw.featured),
+  hasBonusBuy: toBool(raw.hasBonusBuy ?? raw.bonus_buy ?? raw.bonusBuy),
+  rtp: toNumber(raw.rtp, 96),
+  volatility: parseVolatility(raw.volatility),
+  priority: toNumber(raw.priority ?? raw.rank, 0),
+  thumbnail: toText(raw.thumbnail ?? raw.imagePath ?? raw.image, "/casino/vegas-nights.png"),
+  updatedAt: toText(raw.updatedAt ?? raw.updated_at, new Date().toISOString()),
+});
+
+const mapCategoryRow = (raw: LooseRecord, index: number): GameCategory => ({
+  id: toText(raw.id ?? raw.slug, `category-${index}`),
+  name: toText(raw.name, `Category ${index + 1}`),
+  priority: toNumber(raw.priority ?? raw.rank, 0),
+  isActive: toBool(raw.isActive ?? raw.status, true),
+  description: toText(raw.description, "") || undefined,
+  createdAt: toText(raw.createdAt ?? raw.created_at, new Date().toISOString()),
+});
+
+const mapProviderRow = (raw: LooseRecord, index: number): GameProvider => ({
+  id: toText(raw.id ?? raw.slug, `provider-${index}`),
+  name: toText(raw.name, `Provider ${index + 1}`),
+  slug: toText(raw.slug, `provider-${index}`),
+  isActive: toBool(raw.isActive ?? raw.status, true),
+  totalGames: toNumber(raw.totalGames ?? raw.total_games ?? raw.gamesCount, 0),
+  website: toText(raw.website ?? raw.url, "") || undefined,
+  headquarters: toText(raw.headquarters ?? raw.country, "") || undefined,
+  foundedYear: (() => {
+    const year = toNumber(raw.foundedYear ?? raw.founded_year, NaN);
+    return Number.isFinite(year) ? year : undefined;
+  })(),
+});
+
+const toApiStatus = (status: CasinoGame["status"]): number => {
+  if (status === "active") return 1;
+  if (status === "preview") return 2;
+  return 0;
+};
+
 function CasinoPage() {
   const { theme } = useTheme();
 
   const [activeTab, setActiveTab] = useState<CasinoTabKey>("games");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [games, setGames] = useState<CasinoGame[]>(() =>
-    [...initialGames].sort((a, b) => b.priority - a.priority)
-  );
-  const [categories, setCategories] = useState<GameCategory[]>(() =>
-    [...initialCategories].sort((a, b) => b.priority - a.priority)
-  );
-  const [providers, setProviders] = useState<GameProvider[]>(initialProviders);
+  const [games, setGames] = useState<CasinoGame[]>([]);
+  const [categories, setCategories] = useState<GameCategory[]>([]);
+  const [providers, setProviders] = useState<GameProvider[]>([]);
   const [banners, setBanners] = useState<CasinoBanner[]>(initialBanners);
 
   const [selectedFilters, setSelectedFilters] = useState<CasinoFilterOption[]>(
@@ -128,16 +246,84 @@ function CasinoPage() {
   const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
   const [editingBanner, setEditingBanner] = useState<CasinoBanner | null>(null);
 
-  const filterGroups = useMemo<CasinoGroupedFilterOption[]>(
-    () => casinoFilterOptions,
-    []
-  );
+  const loadCasinoData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const [gamesPayload, categoriesPayload, providersPayload] = await Promise.all([
+        casinoApi.getGames(),
+        casinoApi.getCategories(),
+        casinoApi.getProviders(),
+      ]);
+
+      const nextGames = toArray<LooseRecord>(gamesPayload)
+        .map(mapGameRow)
+        .sort((a, b) => b.priority - a.priority);
+      const nextCategories = toArray<LooseRecord>(categoriesPayload)
+        .map(mapCategoryRow)
+        .sort((a, b) => b.priority - a.priority);
+      const nextProviders = toArray<LooseRecord>(providersPayload).map(mapProviderRow);
+
+      setGames(nextGames);
+      setCategories(nextCategories);
+      setProviders(nextProviders);
+    } catch (error) {
+      const apiError = normalizeApiError(error);
+      toast.error(apiError.message || "Failed to load casino data");
+      setGames([]);
+      setCategories([]);
+      setProviders([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadCasinoData();
+  }, [loadCasinoData]);
+
+  const filterGroups = useMemo<CasinoGroupedFilterOption[]>(() => {
+    const statusOptions: CasinoFilterOption[] = [
+      { label: "Active", value: "active", group: "status" },
+      { label: "Inactive", value: "inactive", group: "status" },
+      { label: "Preview", value: "preview", group: "status" },
+    ];
+
+    const featureOptions: CasinoFilterOption[] = [
+      { label: "Featured Only", value: "featured", group: "feature" },
+      { label: "Bonus Buy", value: "bonus-buy", group: "feature" },
+      { label: "Live Dealer", value: "live", group: "feature" },
+    ];
+
+    return [
+      {
+        label: "Categories",
+        options: categories.map((category) => ({
+          label: category.name,
+          value: category.id,
+          group: "category",
+        })),
+      },
+      {
+        label: "Providers",
+        options: providers.map((provider) => ({
+          label: provider.name,
+          value: provider.id,
+          group: "provider",
+        })),
+      },
+      {
+        label: "Status",
+        options: statusOptions,
+      },
+      {
+        label: "Features",
+        options: featureOptions,
+      },
+    ];
+  }, [categories, providers]);
 
   const handleFilterChange = useCallback(
-    (
-      options: MultiValue<CasinoFilterOption>,
-      _meta: ActionMeta<CasinoFilterOption>
-    ) => {
+    (options: MultiValue<CasinoFilterOption>) => {
       const deduped = enforceSingleSelections(options);
       setSelectedFilters(deduped);
     },
@@ -176,7 +362,6 @@ function CasinoPage() {
             }
             if (filter.value === "live") {
               return (
-                game.categories.includes("cat-live") ||
                 game.tags.includes("live")
               );
             }
@@ -198,42 +383,60 @@ function CasinoPage() {
     setIsGameModalOpen(true);
   }, []);
 
-  const handleDeleteGame = useCallback((game: CasinoGame) => {
+  const handleDeleteGame = useCallback(async (game: CasinoGame) => {
     const confirmDelete = window.confirm(
       `Delete "${game.name}" from the catalogue?`
     );
     if (!confirmDelete) return;
-    setGames((prev) => prev.filter((item) => item.id !== game.id));
-  }, []);
+
+    try {
+      setIsSubmitting(true);
+      await casinoApi.deleteGame(game.id);
+      toast.success("Game deleted successfully");
+      await loadCasinoData();
+    } catch (error) {
+      const apiError = normalizeApiError(error);
+      toast.error(apiError.message || "Failed to delete game");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [loadCasinoData]);
 
   const handleGameSubmit = useCallback(
-    (formValues: GameFormValues) => {
-      const timestamp = new Date().toISOString();
-      if (editingGame) {
-        setGames((prev) =>
-          prev
-            .map((game) =>
-              game.id === editingGame.id
-                ? { ...game, ...formValues, updatedAt: timestamp }
-                : game
-            )
-            .sort((a, b) => b.priority - a.priority)
-        );
-      } else {
-        const newGame: CasinoGame = {
-          id: `game-${Date.now()}`,
-          updatedAt: timestamp,
-          ...formValues,
-        };
-        setGames((prev) =>
-          [newGame, ...prev].sort((a, b) => b.priority - a.priority)
-        );
-      }
+    async (formValues: GameFormValues) => {
+      try {
+        setIsSubmitting(true);
 
-      setIsGameModalOpen(false);
-      setEditingGame(null);
+        await casinoApi.updateGame({
+          id: editingGame?.id,
+          name: formValues.name,
+          slug: formValues.slug,
+          providerId: formValues.providerId,
+          provider_id: formValues.providerId,
+          categories: formValues.categories,
+          tags: formValues.tags,
+          status: toApiStatus(formValues.status),
+          statusLabel: formValues.status,
+          isFeatured: formValues.isFeatured,
+          hasBonusBuy: formValues.hasBonusBuy,
+          rtp: formValues.rtp,
+          volatility: formValues.volatility,
+          priority: formValues.priority,
+          thumbnail: formValues.thumbnail,
+        });
+
+        toast.success(editingGame ? "Game updated" : "Game saved");
+        setIsGameModalOpen(false);
+        setEditingGame(null);
+        await loadCasinoData();
+      } catch (error) {
+        const apiError = normalizeApiError(error);
+        toast.error(apiError.message || "Failed to save game");
+      } finally {
+        setIsSubmitting(false);
+      }
     },
-    [editingGame]
+    [editingGame, loadCasinoData]
   );
 
   const openCreateCategory = useCallback(() => {
@@ -246,60 +449,61 @@ function CasinoPage() {
     setIsCategoryModalOpen(true);
   }, []);
 
-  const handleDeleteCategory = useCallback((category: GameCategory) => {
+  const handleDeleteCategory = useCallback(async (category: GameCategory) => {
     const confirmDelete = window.confirm(
       `Remove category "${category.name}"?`
     );
     if (!confirmDelete) return;
 
-    setCategories((prev) =>
-      prev.filter((item) => item.id !== category.id)
-    );
-
-    setGames((prev) =>
-      prev.map((game) => ({
-        ...game,
-        categories: game.categories.filter((id) => id !== category.id),
-      }))
-    );
-  }, []);
+    try {
+      setIsSubmitting(true);
+      await casinoApi.deleteCategory(category.id);
+      toast.success("Category deleted successfully");
+      await loadCasinoData();
+    } catch (error) {
+      const apiError = normalizeApiError(error);
+      toast.error(apiError.message || "Failed to delete category");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [loadCasinoData]);
 
   const handleCategorySubmit = useCallback(
-    (values: CategoryFormValues) => {
-      if (editingCategory) {
-        setCategories((prev) =>
-          prev
-            .map((category) =>
-              category.id === editingCategory.id
-                ? {
-                    ...category,
-                    name: values.name,
-                    priority: values.priority,
-                    isActive: values.isActive,
-                    description: values.description,
-                  }
-                : category
-            )
-            .sort((a, b) => b.priority - a.priority)
-        );
-      } else {
-        const newCategory: GameCategory = {
-          id: `category-${Date.now()}`,
-          createdAt: new Date().toISOString(),
-          name: values.name,
-          priority: values.priority,
-          isActive: values.isActive,
-          description: values.description,
-        };
-        setCategories((prev) =>
-          [newCategory, ...prev].sort((a, b) => b.priority - a.priority)
-        );
-      }
+    async (values: CategoryFormValues) => {
+      try {
+        setIsSubmitting(true);
+        if (editingCategory) {
+          await casinoApi.updateCategory({
+            id: editingCategory.id,
+            name: values.name,
+            slug: values.name.toLowerCase().trim().replace(/\s+/g, "-"),
+            priority: values.priority,
+            status: values.isActive ? 1 : 0,
+            description: values.description ?? "",
+          });
+          toast.success("Category updated successfully");
+        } else {
+          await casinoApi.addCategory({
+            name: values.name,
+            slug: values.name.toLowerCase().trim().replace(/\s+/g, "-"),
+            priority: values.priority,
+            status: values.isActive ? 1 : 0,
+            description: values.description ?? "",
+          });
+          toast.success("Category created successfully");
+        }
 
-      setIsCategoryModalOpen(false);
-      setEditingCategory(null);
+        setIsCategoryModalOpen(false);
+        setEditingCategory(null);
+        await loadCasinoData();
+      } catch (error) {
+        const apiError = normalizeApiError(error);
+        toast.error(apiError.message || "Failed to save category");
+      } finally {
+        setIsSubmitting(false);
+      }
     },
-    [editingCategory]
+    [editingCategory, loadCasinoData]
   );
 
   const openCreateProvider = useCallback(() => {
@@ -312,64 +516,69 @@ function CasinoPage() {
     setIsProviderModalOpen(true);
   }, []);
 
-  const handleToggleProvider = useCallback((provider: GameProvider) => {
-    setProviders((prev) =>
-      prev.map((item) =>
-        item.id === provider.id
-          ? { ...item, isActive: !item.isActive }
-          : item
-      )
-    );
-  }, []);
+  const handleToggleProvider = useCallback(async (provider: GameProvider) => {
+    try {
+      setIsSubmitting(true);
+      await casinoApi.toggleProvider({
+        id: provider.id,
+        providerId: provider.id,
+        status: provider.isActive ? 0 : 1,
+      });
+      toast.success("Provider status updated");
+      await loadCasinoData();
+    } catch (error) {
+      const apiError = normalizeApiError(error);
+      toast.error(apiError.message || "Failed to toggle provider");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [loadCasinoData]);
 
-  const handleDeleteProvider = useCallback((provider: GameProvider) => {
+  const handleDeleteProvider = useCallback(async (provider: GameProvider) => {
     const confirmDelete = window.confirm(
       `Remove provider "${provider.name}"?`
     );
     if (!confirmDelete) return;
 
-    setProviders((prev) => prev.filter((item) => item.id !== provider.id));
-    setGames((prev) =>
-      prev.filter((game) => game.providerId !== provider.id)
-    );
-  }, []);
+    try {
+      setIsSubmitting(true);
+      await casinoApi.deleteProvider(provider.id);
+      toast.success("Provider deleted successfully");
+      await loadCasinoData();
+    } catch (error) {
+      const apiError = normalizeApiError(error);
+      toast.error(apiError.message || "Failed to delete provider");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [loadCasinoData]);
 
   const handleProviderSubmit = useCallback(
-    (values: ProviderFormValues) => {
-      if (editingProvider) {
-        setProviders((prev) =>
-          prev.map((provider) =>
-            provider.id === editingProvider.id
-              ? {
-                  ...provider,
-                  name: values.name,
-                  slug: values.slug,
-                  website: values.website,
-                  headquarters: values.headquarters,
-                  foundedYear: values.foundedYear,
-                  isActive: values.isActive,
-                }
-              : provider
-          )
-        );
-      } else {
-        const newProvider: GameProvider = {
-          id: `provider-${Date.now()}`,
+    async (values: ProviderFormValues) => {
+      try {
+        setIsSubmitting(true);
+        await casinoApi.updateProvider({
+          id: editingProvider?.id,
           name: values.name,
           slug: values.slug,
           website: values.website,
           headquarters: values.headquarters,
           foundedYear: values.foundedYear,
-          isActive: values.isActive,
-          totalGames: 0,
-        };
-        setProviders((prev) => [newProvider, ...prev]);
-      }
+          status: values.isActive ? 1 : 0,
+        });
 
-      setIsProviderModalOpen(false);
-      setEditingProvider(null);
+        toast.success(editingProvider ? "Provider updated" : "Provider saved");
+        setIsProviderModalOpen(false);
+        setEditingProvider(null);
+        await loadCasinoData();
+      } catch (error) {
+        const apiError = normalizeApiError(error);
+        toast.error(apiError.message || "Failed to save provider");
+      } finally {
+        setIsSubmitting(false);
+      }
     },
-    [editingProvider]
+    [editingProvider, loadCasinoData]
   );
 
   const openCreateBanner = useCallback(() => {
@@ -469,66 +678,72 @@ function CasinoPage() {
     <div className="space-y-6 p-4">
       <PageBreadcrumb pageTitle="Casino Management" />
 
-      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as CasinoTabKey)}>
-        <TabsList className="flex w-full flex-wrap items-center justify-center gap-2 rounded-full border border-gray-100 bg-white p-1 shadow-sm dark:border-gray-800 dark:bg-gray-950 md:justify-start">
-          {tabConfig.map((tab) => (
-            <TabsTrigger
-              key={tab.key}
-              value={tab.key}
-              className="group inline-flex items-center gap-2 rounded-full px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 transition data-[state=active]:bg-brand-500 data-[state=active]:text-white dark:text-gray-400 dark:data-[state=active]:bg-brand-400 dark:data-[state=active]:text-gray-950"
-            >
-              <span>{tab.icon}</span>
-              {tab.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+      {isLoading ? (
+        <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <LoadingState text="Loading casino data..." className="py-12" />
+        </div>
+      ) : (
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as CasinoTabKey)}>
+          <TabsList className="flex w-full flex-wrap items-center justify-center gap-2 rounded-full border border-gray-100 bg-white p-1 shadow-sm dark:border-gray-800 dark:bg-gray-950 md:justify-start">
+            {tabConfig.map((tab) => (
+              <TabsTrigger
+                key={tab.key}
+                value={tab.key}
+                className="group inline-flex items-center gap-2 rounded-full px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 transition data-[state=active]:bg-brand-500 data-[state=active]:text-white dark:text-gray-400 dark:data-[state=active]:bg-brand-400 dark:data-[state=active]:text-gray-950"
+              >
+                <span>{tab.icon}</span>
+                {tab.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
 
-        <TabsContent value="games">
-          <CasinoGamesTab
-            theme={theme}
-            games={games}
-            filteredGames={filteredGames}
-            categories={categories}
-            providers={providers}
-            filterGroups={filterGroups}
-            selectedFilters={selectedFilters}
-            onFilterChange={handleFilterChange}
-            onApplyFilters={handleApplyFilters}
-            onClearFilters={handleClearFilters}
-            onCreateGame={openCreateGame}
-            onEditGame={openEditGame}
-            onDeleteGame={handleDeleteGame}
-          />
-        </TabsContent>
+          <TabsContent value="games">
+            <CasinoGamesTab
+              theme={theme}
+              games={games}
+              filteredGames={filteredGames}
+              categories={categories}
+              providers={providers}
+              filterGroups={filterGroups}
+              selectedFilters={selectedFilters}
+              onFilterChange={handleFilterChange}
+              onApplyFilters={handleApplyFilters}
+              onClearFilters={handleClearFilters}
+              onCreateGame={openCreateGame}
+              onEditGame={openEditGame}
+              onDeleteGame={handleDeleteGame}
+            />
+          </TabsContent>
 
-        <TabsContent value="categories">
-          <GameCategoriesTab
-            categories={categories}
-            onCreateCategory={openCreateCategory}
-            onEditCategory={openEditCategory}
-            onDeleteCategory={handleDeleteCategory}
-          />
-        </TabsContent>
+          <TabsContent value="categories">
+            <GameCategoriesTab
+              categories={categories}
+              onCreateCategory={openCreateCategory}
+              onEditCategory={openEditCategory}
+              onDeleteCategory={handleDeleteCategory}
+            />
+          </TabsContent>
 
-        <TabsContent value="providers">
-          <ProvidersTab
-            providers={providers}
-            onCreateProvider={openCreateProvider}
-            onEditProvider={openEditProvider}
-            onToggleProvider={handleToggleProvider}
-            onDeleteProvider={handleDeleteProvider}
-          />
-        </TabsContent>
+          <TabsContent value="providers">
+            <ProvidersTab
+              providers={providers}
+              onCreateProvider={openCreateProvider}
+              onEditProvider={openEditProvider}
+              onToggleProvider={handleToggleProvider}
+              onDeleteProvider={handleDeleteProvider}
+            />
+          </TabsContent>
 
-        <TabsContent value="banners">
-          <BannersTab
-            banners={banners}
-            onCreateBanner={openCreateBanner}
-            onEditBanner={openEditBanner}
-            onDeleteBanner={handleDeleteBanner}
-          />
-        </TabsContent>
-      </Tabs>
+          <TabsContent value="banners">
+            <BannersTab
+              banners={banners}
+              onCreateBanner={openCreateBanner}
+              onEditBanner={openEditBanner}
+              onDeleteBanner={handleDeleteBanner}
+            />
+          </TabsContent>
+        </Tabs>
+      )}
 
       <GameFormModal
         theme={theme}
@@ -541,7 +756,9 @@ function CasinoPage() {
           setIsGameModalOpen(false);
           setEditingGame(null);
         }}
-        onSubmit={handleGameSubmit}
+        onSubmit={(values) => {
+          void handleGameSubmit(values);
+        }}
       />
 
       <CategoryFormModal
@@ -551,7 +768,9 @@ function CasinoPage() {
           setIsCategoryModalOpen(false);
           setEditingCategory(null);
         }}
-        onSubmit={handleCategorySubmit}
+        onSubmit={(values) => {
+          void handleCategorySubmit(values);
+        }}
       />
 
       <ProviderFormModal
@@ -561,7 +780,9 @@ function CasinoPage() {
           setIsProviderModalOpen(false);
           setEditingProvider(null);
         }}
-        onSubmit={handleProviderSubmit}
+        onSubmit={(values) => {
+          void handleProviderSubmit(values);
+        }}
       />
 
       <BannerFormModal
@@ -576,9 +797,12 @@ function CasinoPage() {
         }}
         onSubmit={handleBannerSubmit}
       />
+
+      {isSubmitting ? (
+        <LoadingState text="Applying changes..." className="justify-start py-1" />
+      ) : null}
     </div>
   );
 }
 
 export default withAuth(CasinoPage);
-

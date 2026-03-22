@@ -5,77 +5,105 @@ import type { Range } from "react-date-range";
 
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { DataTable } from "@/components/tables/DataTable";
-import { DateRangeFilter, defaultDateRange } from "@/components/common/DateRangeFilter";
-import { FilterActions } from "@/components/common/FilterActions";
+import { defaultDateRange } from "@/components/common/DateRangeFilter";
 import { withAuth } from "@/utils/withAuth";
-import { useSearch } from "@/context/SearchContext";
-
-import { columns } from "./columns";
-import { networkSalesData, NetworkSalesReport } from "./data";
+import { cashflowApi, normalizeApiError } from "@/lib/api";
 import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
 import { Infotext } from "@/components/common/Info";
 
-const searchableFields: Array<keyof NetworkSalesReport> = ["name"];
+import { columns } from "./columns";
+import { NetworkSalesReport } from "./columns";
+
+const formatDDMMYYYY = (date?: Date) => {
+  if (!date) return "";
+  const day = `${date.getDate()}`.padStart(2, "0");
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const year = date.getFullYear();
+  return `${day}-${month}-${year}`;
+};
+
+const toNumber = (value: unknown) => {
+  const amount = Number(value ?? 0);
+  return Number.isFinite(amount) ? amount : 0;
+};
+
+const parseRows = (response: unknown): NetworkSalesReport[] => {
+  if (!response || typeof response !== "object") return [];
+  const root = response as Record<string, unknown>;
+  const candidates = [
+    root.data,
+    root.rows,
+    root.report,
+    root.result,
+    root.data && typeof root.data === "object"
+      ? (root.data as Record<string, unknown>).rows
+      : undefined,
+  ];
+  const list = candidates.find(Array.isArray) as unknown[] | undefined;
+  if (!Array.isArray(list)) return [];
+
+  return list.map((item, index) => {
+    const row = (item as Record<string, unknown>) ?? {};
+    return {
+      id: String(row.id ?? index + 1),
+      name: String(row.name ?? row.agentName ?? row.shopName ?? row.username ?? "-"),
+      onlineSales: toNumber(row.onlineSales ?? row.online_sales),
+      totalOnlineSales: toNumber(row.totalOnlineSales ?? row.total_online_sales),
+      onlineWithdrawal: toNumber(row.onlineWithdrawal ?? row.online_withdrawal),
+      totalOnlineWithdrawals: toNumber(
+        row.totalOnlineWithdrawals ?? row.total_online_withdrawals
+      ),
+      onlineBalance: toNumber(row.onlineBalance ?? row.online_balance),
+      availableBalance: toNumber(row.availableBalance ?? row.available_balance),
+    };
+  });
+};
 
 function NetworkSalesReportPage() {
-  const [filteredData, setFilteredData] = useState<NetworkSalesReport[]>(networkSalesData);
+  const [data, setData] = useState<NetworkSalesReport[]>([]);
   const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
   const [appliedDateRange, setAppliedDateRange] = useState<Range>(defaultDateRange);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const { query, setPlaceholder, resetPlaceholder, resetQuery } = useSearch();
+  const fetchReport = useCallback(async (range: Range) => {
+    const from = formatDDMMYYYY(range.startDate);
+    const to = formatDDMMYYYY(range.endDate);
+    if (!from || !to) return;
 
-  useEffect(() => {
-    setPlaceholder("Search by Agent/Shop Name");
-
-    return () => {
-      resetPlaceholder();
-    };
-  }, [resetPlaceholder, setPlaceholder]);
-
-  const filterSalesData = useCallback(
-    (value: string) => {
-      const searchTerm = value.trim().toLowerCase();
-
-      return networkSalesData.filter((row) => {
-        if (searchTerm) {
-          const matchesSearch = searchableFields.some((field) =>
-            String(row[field] ?? "").toLowerCase().includes(searchTerm)
-          );
-
-          if (!matchesSearch) {
-            return false;
-          }
-        }
-
-        // Date range filtering would go here if we had a date field
-        // For now, we'll keep all records that pass the search filter
-        return true;
-      });
-    },
-    []
-  );
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await cashflowApi.getRetailCashSales({ from, to });
+      setData(parseRows(response));
+    } catch (err) {
+      const apiError = normalizeApiError(err);
+      setError(apiError.message ?? "Failed to fetch retail cash sales report");
+      setData([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    setFilteredData(filterSalesData(query));
-  }, [filterSalesData, query]);
+    void fetchReport(appliedDateRange);
+  }, [appliedDateRange, fetchReport]);
 
   const applyFilters = () => {
-    const nextRange = dateRange.startDate && dateRange.endDate ? dateRange : defaultDateRange;
+    const nextRange =
+      dateRange.startDate && dateRange.endDate ? dateRange : defaultDateRange;
     setAppliedDateRange(nextRange);
-    setFilteredData(filterSalesData(query));
   };
 
   const clearFilters = () => {
     setDateRange(defaultDateRange);
     setAppliedDateRange(defaultDateRange);
-    setFilteredData(networkSalesData);
-    resetQuery();
   };
 
   return (
     <div className="space-y-6 p-4">
       <PageBreadcrumb pageTitle="Network Sales Report" />
-      <Infotext text="Use the global search to filter by Agent/Shop Name, or use the filters below to narrow down the results." />
+      <Infotext text="Filter by date range and click Search to load report data." />
 
       <TableFilterToolbar
         dateRange={dateRange}
@@ -84,11 +112,19 @@ function NetworkSalesReportPage() {
           onSearch: applyFilters,
           onClear: clearFilters,
         }}
+        isLoading={isLoading}
       />
 
-      <DataTable columns={columns} data={filteredData} />
+      {error ? (
+        <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          {error}
+        </div>
+      ) : null}
+
+      <DataTable columns={columns} data={data} loading={isLoading} />
     </div>
   );
 }
 
 export default withAuth(NetworkSalesReportPage);
+

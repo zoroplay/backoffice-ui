@@ -15,10 +15,17 @@ export const betsApi = {
     );
   },
   getPendingCashout(page = 1) {
-    return unwrapData(legacyApiClient.get(`/api/admin/sport/pending-cashout?page=${page}`));
+    return unwrapData(
+      legacyApiClient.get(`/admin/sport/pending-cashout?page=${page}`)
+    );
   },
   getWinningsOnHold(page = 1) {
     return unwrapData(legacyApiClient.get(`/api/admin/sport/winnings-on-hold?page=${page}`));
+  },
+  getTicketsOnHold(payload: unknown, page = 1) {
+    return unwrapData(
+      legacyApiClient.post(`/admin/sport/bets-monitor?page=${page}`, payload)
+    );
   },
   getTaxReport(payload: unknown, page = 1) {
     return unwrapData(
@@ -31,4 +38,3 @@ export const betsApi = {
     );
   }, 
 };
-

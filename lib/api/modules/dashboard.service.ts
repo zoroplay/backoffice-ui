@@ -9,6 +9,12 @@ export type DateRangeParams = {
 };
 
 export const dashboardApi = {
+  getAuthDetails() {
+    return unwrapData(newApiClient.get(`/auth/details/${clientId}`));
+  },
+  getGlobalVariables() {
+    return unwrapData(newApiClient.get(`/auth/globalvariables/${clientId}`));
+  },
   getStatistics() {
     return unwrapData(newApiClient.get(`/admin/dashboard/statistics/${clientId}`));
   },
@@ -56,4 +62,3 @@ export const dashboardApi = {
     );
   },
 };
-

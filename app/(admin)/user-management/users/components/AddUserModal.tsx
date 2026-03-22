@@ -16,14 +16,6 @@ const states = ["Lagos", "Abuja", "Rivers", "Oyo"];
 const languages = ["English", "French", "Spanish"];
 const currencies = ["NGN", "USD", "EUR", "KES"];
 const genders = ["Female", "Male", "Other"];
-const userLevels = [
-  "Super Admin",
-  "Risk Manager",
-  "Customer Support",
-  "Finance",
-  "Affiliate Manager",
-];
-
 export type AddUserFormValues = {
   country: string;
   state: string;
@@ -49,6 +41,7 @@ type AddUserModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (values: AddUserFormValues) => void;
+  userLevelOptions?: string[];
 };
 
 const defaultValues: AddUserFormValues = {
@@ -72,7 +65,12 @@ const defaultValues: AddUserFormValues = {
   confirmEmail: "",
 };
 
-export function AddUserModal({ isOpen, onClose, onSubmit }: AddUserModalProps) {
+export function AddUserModal({
+  isOpen,
+  onClose,
+  onSubmit,
+  userLevelOptions,
+}: AddUserModalProps) {
   const [formValues, setFormValues] =
     useState<AddUserFormValues>(defaultValues);
 
@@ -170,7 +168,13 @@ export function AddUserModal({ isOpen, onClose, onSubmit }: AddUserModalProps) {
 
           <div className="grid gap-4 md:grid-cols-2">
             {renderInput("Username", "username", { placeholder: "janedoe" })}
-            {renderSelect("User Level", "userLevel", userLevels)}
+            {renderSelect(
+              "User Level",
+              "userLevel",
+              userLevelOptions?.length
+                ? userLevelOptions
+                : ["Super Admin", "Customer Support"]
+            )}
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-600 dark:text-gray-300">
                 Parent User

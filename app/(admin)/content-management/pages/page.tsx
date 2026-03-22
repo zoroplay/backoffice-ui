@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useCallback, useMemo, useState } from "react";
-import Select, { type SingleValue, type MultiValue } from "react-select";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import Select, { type MultiValue } from "react-select";
 import type { Row } from "@tanstack/react-table";
 import type { Range } from "react-date-range";
+import { toast } from "sonner";
 
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { defaultDateRange } from "@/components/common/DateRangeFilter";
@@ -19,12 +20,21 @@ import Switch from "@/components/form/switch/Switch";
 import { useTheme } from "@/context/ThemeContext";
 import { reactSelectStyles } from "@/utils/reactSelectStyles";
 import { withAuth } from "@/utils/withAuth";
+import { apiEnv } from "@/lib/api/env";
+import { cmsApi, CmsPageRecord } from "@/lib/api/modules/cms.service";
 
 import { columns, ContentPageRow, createActionColumn } from "./columns";
-import { ContentPage, contentPages } from "./data";
 
 type FilterOption = { value: string; label: string };
-type TargetOption = { value: ContentPage["target"]; label: string };
+type TargetOption = { value: "web" | "mobile" | "hybrid"; label: string };
+
+type FormValues = {
+  title: string;
+  slug: string;
+  createdBy: string;
+  content: string;
+  isActive: boolean;
+};
 
 const filterOptions: { label: string; options: FilterOption[] }[] = [
   {
@@ -45,20 +55,98 @@ const filterOptions: { label: string; options: FilterOption[] }[] = [
 ];
 
 const targetOptions: TargetOption[] = [
-  { value: "Web", label: "Web" },
-  { value: "Mobile", label: "Mobile" },
-  { value: "Hybrid", label: "Hybrid" },
+  { value: "web", label: "Web" },
+  { value: "mobile", label: "Mobile" },
+  { value: "hybrid", label: "Hybrid" },
 ];
 
-const mapPageToRow = (page: ContentPage): ContentPageRow => ({
-  id: page.id,
-  title: page.title,
-  target: page.target,
-  createdBy: page.createdBy,
-  content: page.content,
-  isActive: page.isActive,
-  lastUpdated: page.lastUpdated,
-});
+const defaultFormValues: FormValues = {
+  title: "",
+  slug: "",
+  createdBy: "",
+  content: "",
+  isActive: true,
+};
+
+const getSafeIsoDate = (value: unknown): string => {
+  if (typeof value === "string" || typeof value === "number") {
+    const date = new Date(value);
+    if (!Number.isNaN(date.getTime())) {
+      return date.toISOString();
+    }
+  }
+
+  return new Date().toISOString();
+};
+
+const normalizeTarget = (value: unknown): TargetOption["value"] => {
+  const normalized = String(value ?? "").trim().toLowerCase();
+  if (normalized === "mobile") return "mobile";
+  if (normalized === "hybrid") return "hybrid";
+  return "web";
+};
+
+const formatTargetLabel = (target: TargetOption["value"]): string => {
+  if (target === "mobile") return "Mobile";
+  if (target === "hybrid") return "Hybrid";
+  return "Web";
+};
+
+const mapPageToRow = (page: CmsPageRecord): ContentPageRow => {
+  const normalizedTarget = normalizeTarget(page.target);
+
+  return {
+    id: String(page.id),
+    title: page.title,
+    target: formatTargetLabel(normalizedTarget),
+    createdBy: page.createdBy || "Admin",
+    content: page.content || "",
+    isActive: true,
+    lastUpdated: getSafeIsoDate(page.updatedAt ?? page.createdAt),
+  };
+};
+
+const toPageArray = (payload: unknown): CmsPageRecord[] => {
+  if (Array.isArray(payload)) {
+    return payload as CmsPageRecord[];
+  }
+
+  if (payload && typeof payload === "object") {
+    const root = payload as { data?: unknown };
+
+    if (Array.isArray(root.data)) {
+      return root.data as CmsPageRecord[];
+    }
+
+    if (root.data && typeof root.data === "object") {
+      return Object.values(root.data as Record<string, CmsPageRecord>);
+    }
+  }
+
+  return [];
+};
+
+const toSinglePage = (payload: unknown): CmsPageRecord | null => {
+  if (!payload || typeof payload !== "object") {
+    return null;
+  }
+
+  const root = payload as { data?: unknown };
+
+  if (root.data && typeof root.data === "object" && !Array.isArray(root.data)) {
+    return root.data as CmsPageRecord;
+  }
+
+  return payload as CmsPageRecord;
+};
+
+const toSlug = (value: string): string =>
+  value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
 
 const applyFilter = (rows: ContentPageRow[], filters: FilterOption[]) => {
   if (filters.length === 0) return rows;
@@ -82,19 +170,16 @@ const applyFilter = (rows: ContentPageRow[], filters: FilterOption[]) => {
 function PagesPage() {
   const { theme } = useTheme();
 
-  const [pages, setPages] = useState<ContentPageRow[]>(() => contentPages.map(mapPageToRow));
+  const [pages, setPages] = useState<ContentPageRow[]>([]);
   const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
   const [selectedFilters, setSelectedFilters] = useState<FilterOption[]>([]);
-  const [filteredRows, setFilteredRows] = useState<ContentPageRow[]>(() => contentPages.map(mapPageToRow));
+  const [filteredRows, setFilteredRows] = useState<ContentPageRow[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [editingPage, setEditingPage] = useState<ContentPageRow | null>(null);
-  const [targetSelection, setTargetSelection] = useState<TargetOption | null>(targetOptions[0]);
-  const [formValues, setFormValues] = useState({
-    title: "",
-    createdBy: "",
-    content: "",
-    isActive: true,
-  });
+  const [editingRecord, setEditingRecord] = useState<CmsPageRecord | null>(null);
+  const [targetSelection, setTargetSelection] = useState<TargetOption>(targetOptions[0]);
+  const [formValues, setFormValues] = useState<FormValues>(defaultFormValues);
   const [formKey, setFormKey] = useState(0);
 
   const summary = useMemo(() => {
@@ -109,43 +194,88 @@ function PagesPage() {
     };
   }, [filteredRows]);
 
+  const loadPages = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const payload = await cmsApi.getPages(Number(apiEnv.clientId));
+      const records = toPageArray(payload);
+      const rows = records.map(mapPageToRow);
+      setPages(rows);
+      setFilteredRows(applyFilter(rows, selectedFilters));
+    } catch {
+      toast.error("Failed to load pages");
+      setPages([]);
+      setFilteredRows([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [selectedFilters]);
+
+  useEffect(() => {
+    void loadPages();
+  }, [loadPages]);
+
   const openCreateModal = () => {
     setEditingPage(null);
-    setFormValues({
-      title: "",
-      createdBy: "",
-      content: "",
-      isActive: true,
-    });
+    setEditingRecord(null);
+    setFormValues(defaultFormValues);
     setTargetSelection(targetOptions[0]);
     setFormKey((key) => key + 1);
     setIsModalOpen(true);
   };
 
-  const handleEdit = useCallback((page: ContentPageRow) => {
-    setEditingPage(page);
-    setFormValues({
-      title: page.title,
-      createdBy: page.createdBy,
-      content: page.content,
-      isActive: page.isActive,
-    });
-    setTargetSelection(targetOptions.find((option) => option.value === page.target) ?? null);
-    setFormKey((key) => key + 1);
-    setIsModalOpen(true);
+  const handleEdit = useCallback(async (page: ContentPageRow) => {
+    try {
+      setIsLoading(true);
+      const payload = await cmsApi.getPageById(page.id, Number(apiEnv.clientId));
+      const record = toSinglePage(payload);
+
+      if (!record) {
+        toast.error("Page details unavailable");
+        return;
+      }
+
+      setEditingPage(page);
+      setEditingRecord(record);
+      setFormValues({
+        title: record.title || page.title,
+        slug: record.slug || toSlug(record.title || page.title),
+        createdBy: record.createdBy || page.createdBy || "",
+        content: record.content || page.content || "",
+        isActive: page.isActive,
+      });
+      setTargetSelection(
+        targetOptions.find((option) => option.value === normalizeTarget(record.target)) ??
+          targetOptions[0]
+      );
+      setFormKey((key) => key + 1);
+      setIsModalOpen(true);
+    } catch {
+      toast.error("Failed to load page");
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
   const handleDelete = useCallback(
-    (pageId: string) => {
+    async (pageId: string) => {
       const page = pages.find((item) => item.id === pageId);
       if (!page) return;
       const confirmed = window.confirm(`Remove "${page.title}" from published pages?`);
       if (!confirmed) return;
 
-      const updatedPages = pages.filter((item) => item.id !== pageId);
-      setPages(updatedPages);
+      try {
+        setIsLoading(true);
+        await cmsApi.deletePage(pageId, Number(apiEnv.clientId));
+        toast.success("Page deleted");
+        await loadPages();
+      } catch {
+        toast.error("Failed to delete page");
+      } finally {
+        setIsLoading(false);
+      }
     },
-    [pages]
+    [loadPages, pages]
   );
 
   const closeModal = () => {
@@ -168,62 +298,68 @@ function PagesPage() {
       return;
     }
 
-    // Ensure only one entry per group (by prefix before colon)
     const filterMap = new Map<string, FilterOption>();
-    
+
     Array.from(newValue).forEach((filter) => {
       const [groupType] = filter.value.split(":");
       filterMap.set(groupType, filter);
     });
-    
+
     setSelectedFilters(Array.from(filterMap.values()));
   };
 
-  const handleFormSubmit = () => {
-    if (!formValues.title.trim()) {
-      alert("Please provide a page title.");
+  const handleFormSubmit = async () => {
+    const title = formValues.title.trim();
+    const createdBy = formValues.createdBy.trim() || "Admin";
+    const content = formValues.content.trim();
+    const slug = (formValues.slug.trim() || toSlug(title)).trim();
+
+    if (!title) {
+      toast.error("Please provide a page title.");
       return;
     }
 
-    if (!targetSelection) {
-      alert("Please choose a target platform.");
+    if (!slug) {
+      toast.error("Please provide a valid slug.");
       return;
     }
 
-    const now = new Date().toISOString();
+    try {
+      setIsLoading(true);
 
-    if (editingPage) {
-      const updatedPages = pages.map((page) =>
-        page.id === editingPage.id
-          ? {
-              ...page,
-              title: formValues.title.trim(),
-              createdBy: formValues.createdBy.trim() || "Admin",
-              content: formValues.content.trim(),
-              target: targetSelection.value,
-              isActive: formValues.isActive,
-              lastUpdated: now,
-            }
-          : page
-      );
-      setPages(updatedPages);
-      alert("Page updated (mock).");
-    } else {
-      const newPage: ContentPageRow = {
-        id: `page-${Date.now()}`,
-        title: formValues.title.trim(),
-        createdBy: formValues.createdBy.trim() || "Admin",
-        content: formValues.content.trim(),
-        target: targetSelection.value,
-        isActive: formValues.isActive,
-        lastUpdated: now,
-      };
+      if (editingPage && editingRecord) {
+        await cmsApi.updatePage({
+          id: editingRecord.id,
+          clientId: Number(apiEnv.clientId),
+          title,
+          url: editingRecord.url ?? null,
+          target: targetSelection.value,
+          content,
+          createdBy,
+          createdAt: editingRecord.createdAt ?? {},
+          updatedAt: editingRecord.updatedAt ?? {},
+          slug,
+        });
+        toast.success("Page updated successfully");
+      } else {
+        await cmsApi.createPage({
+          title,
+          slug,
+          content,
+          target: targetSelection.value,
+          clientId: Number(apiEnv.clientId),
+          createdBy,
+        });
+        toast.success("Page created successfully");
+      }
 
-      setPages((prev) => [newPage, ...prev]);
-      alert("Page created (mock).");
+      setIsModalOpen(false);
+      await loadPages();
+    } catch {
+      toast.error(editingPage ? "Failed to update page" : "Failed to create page");
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsModalOpen(false);
   };
 
   const columnsWithActions = useMemo(
@@ -257,7 +393,7 @@ function PagesPage() {
             <p className="text-sm text-gray-500 dark:text-gray-400">Web Target</p>
             <p className="text-2xl font-semibold text-gray-900 dark:text-white">{summary.webCount}</p>
           </div>
-            <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900/60">
+          <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900/60">
             <p className="text-sm text-gray-500 dark:text-gray-400">Mobile Target</p>
             <p className="text-2xl font-semibold text-gray-900 dark:text-white">{summary.mobileCount}</p>
           </div>
@@ -291,7 +427,10 @@ function PagesPage() {
           <DataTable
             columns={columnsWithActions}
             data={filteredRows}
-            onRowClick={(row: Row<ContentPageRow>) => handleEdit(row.original)}
+            onRowClick={(row: Row<ContentPageRow>) => {
+              void handleEdit(row.original);
+            }}
+            loading={isLoading}
           />
         </div>
       </div>
@@ -302,7 +441,7 @@ function PagesPage() {
           <Form
             key={formKey}
             onSubmit={() => {
-              handleFormSubmit();
+              void handleFormSubmit();
             }}
             className="space-y-6"
           >
@@ -314,7 +453,22 @@ function PagesPage() {
                   placeholder="Enter page title"
                   defaultValue={formValues.title}
                   onChange={(event) =>
-                    setFormValues((prev) => ({ ...prev, title: event.target.value }))
+                    setFormValues((prev) => ({
+                      ...prev,
+                      title: event.target.value,
+                      slug: prev.slug ? prev.slug : toSlug(event.target.value),
+                    }))
+                  }
+                />
+              </div>
+              <div>
+                <Label htmlFor="pageSlug">Slug</Label>
+                <Input
+                  id="pageSlug"
+                  placeholder="page-slug"
+                  defaultValue={formValues.slug}
+                  onChange={(event) =>
+                    setFormValues((prev) => ({ ...prev, slug: event.target.value }))
                   }
                 />
               </div>
@@ -329,13 +483,16 @@ function PagesPage() {
                   }
                 />
               </div>
-              <div className="md:col-span-2">
+              <div>
                 <Label>Target</Label>
                 <Select<TargetOption, false>
                   styles={reactSelectStyles(theme)}
                   options={targetOptions}
                   value={targetSelection}
-                  onChange={(option) => setTargetSelection(option as TargetOption)}
+                  onChange={(option) => {
+                    if (!option) return;
+                    setTargetSelection(option);
+                  }}
                 />
               </div>
               <div className="md:col-span-2">
@@ -366,16 +523,15 @@ function PagesPage() {
                   }))
                 }
               />
-              
             </div>
           </Form>
         </ModalBody>
         <ModalFooter>
-          <Button variant="outline" onClick={closeModal}>
+          <Button variant="outline" onClick={closeModal} disabled={isLoading}>
             Cancel
           </Button>
-          <Button onClick={handleFormSubmit}>
-            {editingPage ? "Update Page" : "Save Page"}
+          <Button onClick={() => void handleFormSubmit()} disabled={isLoading}>
+            {isLoading ? "Saving..." : editingPage ? "Update Page" : "Save Page"}
           </Button>
         </ModalFooter>
       </Modal>
@@ -384,4 +540,3 @@ function PagesPage() {
 }
 
 export default withAuth(PagesPage);
-

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { PaymentMethod } from "../types";
 import { Checkbox } from "@/components/ui/checkbox";
 import Button from "@/components/ui/button/Button";
@@ -8,8 +8,9 @@ import { Trash2 } from "lucide-react";
 
 interface PaymentMethodFormProps {
   initialValues?: Partial<PaymentMethod>;
-  onSubmit: (values: PaymentMethod) => void;
-  onDelete?: (id: string) => void;
+  onSubmit: (values: PaymentMethod) => Promise<void> | void;
+  onDelete?: (id: string | number) => Promise<void> | void;
+  isSubmitting?: boolean;
 }
 
 const inputClassName =
@@ -19,6 +20,7 @@ export const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
   initialValues,
   onSubmit,
   onDelete,
+  isSubmitting = false,
 }) => {
   const [formValues, setFormValues] = useState<Partial<PaymentMethod>>({
     isEnabled: true,
@@ -33,13 +35,28 @@ export const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
     ...initialValues,
   });
 
-  const handleChange = (field: keyof PaymentMethod, value: any) => {
+  useEffect(() => {
+    setFormValues({
+      isEnabled: true,
+      isDefaultWithdrawal: false,
+      useForWithdrawal: false,
+      displayTitle: "",
+      providerName: "",
+      apiSecretKey: "",
+      apiPublicKey: "",
+      merchantId: "",
+      baseUrl: "",
+      ...initialValues,
+    });
+  }, [initialValues]);
+
+  const handleChange = (field: keyof PaymentMethod, value: PaymentMethod[keyof PaymentMethod]) => {
     setFormValues((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formValues as PaymentMethod);
+    await onSubmit(formValues as PaymentMethod);
   };
 
   return (
@@ -50,8 +67,8 @@ export const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
           <div className="flex items-center gap-3">
             <Checkbox
               id="isEnabled"
-              checked={formValues.isEnabled}
-              onCheckedChange={(val) => handleChange("isEnabled", val)}
+              checked={Boolean(formValues.isEnabled)}
+              onCheckedChange={(val) => handleChange("isEnabled", Boolean(val))}
             />
             <label htmlFor="isEnabled" className="text-sm font-medium text-gray-700 dark:text-gray-200 cursor-pointer">
               Enable Payment Method
@@ -60,8 +77,8 @@ export const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
           <div className="flex items-center gap-3">
             <Checkbox
               id="isDefaultWithdrawal"
-              checked={formValues.isDefaultWithdrawal}
-              onCheckedChange={(val) => handleChange("isDefaultWithdrawal", val)}
+              checked={Boolean(formValues.isDefaultWithdrawal)}
+              onCheckedChange={(val) => handleChange("isDefaultWithdrawal", Boolean(val))}
             />
             <label htmlFor="isDefaultWithdrawal" className="text-sm font-medium text-gray-700 dark:text-gray-200 cursor-pointer">
               Default Withdrawal
@@ -70,8 +87,8 @@ export const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
            <div className="flex items-center gap-3">
             <Checkbox
               id="useForWithdrawal"
-              checked={formValues.useForWithdrawal}
-              onCheckedChange={(val) => handleChange("useForWithdrawal", val)}
+              checked={Boolean(formValues.useForWithdrawal)}
+              onCheckedChange={(val) => handleChange("useForWithdrawal", Boolean(val))}
             />
             <label htmlFor="useForWithdrawal" className="text-sm font-medium text-gray-700 dark:text-gray-200 cursor-pointer">
               Use for withdrawal
@@ -173,14 +190,19 @@ export const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
               className="text-error-600 border-error-200 hover:bg-error-50"
               onClick={() => onDelete(formValues.id!)}
               startIcon={<Trash2 className="h-4 w-4" />}
+              disabled={isSubmitting}
             >
               Delete This Method
             </Button>
           )}
         </div>
         <div className="flex gap-3">
-          <Button type="submit">
-            {formValues.id ? "Save Changes" : "Save Payment Method"}
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting
+              ? "Saving..."
+              : formValues.id
+                ? "Save Changes"
+                : "Save Payment Method"}
           </Button>
         </div>
       </div>

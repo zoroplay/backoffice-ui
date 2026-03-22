@@ -1,7 +1,7 @@
 export type RoleType = "admin" | "agency" | "player";
 
 export type RoleRecord = {
-  id: string;
+  id: string | number;
   name: string;
   type: RoleType;
   description: string;
@@ -10,7 +10,7 @@ export type RoleRecord = {
 };
 
 export type PermissionRecord = {
-  id: string;
+  id: string | number;
   name: string;
   category: string;
   description: string;

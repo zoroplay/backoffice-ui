@@ -11,7 +11,7 @@ import Badge from "@/components/ui/badge/Badge";
 import { withAuth } from "@/utils/withAuth";
 
 import { columns, createActionColumn, MessageRow } from "./columns";
-import { cmsApi } from "@/lib/api/modules/cms";
+import { cmsApi } from "@/lib/api/modules/cms.service";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Settings } from "lucide-react";
 

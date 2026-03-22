@@ -7,11 +7,11 @@ import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { DataTable } from "@/components/tables/DataTable";
 import type { Range } from "react-date-range";
 import { defaultDateRange } from "@/components/common/DateRangeFilter";
-import { networkSalesColumns } from "./columns";
-import { NetworkSalesTypes } from "./columns";
+import { networkSalesColumns,NetworkSalesTypes } from "./columns";
 import { withAuth } from "@/utils/withAuth";
 import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
 import { Infotext } from "@/components/common/Info";
+import { LoadingState } from "@/components/common/LoadingState";
 
 // ----------------------
 // Select Options
@@ -38,6 +38,8 @@ function NetworkSales() {
   const [filteredData, setFilteredData] = useState<NetworkSalesTypes[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasSearched, setHasSearched] = useState(false);
+  const emptyStateText = "Search to see data.";
 
   // ----------------------
   // Apply filters
@@ -53,6 +55,7 @@ function NetworkSales() {
   const handleSearch = async () => {
     setIsLoading(true);
     setError(null);
+    setHasSearched(true);
 
     try {
       const productMap: Record<string, string> = {
@@ -102,6 +105,8 @@ function NetworkSales() {
     setDateRange(defaultDateRange);
     setSelectedFilter(null);
     setFilteredData([]);
+    setError(null);
+    setHasSearched(false);
   };
 
   return (
@@ -130,7 +135,11 @@ function NetworkSales() {
 
       {/* Table */}
       {isLoading ? (
-        <div className="flex justify-center py-8 text-gray-500">Loading...</div>
+        <LoadingState className="py-8" />
+      ) : !hasSearched ? (
+        <div className="flex justify-center py-8 text-gray-500">
+          {emptyStateText}
+        </div>
       ) : (
         <>
           {error && (

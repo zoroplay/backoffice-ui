@@ -7,14 +7,14 @@ import { DataTable } from "@/components/tables/DataTable";
 import type { Range } from "react-date-range";
 import { defaultDateRange } from "@/components/common/DateRangeFilter";
 import { columns } from "./column";
-import { tableData as defaultTableData } from "./data";
 import { withAuth } from "@/utils/withAuth";
 import { useSearch } from "@/context/SearchContext";
 import type { MultiValue } from "react-select";
 import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
 import { Infotext } from "@/components/common/Info";
 import { reportsApi, normalizeApiError, apiEnv } from "@/lib/api";
-import type { TableDataTypes } from "./data";
+import type { TableDataTypes } from "./column";
+import { LoadingState } from "@/components/common/LoadingState";
 
 
 // ----------------------
@@ -81,12 +81,14 @@ const filterOptionGroupMap = groupedOptions.reduce<Map<string, string>>(
 function GamingActivities() {
   const [filters, setFilters] = useState<FilterSelection[]>([]);
   const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
-  const [tableData, setTableData] = useState<TableDataTypes[]>(defaultTableData);
+  const [tableData, setTableData] = useState<TableDataTypes[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { query, setPlaceholder, resetPlaceholder, resetQuery } = useSearch();
   const [appliedFilters, setAppliedFilters] = useState<FilterSelection[]>([]);
   const [appliedDateRange, setAppliedDateRange] = useState<Range | null>(null);
+  const [hasSearched, setHasSearched] = useState(false);
+  const emptyStateText = "Search to see data.";
 
   useEffect(() => {
     setPlaceholder("Search by Group");
@@ -156,26 +158,18 @@ function GamingActivities() {
         setTableData(result as TableDataTypes[]);
       } else if (result && typeof result === "object" && "data" in result) {
         const data = (result as { data: unknown }).data;
-        setTableData(Array.isArray(data) ? (data as TableDataTypes[]) : defaultTableData);
+        setTableData(Array.isArray(data) ? (data as TableDataTypes[]) : []);
       } else {
-        setTableData(defaultTableData);
+        setTableData([]);
       }
     } catch (err) {
       const apiError = normalizeApiError(err);
       setError(apiError.message ?? "Failed to fetch gaming activity data");
-      setTableData(defaultTableData);
+      setTableData([]);
     } finally {
       setIsLoading(false);
     }
   };
-
-  // initial fetch on mount
-  useEffect(() => {
-    fetchGamingActivity(defaultDateRange, []);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  
 
   // ----------------------
   // Filter & Search logic placeholder
@@ -190,7 +184,7 @@ function GamingActivities() {
     return tableData.filter((row) =>
       row.group.toString().toLowerCase().includes(searchTerm)
     );
-  }, [query]);
+  }, [query, tableData]);
 
   const handleFilterChange = (value: MultiValue<FilterSelection>) => {
     const latestSelections = new Map<string, FilterSelection>();
@@ -225,6 +219,7 @@ function GamingActivities() {
 
     setAppliedFilters(nextAppliedFilters);
     setAppliedDateRange(nextAppliedDateRange);
+    setHasSearched(true);
 
     fetchGamingActivity(nextAppliedDateRange, nextAppliedFilters);
   };
@@ -234,10 +229,9 @@ function GamingActivities() {
     setDateRange(defaultDateRange);
     setAppliedFilters([]);
     setAppliedDateRange(null);
-    setTableData(defaultTableData);
+    setTableData([]);
     resetQuery();
-    // refetch default data
-    fetchGamingActivity(defaultDateRange, []);
+    setHasSearched(false);
   };
 
   return (
@@ -271,13 +265,14 @@ function GamingActivities() {
       
       {isLoading ? (
         <div className="flex justify-center py-8">
-          <div className="text-gray-500">Loading gaming activity data...</div>
+          <LoadingState text="Loading..." />
+        </div>
+      ) : !hasSearched ? (
+        <div className="flex justify-center py-8 text-gray-500">
+          {emptyStateText}
         </div>
       ) : (
-        <DataTable 
-          columns={columns} 
-          data={filteredData}
-        />
+        <DataTable columns={columns} data={filteredData} />
       )}
     </div>
   );

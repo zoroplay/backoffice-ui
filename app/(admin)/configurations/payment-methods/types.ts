@@ -1,5 +1,5 @@
 export type PaymentMethod = {
-  id: string;
+  id: string | number;
   isEnabled: boolean;
   isDefaultWithdrawal: boolean;
   useForWithdrawal: boolean;

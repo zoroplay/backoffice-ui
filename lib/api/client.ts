@@ -4,20 +4,69 @@ import { buildSecurityHeaders, getAuthToken } from "./security";
 
 export type ApiErrorPayload = {
   status?: number;
+  statusCode?: number;
   message?: string;
   error?: string;
   [key: string]: unknown;
 };
 
 export const normalizeApiError = (error: unknown): ApiErrorPayload => {
+  const unauthorizedMessage = "Session expired. Please log in again.";
+  const notFoundMessage = "Resource not found.";
+
+  if (error && typeof error === "object") {
+    const maybePayload = error as ApiErrorPayload;
+    const hasKnownShape =
+      typeof maybePayload.message === "string" ||
+      typeof maybePayload.status === "number" ||
+      typeof maybePayload.statusCode === "number";
+
+    if (hasKnownShape) {
+      const status = maybePayload.status ?? maybePayload.statusCode;
+      if (status === 401) {
+        return {
+          ...maybePayload,
+          status: 401,
+          statusCode: 401,
+          message: unauthorizedMessage,
+        };
+      }
+      if (status === 404) {
+        return {
+          ...maybePayload,
+          status: 404,
+          statusCode: 404,
+          message:
+            (typeof maybePayload.error === "string" && maybePayload.error.trim()) ||
+            notFoundMessage,
+        };
+      }
+      return {
+        ...maybePayload,
+        status: status ?? 500,
+      };
+    }
+  }
+
   if (axios.isAxiosError(error)) {
     const payload = error.response?.data as ApiErrorPayload | undefined;
-    return (
-      payload ?? {
-        status: error.response?.status ?? 500,
-        message: error.message,
-      }
-    );
+    const status = error.response?.status ?? payload?.statusCode ?? 500;
+    const message =
+      (status === 401
+        ? unauthorizedMessage
+        : status === 404
+        ? (typeof payload?.error === "string" && payload.error.trim()) ||
+          notFoundMessage
+        : undefined) ??
+      payload?.message ??
+      error.message;
+
+    return {
+      ...(payload ?? {}),
+      status,
+      statusCode: payload?.statusCode ?? status,
+      message,
+    };
   }
 
   return {

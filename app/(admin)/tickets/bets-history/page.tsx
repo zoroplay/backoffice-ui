@@ -12,6 +12,7 @@ import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
 import BetDetailsModal from "./components/BetDetailsModal";
 import { Infotext } from "@/components/common/Info";
 import { betsApi, normalizeApiError } from "@/lib/api";
+import { LoadingState } from "@/components/common/LoadingState";
 
 //  Default last 30 days range
 const defaultDateRange: Range = {
@@ -413,7 +414,7 @@ function BetsHistoryPage() {
 
       {/* Table */}
       {isLoading ? (
-        <div className="flex justify-center py-8 text-gray-500">Loading...</div>
+        <LoadingState className="py-8" />
       ) : (
         <>
           {error && (

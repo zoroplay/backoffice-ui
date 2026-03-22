@@ -23,6 +23,7 @@ import {
 
 import Button from "@/components/ui/button/Button";
 import { cn } from "@/lib/utils";
+import { LoadingState } from "@/components/common/LoadingState";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -31,6 +32,8 @@ interface DataTableProps<TData, TValue> {
   rowSelection?: RowSelectionState;
   onRowClick?: (row: Row<TData>) => void;
   loading?: boolean;
+  pageSize?: number;
+  hidePagination?: boolean;
 }
 
 export function DataTable<TData, TValue>({
@@ -40,6 +43,8 @@ export function DataTable<TData, TValue>({
   rowSelection,
   onRowClick,
   loading,
+  pageSize = 5,
+  hidePagination = false,
 }: DataTableProps<TData, TValue>) {
   const table = useReactTable({
     data,
@@ -53,7 +58,7 @@ export function DataTable<TData, TValue>({
     enableRowSelection: true,
     initialState: {
       pagination: {
-        pageSize: 5, // Set to 5 rows per page
+        pageSize,
       },
     },
   });
@@ -91,10 +96,7 @@ export function DataTable<TData, TValue>({
                     colSpan={columns.length}
                     className="h-24 text-center"
                   >
-                    <div className="flex items-center justify-center gap-2">
-                       <span className="w-5 h-5 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></span>
-                       Loading data...
-                    </div>
+                    <LoadingState text="Loading..." />
                   </TableCell>
                 </TableRow>
               ) : table.getRowModel().rows?.length ? (
@@ -145,51 +147,49 @@ export function DataTable<TData, TValue>({
         </div>
       </div>
 
-      {/* Pagination controls */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between py-4 gap-2 md:gap-0 ">
-        {/* Page info */}
-        <div className="text-sm text-gray-700 dark:text-gray-300">
-          Page {table.getState().pagination.pageIndex + 1} of{" "}
-          {table.getPageCount()} ({data.length} total rows)
-        </div>
+      {!hidePagination ? (
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between py-4 gap-2 md:gap-0 ">
+          <div className="text-sm text-gray-700 dark:text-gray-300">
+            Page {table.getState().pagination.pageIndex + 1} of{" "}
+            {table.getPageCount()} ({data.length} total rows)
+          </div>
 
-        {/* Pagination buttons */}
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.setPageIndex(0)}
-            disabled={!table.getCanPreviousPage()}
-          >
-            First
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Next
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-            disabled={!table.getCanNextPage()}
-          >
-            Last
-          </Button>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.setPageIndex(0)}
+              disabled={!table.getCanPreviousPage()}
+            >
+              First
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+            >
+              Next
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+              disabled={!table.getCanNextPage()}
+            >
+              Last
+            </Button>
+          </div>
         </div>
-
-      </div>
+      ) : null}
     </div>
   );
 }

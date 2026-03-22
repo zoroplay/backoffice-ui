@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useCallback, useMemo, useState, useEffect } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Plus, Edit2, Globe2, ShieldCheck, Power, PowerOff } from "lucide-react";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
@@ -8,15 +8,60 @@ import Button from "@/components/ui/button/Button";
 import { DataTable } from "@/components/tables/DataTable";
 import Badge from "@/components/ui/badge/Badge";
 import { Modal, ModalHeader, ModalBody } from "@/components/ui/modal/Modal";
-import { mockPaymentMethods } from "./data";
 import { PaymentMethod } from "./types";
 import { PaymentMethodForm } from "./components/PaymentMethodForm";
 import { toast } from "sonner";
+import { apiEnv, normalizeApiError, settingsApi } from "@/lib/api";
+import type { PaymentMethodRecord } from "@/lib/api/modules/settings.service";
+
+const toPaymentMethodRows = (payload: unknown): PaymentMethod[] => {
+  if (!payload || typeof payload !== "object") return [];
+
+  const root = payload as { data?: unknown };
+  const rows = Array.isArray(root.data)
+    ? (root.data as PaymentMethodRecord[])
+    : Array.isArray(payload)
+      ? (payload as PaymentMethodRecord[])
+      : [];
+
+  return rows.map((row) => ({
+    id: row.id,
+    isEnabled: Number(row.status) === 1,
+    isDefaultWithdrawal: false,
+    useForWithdrawal: Number(row.forDisbursement) === 1,
+    displayTitle: row.title ?? "",
+    providerName: row.provider ?? "",
+    apiSecretKey: row.secretKey ?? "",
+    apiPublicKey: row.publicKey ?? "",
+    merchantId: row.merchantId ?? "",
+    baseUrl: row.baseUrl ?? "",
+  }));
+};
 
 export default function PaymentMethodsPage() {
-  const [methods, setMethods] = useState<PaymentMethod[]>(mockPaymentMethods);
+  const [methods, setMethods] = useState<PaymentMethod[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMethod, setEditingMethod] = useState<PaymentMethod | null>(null);
+
+  const fetchPaymentMethods = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const payload = await settingsApi.getPaymentMethods(Number(apiEnv.clientId));
+      setMethods(toPaymentMethodRows(payload));
+    } catch (error) {
+      const apiError = normalizeApiError(error);
+      toast.error(apiError.message || "Failed to load payment methods");
+      setMethods([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void fetchPaymentMethods();
+  }, [fetchPaymentMethods]);
 
   const handleAddClick = () => {
     setEditingMethod(null);
@@ -28,29 +73,74 @@ export default function PaymentMethodsPage() {
     setIsModalOpen(true);
   };
 
-  const handleFormSubmit = (values: PaymentMethod) => {
-    if (editingMethod) {
-      // Update
-      setMethods((prev) =>
-        prev.map((m) => (m.id === editingMethod.id ? { ...values, id: m.id } : m))
-      );
-      toast.success("Payment method updated successfully");
-    } else {
-      // Add
-      const newMethod = {
-        ...values,
-        id: values.providerName.toLowerCase().replace(/\s+/g, "-") + "-" + Date.now(),
-      };
-      setMethods((prev) => [...prev, newMethod]);
-      toast.success("New payment method added");
+  const handleFormSubmit = async (values: PaymentMethod) => {
+    try {
+      setIsSubmitting(true);
+
+      if (editingMethod) {
+        await settingsApi.updatePaymentMethod(
+          {
+            id: Number(editingMethod.id),
+            clientId: Number(apiEnv.clientId),
+            status: values.isEnabled ? 1 : 0,
+            provider: values.providerName,
+            secretKey: values.apiSecretKey,
+            publicKey: values.apiPublicKey,
+            merchantId: values.merchantId,
+            baseUrl: values.baseUrl,
+            forDisbursement: values.useForWithdrawal ? 1 : 0,
+            title: values.displayTitle,
+          },
+          Number(apiEnv.clientId)
+        );
+
+        // Required: always refresh list from GET after update
+        await fetchPaymentMethods();
+        toast.success("Payment method updated successfully");
+      } else {
+        await settingsApi.createPaymentMethod(
+          {
+            title: values.displayTitle,
+            provider: values.providerName,
+            publicKey: values.apiPublicKey,
+            secretKey: values.apiSecretKey,
+            merchantId: values.merchantId,
+            baseUrl: values.baseUrl,
+            forDisbursement: values.useForWithdrawal ? 1 : 0,
+            clientId: Number(apiEnv.clientId),
+          },
+          Number(apiEnv.clientId)
+        );
+
+        await fetchPaymentMethods();
+        toast.success("New payment method added");
+      }
+
+      setIsModalOpen(false);
+    } catch (error) {
+      const apiError = normalizeApiError(error);
+      toast.error(apiError.message || "Failed to save payment method");
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsModalOpen(false);
   };
 
-  const handleDelete = (id: string) => {
-    setMethods((prev) => prev.filter((m) => m.id !== id));
-    setIsModalOpen(false);
-    toast.success("Payment method deleted");
+  const handleDelete = async (id: string | number) => {
+    try {
+      setIsSubmitting(true);
+      await settingsApi.deletePaymentMethod(id, Number(apiEnv.clientId));
+
+      // Required: always refresh list from GET after delete
+      await fetchPaymentMethods();
+
+      setIsModalOpen(false);
+      toast.success("Payment method deleted");
+    } catch (error) {
+      const apiError = normalizeApiError(error);
+      toast.error(apiError.message || "Failed to delete payment method");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const columns = useMemo<ColumnDef<PaymentMethod>[]>(
@@ -133,7 +223,6 @@ export default function PaymentMethodsPage() {
     <div className="space-y-6 p-4">
       <PageBreadcrumb pageTitle="Configurations · Payment Method" />
 
-      {/* Header Section */}
       <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-2">
@@ -144,17 +233,13 @@ export default function PaymentMethodsPage() {
               Configure gateways, API credentials, and withdrawal rules for your platform.
             </p>
           </div>
-          <Button
-            onClick={handleAddClick}
-            startIcon={<Plus className="h-4 w-4" />}            
-          >
+          <Button onClick={handleAddClick} startIcon={<Plus className="h-4 w-4" />}>
             Add new payment method
           </Button>
         </div>
 
-        {/* Summary Stats / Info */}
         <div className="mt-6 grid gap-4 md:grid-cols-2">
-           <div className="flex items-center gap-4 rounded-xl border border-gray-100 bg-gray-50/50 p-4 dark:border-gray-800 dark:bg-gray-900/40">
+          <div className="flex items-center gap-4 rounded-xl border border-gray-100 bg-gray-50/50 p-4 dark:border-gray-800 dark:bg-gray-900/40">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-500/10 text-brand-500">
               <ShieldCheck className="h-6 w-6" />
             </div>
@@ -175,17 +260,15 @@ export default function PaymentMethodsPage() {
         </div>
       </section>
 
-      {/* Table Section */}
       <section className="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-950">
         <div className="p-6 border-b border-gray-100 dark:border-gray-800">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Configured Gateways</h2>
         </div>
         <div className="overflow-hidden p-6 pt-2">
-          <DataTable columns={columns} data={methods} />
+          <DataTable columns={columns} data={methods} loading={isLoading} />
         </div>
       </section>
 
-      {/* Add/Edit Modal */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} size="2xl">
         <ModalHeader>
           {editingMethod ? `Edit ${editingMethod.displayTitle}` : "Add New Payment Method"}
@@ -195,6 +278,7 @@ export default function PaymentMethodsPage() {
             initialValues={editingMethod || undefined}
             onSubmit={handleFormSubmit}
             onDelete={handleDelete}
+            isSubmitting={isSubmitting}
           />
         </ModalBody>
       </Modal>

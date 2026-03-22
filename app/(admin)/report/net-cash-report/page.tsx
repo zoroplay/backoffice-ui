@@ -9,15 +9,12 @@ import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { DataTable } from "@/components/tables/DataTable";
 import { defaultDateRange } from "@/components/common/DateRangeFilter";
 import { summaryColumns, groupColumns } from "./columns";
-import {
-  netCashSummaryData,
-  netCashGroupData,
-  NetCashSummary,
-  NetCashGroup,
-} from "./data";
+import { NetCashGroup, NetCashSummary } from "./columns";
 import { withAuth } from "@/utils/withAuth";
 import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
 import { Infotext } from "@/components/common/Info";
+import { normalizeApiError, reportsApi } from "@/lib/api";
+import { LoadingState } from "@/components/common/LoadingState";
 
 // ----------------------
 // Filter Options
@@ -58,6 +55,8 @@ type FilterSelection = { value: string; label: string };
 function NetCashReport() {
   const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
   const [selectedFilters, setSelectedFilters] = useState<FilterSelection[]>([]);
+  const [hasSearched, setHasSearched] = useState(false);
+  const emptyStateText = "Search to see data.";
 
   const handleFilterChange = (value: MultiValue<FilterSelection>) => {
     const latestSelections = new Map<string, FilterSelection>();
@@ -88,9 +87,71 @@ function NetCashReport() {
 
   // state for filtered data
   const [filteredSummary, setFilteredSummary] =
-    useState<NetCashSummary[]>(netCashSummaryData);
+    useState<NetCashSummary[]>([]);
   const [filteredGroups, setFilteredGroups] =
-    useState<NetCashGroup[]>(netCashGroupData);
+    useState<NetCashGroup[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const toNumber = (value: unknown): number => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+
+  const toSummary = (row: Record<string, unknown>): NetCashSummary => ({
+    deposits: toNumber(row.deposits ?? row.totalDeposits ?? row.depositCount),
+    depositAmount: toNumber(
+      row.depositAmount ?? row.totalDepositAmount ?? row.depositsAmount
+    ),
+    avgDepositAmount: toNumber(
+      row.avgDepositAmount ?? row.averageDepositAmount ?? row.avgDeposit
+    ),
+    withdrawals: toNumber(
+      row.withdrawals ?? row.totalWithdrawals ?? row.withdrawalCount
+    ),
+    withdrawalAmount: toNumber(
+      row.withdrawalAmount ?? row.totalWithdrawalAmount ?? row.withdrawalsAmount
+    ),
+    avgWithdrawalAmount: toNumber(
+      row.avgWithdrawalAmount ?? row.averageWithdrawalAmount ?? row.avgWithdrawal
+    ),
+    netCash: toNumber(row.netCash ?? row.net_cash ?? row.net),
+    ratio: toNumber(
+      row.ratio ?? row.netCashRatio ?? row.netCashToDepositRatio
+    ),
+    date: String(row.date ?? row.period ?? row.label ?? ""),
+    paymentMethod: String(row.paymentMethod ?? row.method ?? ""),
+    clientType: String(row.clientType ?? row.channel ?? ""),
+  });
+
+  const toGroup = (row: Record<string, unknown>): NetCashGroup => ({
+    group: String(
+      row.group ?? row.name ?? row.clientType ?? row.paymentMethod ?? ""
+    ),
+    deposits: toNumber(row.deposits ?? row.totalDeposits ?? row.depositCount),
+    depositAmount: toNumber(
+      row.depositAmount ?? row.totalDepositAmount ?? row.depositsAmount
+    ),
+    avgDepositAmount: toNumber(
+      row.avgDepositAmount ?? row.averageDepositAmount ?? row.avgDeposit
+    ),
+    withdrawals: toNumber(
+      row.withdrawals ?? row.totalWithdrawals ?? row.withdrawalCount
+    ),
+    withdrawalAmount: toNumber(
+      row.withdrawalAmount ?? row.totalWithdrawalAmount ?? row.withdrawalsAmount
+    ),
+    avgWithdrawalAmount: toNumber(
+      row.avgWithdrawalAmount ?? row.averageWithdrawalAmount ?? row.avgWithdrawal
+    ),
+    netCash: toNumber(row.netCash ?? row.net_cash ?? row.net),
+    ratio: toNumber(
+      row.ratio ?? row.netCashRatio ?? row.netCashToDepositRatio
+    ),
+    date: String(row.date ?? row.period ?? row.label ?? ""),
+    paymentMethod: String(row.paymentMethod ?? row.method ?? ""),
+    clientType: String(row.clientType ?? row.channel ?? ""),
+  });
 
   // ----------------------
   // Clear filters
@@ -98,54 +159,72 @@ function NetCashReport() {
   const handleClear = () => {
     setDateRange(defaultDateRange);
     setSelectedFilters([]);
-    setFilteredSummary(netCashSummaryData);
-    setFilteredGroups(netCashGroupData);
+    setFilteredSummary([]);
+    setFilteredGroups([]);
+    setError(null);
+    setHasSearched(false);
   };
 
   // ----------------------
   // Apply filters
   // ----------------------
-  const handleSearch = () => {
-    const start = dateRange.startDate ?? new Date("1900-01-01");
-    const end = dateRange.endDate ?? new Date("2100-12-31");
+  const handleSearch = async () => {
+    setIsLoading(true);
+    setError(null);
+    setHasSearched(true);
 
-    const selectedPayments = selectedFilters
-      .filter((f) =>
-        [
-          "paystack",
-          "internal transfer",
-          "bank transfer",
-        ].includes(f.value)
-      )
-      .map((f) => f.value.toLowerCase());
-
-    const selectedClients = selectedFilters
-      .filter((f) => ["website", "mobile", "cashier"].includes(f.value))
-      .map((f) => f.value.toLowerCase());
-
-    const filterFn = (item: {
-      date: string;
-      paymentMethod?: string;
-      clientType?: string;
-    }) => {
-      const itemDate = new Date(item.date);
-      const matchesDate = itemDate >= start && itemDate <= end;
-
-      const matchesPayment =
-        selectedPayments.length === 0 ||
-        (item.paymentMethod &&
-          selectedPayments.includes(item.paymentMethod.toLowerCase()));
-
-      const matchesClient =
-        selectedClients.length === 0 ||
-        (item.clientType &&
-          selectedClients.includes(item.clientType.toLowerCase()));
-
-      return matchesDate && matchesPayment && matchesClient;
+    const fmt = (d?: Date, endOfDay = false) => {
+      if (!d) return "";
+      const dd = String(d.getDate()).padStart(2, "0");
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const yyyy = d.getFullYear();
+      return `${dd}-${mm}-${yyyy} ${endOfDay ? "23:59:59" : "00:00:00"}`;
     };
 
-    setFilteredSummary(netCashSummaryData.filter(filterFn));
-    setFilteredGroups(netCashGroupData.filter(filterFn));
+    try {
+      const payload = {
+        from: fmt(dateRange.startDate ?? undefined, false),
+        to: fmt(dateRange.endDate ?? undefined, true),
+        filters: selectedFilters.map((f) => f.value),
+      } as const;
+
+      const res = await reportsApi.getNetCashReport(payload, 1);
+      const root = (res as { data?: unknown })?.data ?? res;
+
+      const summarySource =
+        ((root as { summary?: unknown })?.summary as unknown[]) ||
+        ((root as { summaryData?: unknown })?.summaryData as unknown[]) ||
+        ((root as { totals?: unknown })?.totals as unknown[]) ||
+        [];
+
+      const groupSource =
+        ((root as { groups?: unknown })?.groups as unknown[]) ||
+        ((root as { grouped?: unknown })?.grouped as unknown[]) ||
+        ((root as { data?: unknown })?.data as unknown[]) ||
+        (Array.isArray(root) ? root : []);
+
+      setFilteredSummary(
+        Array.isArray(summarySource)
+          ? summarySource.map((row) =>
+              toSummary((row as Record<string, unknown>) ?? {})
+            )
+          : []
+      );
+      setFilteredGroups(
+        Array.isArray(groupSource)
+          ? groupSource.map((row) =>
+              toGroup((row as Record<string, unknown>) ?? {})
+            )
+          : []
+      );
+    } catch (err) {
+      const apiErr = normalizeApiError(err);
+      setError(apiErr.message ?? "Failed to fetch net cash report");
+      setFilteredSummary([]);
+      setFilteredGroups([]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -173,17 +252,32 @@ function NetCashReport() {
         }}
       />
 
-      {/* First Table */}
-      <div>
-        <h2 className="text-lg font-semibold mb-2">Total Net Cash</h2>
-        <DataTable columns={summaryColumns} data={filteredSummary} />
-      </div>
+      {!hasSearched ? (
+        <div className="flex justify-center py-8 text-gray-500">
+          {emptyStateText}
+        </div>
+      ) : isLoading ? (
+        <LoadingState className="py-8" />
+      ) : (
+        <>
+          {error && (
+            <div className="rounded-md bg-red-50 p-3 text-sm text-red-700">
+              {error}
+            </div>
+          )}
+          {/* First Table */}
+          <div>
+            <h2 className="text-lg font-semibold mb-2">Total Net Cash</h2>
+            <DataTable columns={summaryColumns} data={filteredSummary} />
+          </div>
 
-      {/* Second Table */}
-      <div>
-        <h2 className="text-lg font-semibold mb-2">Results</h2>
-        <DataTable columns={groupColumns} data={filteredGroups} />
-      </div>
+          {/* Second Table */}
+          <div>
+            <h2 className="text-lg font-semibold mb-2">Results</h2>
+            <DataTable columns={groupColumns} data={filteredGroups} />
+          </div>
+        </>
+      )}
     </section>
   );
 }

@@ -7,15 +7,10 @@ import Backdrop from "@/app/layout/Backdrop";
 import React from "react";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { SearchProvider } from "@/context/SearchContext";
-import { Outfit } from "next/font/google";
+import { Toaster } from "@/components/ui/sonner";
 import "react-date-range/dist/styles.css"; // main style file
 import "react-date-range/dist/theme/default.css";
 import "../globals.css";
-
-const outfit = Outfit({
-  variable: "--font-outfit-sans",
-  subsets: ["latin"],
-});
 
 export default function AdminLayout({
   children,
@@ -29,6 +24,7 @@ export default function AdminLayout({
           <SidebarProvider>
             <AdminLayoutContent>{children}</AdminLayoutContent>
           </SidebarProvider>
+          <Toaster />
         </SearchProvider>
       </ThemeProvider>
     </div>

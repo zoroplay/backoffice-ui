@@ -1,152 +1,86 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { type MultiValue, type GroupBase, type StylesConfig } from "react-select";
 import { Info, Clock, CheckCircle2, XCircle } from "lucide-react";
 
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
 import { DataTable } from "@/components/tables/DataTable";
 import Button from "@/components/ui/button/Button";
 import { withAuth } from "@/utils/withAuth";
-import { reactSelectStyles } from "@/utils/reactSelectStyles";
-import { useTheme } from "@/context/ThemeContext";
-import { useSearch } from "@/context/SearchContext";
+import { agentsApi, normalizeApiError } from "@/lib/api";
 
 import { columns, PendingRequest } from "./columns";
-import {
-  pendingRequests,
-  filterOptions,
-  type FilterOption,
-} from "./data";
 
-const searchableFields: Array<keyof PendingRequest> = [
-  "username",
-  "name",
-  "requestType",
-  "parentUser",
-];
+const parsePendingRequests = (response: unknown): PendingRequest[] => {
+  if (!response || typeof response !== "object") return [];
+  const root = response as Record<string, unknown>;
+  const candidates = [
+    root.data,
+    (root.data as Record<string, unknown> | undefined)?.data,
+  ];
 
-// Helper function to get filter category
-const getFilterCategory = (value: string): string => {
-  const requestTypeGroup = filterOptions[0];
-  if (requestTypeGroup.options.some((opt) => opt.value === value)) {
-    return "requestType";
-  }
-  return "status";
+  const list = candidates.find(Array.isArray) as unknown[] | undefined;
+  if (!Array.isArray(list)) return [];
+
+  return list.map((item) => {
+    const row = (item as Record<string, unknown>) ?? {};
+    const statusNum = Number(row.status ?? 0);
+    const status: PendingRequest["status"] =
+      statusNum === 1
+        ? "approved"
+        : statusNum === 2
+        ? "rejected"
+        : "pending";
+
+    return {
+      id: String(row.id ?? ""),
+      username: String(row.username ?? ""),
+      name: String(
+        row.name ?? `${String(row.firstName ?? "")} ${String(row.lastName ?? "")}`.trim()
+      ),
+      requestType: String(row.requestType ?? row.request_type ?? "Request"),
+      requestedDate: String(
+        row.requestedDate ?? row.requested_date ?? row.createdAt ?? new Date().toISOString()
+      ),
+      status,
+      agentType: String(row.rolename ?? row.agentType ?? ""),
+      parentUser: String(row.parentUser ?? row.parent_username ?? ""),
+      notes: String(row.notes ?? ""),
+    };
+  });
 };
 
 function PendingRequestsPage() {
-  const { theme } = useTheme();
-  const [allRequests, setAllRequests] = useState<PendingRequest[]>(pendingRequests);
-  const [selectedFilters, setSelectedFilters] = useState<FilterOption[]>([]);
-  const [appliedFilters, setAppliedFilters] = useState<FilterOption[]>([]);
-
-  const { query, setPlaceholder, resetPlaceholder, resetQuery } = useSearch();
+  const [allRequests, setAllRequests] = useState<PendingRequest[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setPlaceholder("Search by username, name, request type, or parent user");
+    let cancelled = false;
 
-    return () => {
-      resetPlaceholder();
-    };
-  }, [resetPlaceholder, setPlaceholder]);
-
-  const filterRequests = useCallback(
-    (searchQuery: string, filters: FilterOption[], data: PendingRequest[]) => {
-      const searchTerm = searchQuery.trim().toLowerCase();
-
-      // Separate filters by category
-      const requestTypeFilters = filters.filter(
-        (f) => getFilterCategory(f.value) === "requestType"
-      );
-      const statusFilters = filters.filter(
-        (f) => getFilterCategory(f.value) === "status"
-      );
-
-      return data.filter((request) => {
-        // Search filter
-        if (searchTerm) {
-          const matchesSearch = searchableFields.some((field) =>
-            String(request[field] ?? "")
-              .toLowerCase()
-              .includes(searchTerm)
-          );
-
-          if (!matchesSearch) {
-            return false;
-          }
-        }
-
-        // Request type filter
-        if (requestTypeFilters.length > 0) {
-          const matchesRequestType = requestTypeFilters.some(
-            (filter) => request.requestType === filter.value
-          );
-          if (!matchesRequestType) {
-            return false;
-          }
-        }
-
-        // Status filter
-        if (statusFilters.length > 0) {
-          const matchesStatus = statusFilters.some(
-            (filter) => request.status === filter.value
-          );
-          if (!matchesStatus) {
-            return false;
-          }
-        }
-
-        return true;
-      });
-    },
-    []
-  );
-
-  const filteredData = useMemo(
-    () => filterRequests(query, appliedFilters, allRequests),
-    [filterRequests, query, appliedFilters, allRequests]
-  );
-
-  // Apply filters
-  const handleSearch = () => {
-    setAppliedFilters(selectedFilters);
-  };
-
-  // Clear filters
-  const handleClear = () => {
-    setSelectedFilters([]);
-    setAppliedFilters([]);
-    resetQuery();
-  };
-
-  // Handle filter change
-  const handleFilterChange = (val: MultiValue<FilterOption>) => {
-    if (!val || val.length === 0) {
-      setSelectedFilters([]);
-      return;
-    }
-
-    // Enforce single selection per category
-    const nextSelection = val.reduce<FilterOption[]>((acc, option) => {
-      const category = getFilterCategory(option.value);
-      const existingIndex = acc.findIndex(
-        (selected) => getFilterCategory(selected.value) === category
-      );
-
-      if (existingIndex !== -1) {
-        acc.splice(existingIndex, 1);
+    const fetchRequests = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const response = await agentsApi.getAgentPendingRequests({ page: 1 });
+        if (cancelled) return;
+        setAllRequests(parsePendingRequests(response));
+      } catch (err) {
+        if (cancelled) return;
+        const apiError = normalizeApiError(err);
+        setError(apiError.message ?? "Failed to fetch pending requests");
+        setAllRequests([]);
+      } finally {
+        if (!cancelled) setIsLoading(false);
       }
+    };
 
-      acc.push(option);
-      return acc;
-    }, []);
+    void fetchRequests();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
-    setSelectedFilters(nextSelection);
-  };
-
-  // Approve request
   const handleApprove = useCallback((requestId: string) => {
     setAllRequests((prev) =>
       prev.map((request) =>
@@ -157,7 +91,6 @@ function PendingRequestsPage() {
     );
   }, []);
 
-  // Reject request
   const handleReject = useCallback((requestId: string) => {
     setAllRequests((prev) =>
       prev.map((request) =>
@@ -168,43 +101,41 @@ function PendingRequestsPage() {
     );
   }, []);
 
-  // Create columns with callbacks
   const tableColumns = useMemo(
     () =>
       columns.map((col) => {
         if (col.id === "actions") {
           return {
             ...col,
-            cell: ({ row }: { row: any }) => {
+            cell: ({ row }: { row: { original: PendingRequest } }) => {
               const request = row.original;
               const isPending = request.status === "pending";
 
               return (
                 <div className="flex items-center gap-2">
-                  {isPending && (
+                  {isPending ? (
                     <>
                       <Button
                         variant="primary"
                         size="sm"
-                        className="h-8 bg-green-500 hover:bg-green-600 text-white px-3"
+                        className="h-8 bg-green-500 px-3 text-white hover:bg-green-600"
                         onClick={() => handleApprove(request.id)}
                       >
-                        <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
+                        <CheckCircle2 className="mr-1 h-3.5 w-3.5" />
                         Approve
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
-                        className="h-8 border-red-300 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20 px-3"
+                        className="h-8 border-red-300 px-3 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
                         onClick={() => handleReject(request.id)}
                       >
-                        <XCircle className="h-3.5 w-3.5 mr-1" />
+                        <XCircle className="mr-1 h-3.5 w-3.5" />
                         Reject
                       </Button>
                     </>
-                  )}
-                  {!isPending && (
-                    <span className="text-sm text-gray-400 text-center dark:text-gray-500">
+                  ) : (
+                    <span className="text-center text-sm text-gray-400 dark:text-gray-500">
                       Processed
                     </span>
                   )}
@@ -218,28 +149,21 @@ function PendingRequestsPage() {
     [handleApprove, handleReject]
   );
 
-  const pendingCount = filteredData.filter(
-    (r) => r.status === "pending"
-  ).length;
-  const approvedCount = filteredData.filter(
-    (r) => r.status === "approved"
-  ).length;
-  const rejectedCount = filteredData.filter(
-    (r) => r.status === "rejected"
-  ).length;
+  const pendingCount = allRequests.filter((r) => r.status === "pending").length;
+  const approvedCount = allRequests.filter((r) => r.status === "approved").length;
+  const rejectedCount = allRequests.filter((r) => r.status === "rejected").length;
 
   return (
     <div className="space-y-6 p-4">
       <PageBreadcrumb pageTitle="Pending Requests" />
 
-      <span className="flex items-center gap-1 mb-2 text-gray-500 dark:text-gray-400">
+      <span className="mb-2 flex items-center gap-1 text-gray-500 dark:text-gray-400">
         <Info className="h-4 w-4" />
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          Use the global search to filter by Username, Name, Request Type, or Parent User
+          Pending requests load automatically. Admin can approve or reject requests.
         </p>
       </span>
 
-      {/* Statistics Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="rounded-lg border border-dashed border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
           <div className="flex items-center gap-3">
@@ -290,27 +214,13 @@ function PendingRequestsPage() {
         </div>
       </div>
 
-      {/* Filters */}
-      <TableFilterToolbar<FilterOption, true, GroupBase<FilterOption>>
-        actions={{
-          onSearch: handleSearch,
-          onClear: handleClear,
-        }}
-        selectProps={{
-          containerClassName: "max-w-[22rem]",
-          options: filterOptions,
-          isMulti: true,
-          closeMenuOnSelect: false,
-          hideSelectedOptions: false,
-          placeholder: "Filter by Request Type or Status",
-          value: selectedFilters,
-          onChange: handleFilterChange,
-          styles: reactSelectStyles(theme) as StylesConfig<FilterOption, true, GroupBase<FilterOption>>,
-        }}
-      />
+      {error ? (
+        <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          {error}
+        </div>
+      ) : null}
 
-      {/* Data Table */}
-      <DataTable columns={tableColumns} data={filteredData} />
+      <DataTable columns={tableColumns} data={allRequests} loading={isLoading} />
     </div>
   );
 }

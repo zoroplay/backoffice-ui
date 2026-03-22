@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
-import Image from "next/image";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { ActionMeta, GroupBase, MultiValue } from "react-select";
+import type { GroupBase, MultiValue } from "react-select";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
   CheckCircle2,
@@ -12,10 +11,10 @@ import {
   Shield,
   ShieldAlert,
   Sparkles,
-  Trash2,
   Plus,
   User,
 } from "lucide-react";
+import { toast } from "sonner";
 
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
@@ -23,6 +22,7 @@ import { DataTable } from "@/components/tables/DataTable";
 import Badge from "@/components/ui/badge/Badge";
 import Button from "@/components/ui/button/Button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { apiEnv, normalizeApiError, usersApi, agentsApi } from "@/lib/api";
 import { withAuth } from "@/utils/withAuth";
 
 import ChangePasswordModal from "./components/ChangePasswordModal";
@@ -31,45 +31,37 @@ import AddUserModal, {
 } from "./components/AddUserModal";
 import UserDetailsModal from "./components/UserDetailsModal";
 import UserPermissionsModal from "./components/UserPermissionsModal";
-import {
-  userFilterGroups,
-  userRoles,
-  userStatuses,
-  usersSeed,
-} from "./data";
 import type {
   ChangePasswordPayload,
   EditableUser,
   UserDetail,
   UserFilterOption,
   UserRecord,
+  UserStatus,
 } from "./types";
-
-type FilterGroupKey = UserFilterOption["group"];
 
 type FilterGroup = {
   label: string;
   options: UserFilterOption[];
 };
 
-function enforceSingleSelections(
-  options: MultiValue<UserFilterOption>
-): UserFilterOption[] {
-  const deduped: UserFilterOption[] = [];
-  for (const option of options) {
-    const existingIndex = deduped.findIndex(
-      (item) => item.group === option.group
-    );
-    if (existingIndex >= 0) {
-      deduped[existingIndex] = option;
-    } else {
-      deduped.push(option);
-    }
-  }
-  return deduped;
-}
+type RoleOption = {
+  id: number;
+  name: string;
+  type: string;
+  description?: string;
+};
 
-const USERS_STORAGE_KEY = "backoffice-users";
+type PermissionOption = {
+  id: number;
+  name: string;
+};
+
+const statusTabs: Array<{ value: UserStatus; label: string }> = [
+  { value: "active", label: "Active" },
+  { value: "suspended", label: "Suspended" },
+  { value: "invited", label: "Invited" },
+];
 
 const actionItems = [
   {
@@ -89,64 +81,95 @@ const actionItems = [
   },
 ] as const;
 
+function enforceSingleSelections(
+  options: MultiValue<UserFilterOption>
+): UserFilterOption[] {
+  const deduped: UserFilterOption[] = [];
+  for (const option of options) {
+    const existingIndex = deduped.findIndex(
+      (item) => item.group === option.group
+    );
+    if (existingIndex >= 0) {
+      deduped[existingIndex] = option;
+    } else {
+      deduped.push(option);
+    }
+  }
+  return deduped;
+}
+
+const mapStatus = (status: unknown): UserStatus => {
+  const value = Number(status ?? 0);
+  if (value === 1) return "active";
+  if (value === 2) return "suspended";
+  return "invited";
+};
+
+const parseList = <T,>(input: unknown, key: string): T[] => {
+  if (Array.isArray(input)) return input as T[];
+  if (input && typeof input === "object") {
+    const record = input as Record<string, unknown>;
+    if (Array.isArray(record[key])) {
+      return record[key] as T[];
+    }
+    if (record.data && typeof record.data === "object") {
+      const nested = record.data as Record<string, unknown>;
+      if (Array.isArray(nested[key])) {
+        return nested[key] as T[];
+      }
+    }
+  }
+  return [];
+};
+
+const mapUserRecord = (row: Record<string, unknown>): UserRecord => {
+  const details = (row.userDetails as Record<string, unknown> | undefined) ?? {};
+  const role = (row.role as Record<string, unknown> | undefined) ?? {};
+  const firstName = String(details.firstName ?? "").trim();
+  const lastName = String(details.lastName ?? "").trim();
+  const fullName = `${firstName} ${lastName}`.trim();
+  const id = Number(row.id ?? 0);
+  const email = String(details.email ?? "");
+  const country = String(details.country ?? "");
+  const state = String(details.state ?? "");
+  const location = [state, country].filter(Boolean).join(", ");
+
+  return {
+    id: String(id),
+    numericId: id,
+    username: String(row.username ?? ""),
+    name: fullName || String(row.username ?? `User ${id}`),
+    email,
+    role: String(role.name ?? "Unassigned"),
+    roleId: Number(role.id ?? row.roleId ?? 0) || null,
+    status: mapStatus(row.status),
+    lastActive: String(row.lastLogin ?? ""),
+    joinedAt: String(row.createdAt ?? row.lastLogin ?? ""),
+    phone: String(details.phone ?? ""),
+    location,
+    permissions: [],
+    teams: [],
+    country,
+    state,
+    language: String(details.language ?? ""),
+    currency: String(details.currency ?? ""),
+    gender: String(details.gender ?? ""),
+    address: String(details.address ?? ""),
+  };
+};
+
 function UsersPage() {
   const router = useRouter();
 
-  const [users, setUsers] = useState<UserRecord[]>(usersSeed);
-  const [isUsersHydrated, setIsUsersHydrated] = useState(false);
+  const [users, setUsers] = useState<UserRecord[]>([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [permissionsList, setPermissionsList] = useState<PermissionOption[]>([]);
+  const [roles, setRoles] = useState<RoleOption[]>([]);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const stored = window.localStorage.getItem(USERS_STORAGE_KEY);
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored) as UserRecord[];
-        setUsers(parsed);
-        setIsUsersHydrated(true);
-        return;
-      } catch (error) {
-        console.warn("Failed to parse stored users; falling back to seed data.", error);
-      }
-    } else {
-      window.localStorage.setItem(
-        USERS_STORAGE_KEY,
-        JSON.stringify(usersSeed)
-      );
-    }
-
-    setIsUsersHydrated(true);
-  }, []);
-
-  useEffect(() => {
-    if (!isUsersHydrated || typeof window === "undefined") return;
-    window.localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
-  }, [isUsersHydrated, users]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const handleStorage = (event: StorageEvent) => {
-      if (event.key === USERS_STORAGE_KEY && event.newValue) {
-        try {
-          setUsers(JSON.parse(event.newValue) as UserRecord[]);
-        } catch (error) {
-          console.warn("Failed to sync users from storage event.", error);
-        }
-      }
-    };
-
-    window.addEventListener("storage", handleStorage);
-    return () => window.removeEventListener("storage", handleStorage);
-  }, []);
-
-  const [selectedFilters, setSelectedFilters] = useState<UserFilterOption[]>(
-    []
-  );
+  const [selectedFilters, setSelectedFilters] = useState<UserFilterOption[]>([]);
   const [appliedFilters, setAppliedFilters] = useState<UserFilterOption[]>([]);
-  const [activeTab, setActiveTab] = useState<UserRecord["status"] | "all">(
-    "all"
-  );
+  const [activeTab, setActiveTab] = useState<UserStatus | "all">("all");
 
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isPermissionsModalOpen, setIsPermissionsModalOpen] = useState(false);
@@ -154,21 +177,100 @@ function UsersPage() {
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserRecord | null>(null);
 
-const filterGroups = useMemo<FilterGroup[]>(() => {
-    return [
-      {
-        label: "Roles",
-        options: userFilterGroups.filter((option) => option.group === "role"),
-      },
-    ];
+  const roleNameToId = useMemo(() => {
+    const map = new Map<string, number>();
+    roles.forEach((role) => map.set(role.name, role.id));
+    return map;
+  }, [roles]);
+
+  const userLevelOptions = useMemo(
+    () => roles.map((role) => role.name).filter(Boolean),
+    [roles]
+  );
+
+  const fetchUsers = useCallback(async () => {
+    setIsLoadingUsers(true);
+    try {
+      const response = await usersApi.getUsers(Number(apiEnv.clientId));
+      const raw = parseList<Record<string, unknown>>(response, "data");
+      const mapped = raw.map((item) => mapUserRecord(item));
+      setUsers(mapped);
+    } catch (error) {
+      const apiError = normalizeApiError(error);
+      toast.error(apiError.message ?? "Failed to fetch users");
+      setUsers([]);
+    } finally {
+      setIsLoadingUsers(false);
+    }
   }, []);
 
-  const handleFilterChange = (
-    options: MultiValue<UserFilterOption>,
-    _meta: ActionMeta<UserFilterOption>
-  ) => {
-    const deduped = enforceSingleSelections(options);
-    setSelectedFilters(deduped);
+  const fetchRolesAndPermissions = useCallback(async () => {
+    try {
+      const [rolesResponse, agencyRolesResponse, permissionsResponse] =
+        await Promise.all([
+          usersApi.getRoles(),
+          agentsApi.getAgencyRoles().catch(() => null),
+          usersApi.getPermissions(),
+        ]);
+
+      const allRoles = [
+        ...parseList<Record<string, unknown>>(rolesResponse, "data"),
+        ...parseList<Record<string, unknown>>(agencyRolesResponse, "data"),
+      ];
+
+      const dedupedRoles = Array.from(
+        new Map(
+          allRoles.map((role) => [
+            Number(role.id ?? 0),
+            {
+              id: Number(role.id ?? 0),
+              name: String(role.name ?? ""),
+              type: String(role.type ?? "admin"),
+              description: String(role.description ?? ""),
+            },
+          ])
+        ).values()
+      ).filter((role) => role.id > 0 && role.name);
+
+      const parsedPermissions = parseList<Record<string, unknown>>(
+        permissionsResponse,
+        "data"
+      )
+        .map((item) => ({
+          id: Number(item.id ?? 0),
+          name: String(item.name ?? ""),
+        }))
+        .filter((item) => item.id > 0 && item.name);
+
+      setRoles(dedupedRoles);
+      setPermissionsList(parsedPermissions);
+    } catch (error) {
+      const apiError = normalizeApiError(error);
+      toast.error(apiError.message ?? "Failed to fetch roles and permissions");
+    }
+  }, []);
+
+  useEffect(() => {
+    void fetchUsers();
+    void fetchRolesAndPermissions();
+  }, [fetchRolesAndPermissions, fetchUsers]);
+
+  const filterGroups = useMemo<FilterGroup[]>(
+    () => [
+      {
+        label: "Roles",
+        options: roles.map((role) => ({
+          label: role.name,
+          value: role.name,
+          group: "role" as const,
+        })),
+      },
+    ],
+    [roles]
+  );
+
+  const handleFilterChange = (options: MultiValue<UserFilterOption>) => {
+    setSelectedFilters(enforceSingleSelections(options));
   };
 
   const handleApplyFilters = () => {
@@ -180,9 +282,27 @@ const filterGroups = useMemo<FilterGroup[]>(() => {
     setAppliedFilters([]);
   };
 
-  const handleOpenDetails = (user: UserRecord) => {
-    setSelectedUser(user);
-    setIsDetailsModalOpen(true);
+  const closeAllModals = () => {
+    setIsDetailsModalOpen(false);
+    setIsPermissionsModalOpen(false);
+    setIsPasswordModalOpen(false);
+    setSelectedUser(null);
+  };
+
+  const openDetailsModal = async (user: UserRecord) => {
+    try {
+      const response = await usersApi.getSingleUser(user.numericId);
+      const singlePayload = parseList<Record<string, unknown>>(response, "data")[0];
+      if (singlePayload) {
+        setSelectedUser(mapUserRecord(singlePayload));
+      } else {
+        setSelectedUser(user);
+      }
+    } catch {
+      setSelectedUser(user);
+    } finally {
+      setIsDetailsModalOpen(true);
+    }
   };
 
   const handleOpenPermissions = (user: UserRecord) => {
@@ -195,82 +315,128 @@ const filterGroups = useMemo<FilterGroup[]>(() => {
     setIsPasswordModalOpen(true);
   };
 
-  const closeAllModals = () => {
-    setIsDetailsModalOpen(false);
-    setIsPermissionsModalOpen(false);
-    setIsPasswordModalOpen(false);
-    setSelectedUser(null);
-  };
-
   const handleManageAccess = () => {
     const userId = selectedUser?.id;
     const targetPath = userId
       ? `/user-management/roles-permissions?userId=${encodeURIComponent(userId)}`
       : "/user-management/roles-permissions";
-
     router.push(targetPath);
     closeAllModals();
   };
 
-  const handleChangePassword = (
+  const handleChangePassword = async (
     password: ChangePasswordPayload["password"],
     confirmPassword: ChangePasswordPayload["confirmPassword"]
   ) => {
-    // In production we'd dispatch a request; for now we just close the modal
-    console.info("Password reset:", {
-      userId: selectedUser?.id,
-      password,
-      confirmPassword,
-    });
-    closeAllModals();
+    if (!selectedUser) return;
+    setIsSubmitting(true);
+    try {
+      await usersApi.changePassword({
+        password,
+        conf_password: confirmPassword,
+        username: selectedUser.username,
+        userId: selectedUser.numericId,
+        clientId: Number(apiEnv.clientId),
+      });
+      toast.success("Password updated successfully");
+      closeAllModals();
+    } catch (error) {
+      const apiError = normalizeApiError(error);
+      toast.error(apiError.message ?? "Failed to reset password");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleSaveUser = (updatedUser: UserDetail & EditableUser) => {
-    setUsers((prev) =>
-      prev.map((user) =>
-        user.id === updatedUser.id
-          ? { ...user, ...updatedUser }
-          : user
-      )
-    );
-    closeAllModals();
+  const handleSaveUser = async (updatedUser: UserDetail & EditableUser) => {
+    if (!selectedUser) return;
+    setIsSubmitting(true);
+    try {
+      const [firstName, ...lastNameParts] = (updatedUser.name || "").split(" ");
+      await usersApi.updateUser({
+        country: updatedUser.country ?? "",
+        state: updatedUser.state ?? "",
+        language: updatedUser.language ?? "EN",
+        currency: updatedUser.currency || null,
+        firstName: firstName || selectedUser.name,
+        lastName: lastNameParts.join(" "),
+        gender: updatedUser.gender ?? "",
+        address: updatedUser.address ?? "",
+        username: selectedUser.username,
+        password: "",
+        email: updatedUser.email ?? "",
+        balance: "",
+        roleId:
+          roleNameToId.get(updatedUser.role) ??
+          selectedUser.roleId ??
+          roleNameToId.get(selectedUser.role),
+        parentId: "",
+        clientId: Number(apiEnv.clientId),
+        userId: selectedUser.numericId,
+      });
+      toast.success("User updated successfully");
+      closeAllModals();
+      await fetchUsers();
+    } catch (error) {
+      const apiError = normalizeApiError(error);
+      toast.error(apiError.message ?? "Failed to update user");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleDeleteUser = (userId: string) => {
-    const confirmed = window.confirm("Delete this user? This action cannot be undone.");
-    if (!confirmed) return;
-    setUsers((prev) => prev.filter((user) => user.id !== userId));
-    closeAllModals();
+  const handleDeleteUser = () => {
+    toast.error("Delete user endpoint is not available.");
   };
 
-  const handleAddUser = (values: AddUserFormValues) => {
-    const newUser: UserRecord = {
-      id: `USR-${Date.now()}`,
-      name: `${values.name} ${values.surname}`.trim() || values.username,
-      email: values.email,
-      role:
-        (values.userLevel as UserRecord["role"]) ??
-        "Customer Support",
-      status: "invited",
-      joinedAt: new Date().toISOString(),
-      lastActive: new Date().toISOString(),
-      avatar: `/images/user/user-${(Math.floor(Math.random() * 37) + 1).toString()}.jpg`,
-      phone: values.phoneNumber || "+234 801 234 5678",
-      location: `${values.state || "Lagos"}, ${values.country || "Nigeria"}`,
-      permissions: ["View Reports"],
-      teams: [],
-    };
-    setUsers((prev) => [newUser, ...prev]);
-    setIsAddUserModalOpen(false);
+  const handleAddUser = async (values: AddUserFormValues) => {
+    setIsSubmitting(true);
+    try {
+      const firstName = values.name.trim();
+      const lastName = values.surname.trim();
+      const roleId = roleNameToId.get(values.userLevel) ?? 0;
+      if (!roleId) {
+        toast.error("Select a valid user level.");
+        return;
+      }
+
+      await usersApi.addUser({
+        country: values.country,
+        state: values.state,
+        language: values.language === "English" ? "EN" : values.language,
+        currency: values.currency,
+        firstName,
+        lastName,
+        dateOfBirth: values.dateOfBirth,
+        gender: values.gender,
+        address: values.address,
+        phoneNumber: values.phoneNumber,
+        username: values.username,
+        password: values.password,
+        email: values.email,
+        balance: values.openingBalance,
+        roleId,
+        parentId: values.parentUser,
+        clientId: Number(apiEnv.clientId),
+        date_of_birth: values.dateOfBirth,
+        parent_agent: values.parentUser,
+      });
+
+      toast.success("User created successfully");
+      setIsAddUserModalOpen(false);
+      await fetchUsers();
+    } catch (error) {
+      const apiError = normalizeApiError(error);
+      toast.error(apiError.message ?? "Failed to create user");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const filteredUsers = useMemo(() => {
     return users.filter((user) => {
       const matchesTab = activeTab === "all" ? true : user.status === activeTab;
       const matchesFilters = appliedFilters.every((filter) => {
-        if (filter.group === "status") {
-          return user.status === filter.value;
-        }
         if (filter.group === "role") {
           return user.role === filter.value;
         }
@@ -289,30 +455,28 @@ const filterGroups = useMemo<FilterGroup[]>(() => {
     return { total, active, suspended, invited };
   }, [users]);
 
-  const columns = useMemo<ColumnDef<UserRecord>[]>(() => {
-    return [
+  const columns = useMemo<ColumnDef<UserRecord>[]>(
+    () => [
       {
         accessorKey: "name",
         header: "User",
         meta: { cellClassName: "text-left" },
         cell: ({ row }) => (
           <div className="flex items-center gap-3 text-left">
-            <div className="relative h-12 w-12 overflow-hidden rounded-full border border-gray-200 shadow-sm dark:border-gray-700">
-              <Image
-                src={row.original.avatar}
-                alt={row.original.name}
-                fill
-                sizes="48px"
-                className="object-cover"
-                unoptimized
-              />
+            <div className="flex h-12 w-12 items-center justify-center rounded-full border border-gray-200 bg-brand-500/10 text-sm font-semibold text-brand-700 shadow-sm dark:border-gray-700 dark:bg-brand-500/20 dark:text-brand-200">
+              {(row.original.name || row.original.username || "U")
+                .split(" ")
+                .filter(Boolean)
+                .slice(0, 2)
+                .map((part) => part[0]?.toUpperCase())
+                .join("") || "U"}
             </div>
             <div>
               <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                 {row.original.name}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {row.original.email}
+                {row.original.email || row.original.username}
               </p>
             </div>
           </div>
@@ -339,7 +503,7 @@ const filterGroups = useMemo<FilterGroup[]>(() => {
         cell: ({ row }) => {
           const status = row.original.status;
           const statusConfig: Record<
-            string,
+            UserStatus,
             { color: "success" | "error" | "primary"; icon: React.ReactNode }
           > = {
             active: {
@@ -355,7 +519,7 @@ const filterGroups = useMemo<FilterGroup[]>(() => {
               icon: <Sparkles size={14} />,
             },
           };
-          const config = statusConfig[status] ?? statusConfig.active;
+          const config = statusConfig[status];
           return (
             <Badge
               color={config.color}
@@ -376,7 +540,9 @@ const filterGroups = useMemo<FilterGroup[]>(() => {
           <div className="text-xs text-gray-500 dark:text-gray-400">
             <p className="flex items-center gap-1 font-semibold text-gray-700 dark:text-gray-200">
               <Clock3 className="h-3.5 w-3.5 text-brand-500" />
-              {new Date(row.original.lastActive).toLocaleString()}
+              {row.original.lastActive
+                ? new Date(row.original.lastActive).toLocaleString()
+                : "N/A"}
             </p>
           </div>
         ),
@@ -394,7 +560,7 @@ const filterGroups = useMemo<FilterGroup[]>(() => {
                 className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 transition hover:border-brand-200 hover:bg-brand-500/10 hover:text-brand-600 dark:border-gray-700 dark:bg-gray-900 dark:hover:border-brand-500/40 dark:hover:text-brand-300"
                 onClick={() => {
                   if (action.key === "details") {
-                    handleOpenDetails(row.original);
+                    void openDetailsModal(row.original);
                   } else if (action.key === "permissions") {
                     handleOpenPermissions(row.original);
                   } else if (action.key === "password") {
@@ -405,19 +571,12 @@ const filterGroups = useMemo<FilterGroup[]>(() => {
                 {action.icon}
               </button>
             ))}
-            <button
-              type="button"
-              title="Delete User"
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 transition hover:border-red-200 hover:bg-red-500/10 hover:text-red-600 dark:border-gray-700 dark:bg-gray-900 dark:hover:border-red-500/40 dark:hover:text-red-300"
-              onClick={() => handleDeleteUser(row.original.id)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
           </div>
         ),
       },
-    ];
-  }, []);
+    ],
+    []
+  );
 
   return (
     <div className="space-y-6 p-4">
@@ -488,15 +647,13 @@ const filterGroups = useMemo<FilterGroup[]>(() => {
 
         <Tabs
           value={activeTab}
-          onValueChange={(value) =>
-            setActiveTab(value as UserRecord["status"] | "all")
-          }
+          onValueChange={(value) => setActiveTab(value as UserStatus | "all")}
           className="mt-6"
         >
           <TabsList className="flex w-full flex-wrap items-center gap-2 rounded-full border border-gray-100 bg-white p-1 shadow-sm dark:border-gray-800 dark:bg-gray-950">
             {[
               { value: "all", label: "All" },
-              ...userStatuses.map((status) => ({
+              ...statusTabs.map((status) => ({
                 value: status.value,
                 label: status.label,
               })),
@@ -544,7 +701,11 @@ const filterGroups = useMemo<FilterGroup[]>(() => {
                 </Badge>
               </div>
 
-              <DataTable columns={columns} data={filteredUsers} />
+              <DataTable
+                columns={columns}
+                data={filteredUsers}
+                loading={isLoadingUsers}
+              />
             </div>
           </TabsContent>
         </Tabs>
@@ -552,13 +713,7 @@ const filterGroups = useMemo<FilterGroup[]>(() => {
 
       <UserDetailsModal
         isOpen={isDetailsModalOpen}
-        user={
-          selectedUser
-            ? ({
-                ...selectedUser,
-              } as UserDetail & EditableUser)
-            : null
-        }
+        user={selectedUser ? ({ ...selectedUser } as UserDetail & EditableUser) : null}
         onSave={handleSaveUser}
         onDelete={handleDeleteUser}
         onClose={closeAllModals}
@@ -568,12 +723,7 @@ const filterGroups = useMemo<FilterGroup[]>(() => {
         isOpen={isPermissionsModalOpen}
         userName={selectedUser?.name ?? null}
         grantedPermissions={selectedUser?.permissions ?? []}
-        availablePermissions={[
-          "Export Reports",
-          "Configure Payment Methods",
-          "Manage Bonus Campaigns",
-          "View VIP Accounts",
-        ]}
+        availablePermissions={permissionsList.map((permission) => permission.name)}
         onManageAccess={handleManageAccess}
         onClose={closeAllModals}
       />
@@ -587,12 +737,14 @@ const filterGroups = useMemo<FilterGroup[]>(() => {
 
       <AddUserModal
         isOpen={isAddUserModalOpen}
+        userLevelOptions={userLevelOptions}
         onClose={() => setIsAddUserModalOpen(false)}
         onSubmit={handleAddUser}
       />
+
+      {isSubmitting ? <div className="sr-only">Submitting...</div> : null}
     </div>
   );
 }
 
 export default withAuth(UsersPage);
-

@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import Form from "@/components/form/Form";
@@ -8,6 +9,11 @@ import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import Button from "@/components/ui/button/Button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  normalizeApiError,
+  settingsApi,
+  type SaveRiskManagementPayload,
+} from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { withAuth } from "@/utils/withAuth";
 
@@ -21,6 +27,252 @@ import {
  
 import { fieldGroups, FieldDefinition, FieldGroup } from "./field";
 
+type ApiRecord = Record<string, unknown>;
+type ApiCategory = "online" | "retail";
+type SavePrimitive = string | number | "";
+
+const CHANNEL_TO_CATEGORY: Record<ChannelType, ApiCategory> = {
+  Online: "online",
+  Retail: "retail",
+};
+
+const timeframeToPeriod = (timeframe: TimeOfDay) => timeframe.toLowerCase();
+const buildPeriodKey = (base: string, timeframe: TimeOfDay) =>
+  `${base}_${timeframeToPeriod(timeframe)}`;
+const savingKey = (channel: ChannelType, timeframe: TimeOfDay) => `${channel}-${timeframe}`;
+
+const toRecord = (value: unknown): ApiRecord => {
+  if (Array.isArray(value)) {
+    const first = value[0];
+    return first && typeof first === "object" ? (first as ApiRecord) : {};
+  }
+
+  if (!value || typeof value !== "object") {
+    return {};
+  }
+
+  const root = value as ApiRecord;
+  if (root.data && typeof root.data === "object") {
+    const nested = root.data as ApiRecord;
+    if (Array.isArray(nested.data)) {
+      const first = nested.data[0];
+      return first && typeof first === "object" ? (first as ApiRecord) : {};
+    }
+    if (nested.data && typeof nested.data === "object") {
+      return nested.data as ApiRecord;
+    }
+    return nested;
+  }
+
+  if (Array.isArray(root.data)) {
+    const first = root.data[0];
+    return first && typeof first === "object" ? (first as ApiRecord) : {};
+  }
+
+  return root;
+};
+
+const toStringValue = (value: unknown): string | undefined => {
+  if (value === null || typeof value === "undefined") {
+    return undefined;
+  }
+  return String(value);
+};
+
+const readString = (payload: ApiRecord, keys: string[]): string | undefined => {
+  for (const key of keys) {
+    const value = toStringValue(payload[key]);
+    if (typeof value !== "undefined") {
+      return value;
+    }
+  }
+  return undefined;
+};
+
+const readBoolean = (payload: ApiRecord, keys: string[]): boolean | undefined => {
+  for (const key of keys) {
+    const value = payload[key];
+    if (typeof value === "boolean") {
+      return value;
+    }
+    if (typeof value === "number") {
+      return value === 1;
+    }
+    if (typeof value === "string") {
+      const normalized = value.trim().toLowerCase();
+      if (normalized === "1" || normalized === "true") return true;
+      if (normalized === "0" || normalized === "false") return false;
+    }
+  }
+  return undefined;
+};
+
+const hasTimeframePayload = (payload: ApiRecord, timeframe: TimeOfDay) => {
+  const period = timeframeToPeriod(timeframe);
+  return Object.keys(payload).some((key) => key.endsWith(`_${period}`));
+};
+
+const mapApiToForm = (
+  channel: ChannelType,
+  timeframe: TimeOfDay,
+  payload: ApiRecord,
+  fallback: BettingParameters
+): BettingParameters => {
+  const periodKey = (base: string) => buildPeriodKey(base, timeframe);
+
+  const holdBetsKeys =
+    channel === "Online"
+      ? [periodKey("hold_bets"), periodKey("hold_bets_from")]
+      : [periodKey("hold_bets_from"), periodKey("hold_bets")];
+
+  const systemBetKeys =
+    channel === "Online"
+      ? [periodKey("allow_system_bet"), periodKey("accept_system_bet")]
+      : [periodKey("accept_system_bet"), periodKey("allow_system_bet")];
+
+  const splitBetKeys =
+    channel === "Online"
+      ? [periodKey("allow_split_bet"), periodKey("accept_split_bet")]
+      : [periodKey("accept_split_bet"), periodKey("allow_split_bet")];
+
+  return {
+    ...fallback,
+    minimumWithdrawal:
+      readString(payload, [periodKey("min_withdrawal")]) ?? fallback.minimumWithdrawal,
+    maximumWithdrawal:
+      readString(payload, [periodKey("max_withdrawal")]) ?? fallback.maximumWithdrawal,
+    minimumAvailableCredit:
+      channel === "Retail"
+        ? readString(payload, [periodKey("network_min_available_credit")]) ??
+          fallback.minimumAvailableCredit
+        : fallback.minimumAvailableCredit,
+    maxPayout: readString(payload, [periodKey("max_payout")]) ?? fallback.maxPayout,
+    maxOddLength:
+      readString(payload, [periodKey("max_single_odd_length"), periodKey("max_combi_odd_length")]) ??
+      fallback.maxOddLength,
+    singleStakeMin: readString(payload, [periodKey("single_min")]) ?? fallback.singleStakeMin,
+    singleStakeMax: readString(payload, [periodKey("single_max")]) ?? fallback.singleStakeMax,
+    combStakeMin: readString(payload, [periodKey("combi_min")]) ?? fallback.combStakeMin,
+    combStakeMax: readString(payload, [periodKey("combi_max")]) ?? fallback.combStakeMax,
+    ticketSizeMin: readString(payload, [periodKey("size_min")]) ?? fallback.ticketSizeMin,
+    ticketSizeMax: readString(payload, [periodKey("size_max")]) ?? fallback.ticketSizeMax,
+    liveTicketMin: readString(payload, [periodKey("live_size_min")]) ?? fallback.liveTicketMin,
+    liveTicketMax: readString(payload, [periodKey("live_size_max")]) ?? fallback.liveTicketMax,
+    cancelTicketMinutes:
+      readString(payload, [periodKey("max_time_to_cancel")]) ?? fallback.cancelTicketMinutes,
+    dailyCancelLimit:
+      readString(payload, [periodKey("daily_cancel_limit")]) ?? fallback.dailyCancelLimit,
+    singleTicketMaxWinning:
+      readString(payload, [periodKey("single_max_winning")]) ?? fallback.singleTicketMaxWinning,
+    maxDuplicateTickets:
+      readString(payload, [periodKey("max_duplicate_ticket")]) ?? fallback.maxDuplicateTickets,
+    acceptPreMatchBets:
+      readBoolean(payload, [periodKey("accept_prematch_bets")]) ?? fallback.acceptPreMatchBets,
+    acceptLiveBets:
+      readBoolean(payload, [periodKey("accept_live_bets")]) ?? fallback.acceptLiveBets,
+    enableCashout: readBoolean(payload, [periodKey("enable_cashout")]) ?? fallback.enableCashout,
+    enableCutX: readBoolean(payload, [periodKey("enable_cut_x")]) ?? fallback.enableCutX,
+    enableSystemBet: readBoolean(payload, systemBetKeys) ?? fallback.enableSystemBet,
+    enableSplitBet: readBoolean(payload, splitBetKeys) ?? fallback.enableSplitBet,
+    minBonusOdds: readString(payload, [periodKey("min_bonus_odd")]) ?? fallback.minBonusOdds,
+    holdBetsFrom: readString(payload, holdBetsKeys) ?? fallback.holdBetsFrom,
+  };
+};
+
+const pickRawPayloadForTimeframe = (payload: ApiRecord, timeframe: TimeOfDay): ApiRecord => {
+  const period = timeframeToPeriod(timeframe);
+  const picked: ApiRecord = {};
+
+  Object.entries(payload).forEach(([key, value]) => {
+    if (key.endsWith(`_${period}`)) {
+      picked[key] = value;
+    }
+  });
+
+  return picked;
+};
+
+const toBinary = (value: boolean) => (value ? "1" : "0");
+const toSavePrimitive = (value: unknown): SavePrimitive | undefined => {
+  if (typeof value === "string" || typeof value === "number") {
+    return value;
+  }
+  if (typeof value === "boolean") {
+    return value ? "1" : "0";
+  }
+  if (value === null) {
+    return "";
+  }
+  return undefined;
+};
+
+const mapFormToApiPayload = (
+  channel: ChannelType,
+  timeframe: TimeOfDay,
+  formValues: BettingParameters,
+  basePayload: ApiRecord
+): SaveRiskManagementPayload => {
+  const period = timeframeToPeriod(timeframe);
+  const category = CHANNEL_TO_CATEGORY[channel];
+  const periodKey = (base: string) => buildPeriodKey(base, timeframe);
+  const nextBase: Record<string, SavePrimitive> = {};
+
+  Object.entries(basePayload).forEach(([key, value]) => {
+    const parsed = toSavePrimitive(value);
+    if (typeof parsed !== "undefined") {
+      nextBase[key] = parsed;
+    }
+  });
+
+  if (category === "online") {
+    delete nextBase[periodKey("accept_system_bet")];
+    delete nextBase[periodKey("accept_split_bet")];
+  } else {
+    delete nextBase[periodKey("allow_system_bet")];
+    delete nextBase[periodKey("allow_split_bet")];
+  }
+
+  const payload: SaveRiskManagementPayload = {
+    ...nextBase,
+    period,
+    category,
+    [periodKey("min_withdrawal")]: formValues.minimumWithdrawal,
+    [periodKey("max_withdrawal")]: formValues.maximumWithdrawal,
+    [periodKey("max_payout")]: formValues.maxPayout,
+    [periodKey("max_single_odd_length")]: formValues.maxOddLength,
+    [periodKey("max_combi_odd_length")]: formValues.maxOddLength,
+    [periodKey("single_min")]: formValues.singleStakeMin,
+    [periodKey("single_max")]: formValues.singleStakeMax,
+    [periodKey("combi_min")]: formValues.combStakeMin,
+    [periodKey("combi_max")]: formValues.combStakeMax,
+    [periodKey("size_min")]: formValues.ticketSizeMin,
+    [periodKey("size_max")]: formValues.ticketSizeMax,
+    [periodKey("live_size_min")]: formValues.liveTicketMin,
+    [periodKey("live_size_max")]: formValues.liveTicketMax,
+    [periodKey("max_time_to_cancel")]: formValues.cancelTicketMinutes,
+    [periodKey("daily_cancel_limit")]: formValues.dailyCancelLimit,
+    [periodKey("single_max_winning")]: formValues.singleTicketMaxWinning,
+    [periodKey("max_duplicate_ticket")]: formValues.maxDuplicateTickets,
+    [periodKey("min_bonus_odd")]: formValues.minBonusOdds,
+    [periodKey("enable_cashout")]: toBinary(formValues.enableCashout),
+    [periodKey("enable_cut_x")]: toBinary(formValues.enableCutX),
+    [periodKey("accept_prematch_bets")]: toBinary(formValues.acceptPreMatchBets),
+    [periodKey("accept_live_bets")]: toBinary(formValues.acceptLiveBets),
+  };
+
+  if (category === "online") {
+    payload[periodKey("hold_bets")] = formValues.holdBetsFrom;
+    payload[periodKey("allow_system_bet")] = toBinary(formValues.enableSystemBet);
+    payload[periodKey("allow_split_bet")] = toBinary(formValues.enableSplitBet);
+  } else {
+    payload[periodKey("hold_bets_from")] = formValues.holdBetsFrom;
+    payload[periodKey("accept_system_bet")] = toBinary(formValues.enableSystemBet);
+    payload[periodKey("accept_split_bet")] = toBinary(formValues.enableSplitBet);
+    payload[periodKey("network_min_available_credit")] = formValues.minimumAvailableCredit ?? "";
+  }
+
+  return payload;
+};
 
 const booleanButtonClasses = ({ isActive }: { isActive: boolean }) =>
   cn(
@@ -32,13 +284,84 @@ const booleanButtonClasses = ({ isActive }: { isActive: boolean }) =>
 
 const BettingParametersPage: React.FC = () => {
   const [parameters, setParameters] = useState<BettingParametersState>(defaultBettingParameters);
+  const [initialParameters, setInitialParameters] = useState<BettingParametersState>(
+    defaultBettingParameters
+  );
+  const [rawPayloadByChannel, setRawPayloadByChannel] = useState<
+    Record<ChannelType, Record<TimeOfDay, ApiRecord>>
+  >({
+    Online: { Day: {}, Night: {} },
+    Retail: { Day: {}, Night: {} },
+  });
   const [activeTimeframes, setActiveTimeframes] = useState<Record<ChannelType, TimeOfDay>>({
     Online: "Day",
     Retail: "Day",
   });
   const [activeChannel, setActiveChannel] = useState<ChannelType>("Online");
+  const [isLoading, setIsLoading] = useState(true);
+  const [savingState, setSavingState] = useState<Record<string, boolean>>({});
 
   const channels = useMemo<ChannelType[]>(() => ["Online", "Retail"], []);
+
+  const fetchParameters = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const [onlineResponse, retailResponse] = await Promise.all([
+        settingsApi.getOnlineRiskManagementBettingParameters(),
+        settingsApi.getRetailRiskManagementBettingParameters(),
+      ]);
+
+      const onlinePayload = toRecord(onlineResponse);
+      const retailPayload = toRecord(retailResponse);
+
+      const mapped: BettingParametersState = {
+        Online: {
+          Day: mapApiToForm(
+            "Online",
+            "Day",
+            onlinePayload,
+            defaultBettingParameters.Online.Day
+          ),
+          Night: hasTimeframePayload(onlinePayload, "Night")
+            ? mapApiToForm("Online", "Night", onlinePayload, defaultBettingParameters.Online.Night)
+            : defaultBettingParameters.Online.Night,
+        },
+        Retail: {
+          Day: mapApiToForm(
+            "Retail",
+            "Day",
+            retailPayload,
+            defaultBettingParameters.Retail.Day
+          ),
+          Night: hasTimeframePayload(retailPayload, "Night")
+            ? mapApiToForm("Retail", "Night", retailPayload, defaultBettingParameters.Retail.Night)
+            : defaultBettingParameters.Retail.Night,
+        },
+      };
+
+      setParameters(mapped);
+      setInitialParameters(mapped);
+      setRawPayloadByChannel({
+        Online: {
+          Day: pickRawPayloadForTimeframe(onlinePayload, "Day"),
+          Night: pickRawPayloadForTimeframe(onlinePayload, "Night"),
+        },
+        Retail: {
+          Day: pickRawPayloadForTimeframe(retailPayload, "Day"),
+          Night: pickRawPayloadForTimeframe(retailPayload, "Night"),
+        },
+      });
+    } catch (error) {
+      const apiError = normalizeApiError(error);
+      toast.error(apiError.message ?? "Failed to fetch betting parameters");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void fetchParameters();
+  }, [fetchParameters]);
 
   const setParameterValue = (
     channel: ChannelType,
@@ -67,15 +390,45 @@ const BettingParametersPage: React.FC = () => {
       ...prev,
       [channel]: {
         ...prev[channel],
-        [timeframe]: { ...defaultBettingParameters[channel][timeframe] },
+        [timeframe]: { ...initialParameters[channel][timeframe] },
       },
     }));
   };
 
-  const handleSave = (channel: ChannelType, timeframe: TimeOfDay) => {
-    const payload = parameters[channel][timeframe];
-    console.log("Saving betting parameters", { channel, timeframe, payload });
-    alert(`${channel} (${timeframe}) parameters saved successfully!`);
+  const handleSave = async (channel: ChannelType, timeframe: TimeOfDay) => {
+    const saveStateKey = savingKey(channel, timeframe);
+    setSavingState((prev) => ({ ...prev, [saveStateKey]: true }));
+
+    try {
+      const formValues = parameters[channel][timeframe];
+      const payload = mapFormToApiPayload(
+        channel,
+        timeframe,
+        formValues,
+        rawPayloadByChannel[channel][timeframe]
+      );
+      await settingsApi.saveRiskManagementBettingParameters(payload);
+      setInitialParameters((prev) => ({
+        ...prev,
+        [channel]: {
+          ...prev[channel],
+          [timeframe]: { ...formValues },
+        },
+      }));
+      setRawPayloadByChannel((prev) => ({
+        ...prev,
+        [channel]: {
+          ...prev[channel],
+          [timeframe]: pickRawPayloadForTimeframe(payload as ApiRecord, timeframe),
+        },
+      }));
+      toast.success(`${channel} (${timeframe}) parameters saved`);
+    } catch (error) {
+      const apiError = normalizeApiError(error);
+      toast.error(apiError.message ?? "Failed to save betting parameters");
+    } finally {
+      setSavingState((prev) => ({ ...prev, [saveStateKey]: false }));
+    }
   };
 
   const renderBooleanField = (
@@ -125,7 +478,7 @@ const BettingParametersPage: React.FC = () => {
         <Input
           id={`${channel}-${timeframe}-${field.key}`}
           type="number"
-          defaultValue={value}
+          value={value}
           onChange={(event) => setParameterValue(channel, timeframe, field.key, event.target.value)}
           className={field.prefix ? "pl-8" : undefined}
         />
@@ -177,6 +530,7 @@ const BettingParametersPage: React.FC = () => {
 
   const renderChannelCard = (channel: ChannelType) => {
     const timeframe = activeTimeframes[channel];
+    const isSaving = Boolean(savingState[savingKey(channel, timeframe)]);
 
     return (
       <div key={channel} className="space-y-4 rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">
@@ -215,6 +569,7 @@ const BettingParametersPage: React.FC = () => {
                   type="button"
                   variant="outline"
                   className="text-sm"
+                  disabled={isLoading || isSaving}
                   onClick={() => handleReset(channel, activeTimeframes[channel])}
                 >
                   Reset
@@ -222,9 +577,10 @@ const BettingParametersPage: React.FC = () => {
                 <Button
                   type="button"
                   className="bg-brand-500 text-white hover:bg-brand-600"
-                  onClick={() => handleSave(channel, activeTimeframes[channel])}
+                  disabled={isLoading || isSaving}
+                  onClick={() => void handleSave(channel, activeTimeframes[channel])}
                 >
-                  Save
+                  {isSaving ? "Saving..." : "Save"}
                 </Button>
               </div>
             </div>
@@ -255,6 +611,11 @@ const BettingParametersPage: React.FC = () => {
       <PageBreadcrumb pageTitle="Betting Parameters" />
 
       <div className="space-y-4">
+        {isLoading ? (
+          <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-4 text-sm text-gray-600 shadow-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
+            Loading betting parameters...
+          </div>
+        ) : null}
         <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
           <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
             Centralised Limits & Controls

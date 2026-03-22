@@ -8,12 +8,15 @@ import { withAuth } from "@/utils/withAuth";
 import { useSearch } from "@/context/SearchContext";
 import { Infotext } from "@/components/common/Info";
 import { betsApi, normalizeApiError } from "@/lib/api";
+import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
+import { LoadingState } from "@/components/common/LoadingState";
 
 function QuickBetPage() {
   const [filteredData, setFilteredData] = useState<QuickBet[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { query, setPlaceholder, resetPlaceholder } = useSearch();
+  const { query, setPlaceholder, resetPlaceholder, resetQuery } = useSearch();
+  const [submittedQuery, setSubmittedQuery] = useState("");
 
   const toNumber = (value: unknown): number => {
     const parsed = Number(value);
@@ -63,7 +66,7 @@ function QuickBetPage() {
   }, [resetPlaceholder, setPlaceholder]);
 
   useEffect(() => {
-    const couponId = query.trim();
+    const couponId = submittedQuery.trim();
     if (!couponId) {
       setFilteredData([]);
       setError(null);
@@ -96,7 +99,15 @@ function QuickBetPage() {
     return () => {
       cancelled = true;
     };
-  }, [getRowsFromResponse, query]);
+  }, [getRowsFromResponse, submittedQuery]);
+
+  const applySearch = () => {
+    setSubmittedQuery(query.trim());
+  };
+
+  const clearSearch = () => {
+    resetQuery();
+  };
 
 
 
@@ -106,8 +117,16 @@ function QuickBetPage() {
     <div className="p-4">
       <PageBreadcrumb pageTitle="Quick Bet Search" />
       <Infotext text="Use the search bar to find a quick bet by betslip ID" />
+      <TableFilterToolbar
+        actions={{
+          onSearch: applySearch,
+          onClear: clearSearch,
+        }}
+        isLoading={isLoading}
+        className="mb-4"
+      />
       {isLoading ? (
-        <div className="flex justify-center py-8 text-gray-500">Loading...</div>
+        <LoadingState className="py-8" />
       ) : (
         <>
           {error && (

@@ -14,94 +14,187 @@ import {
   Trash2,
   Users,
 } from "lucide-react";
+import { toast } from "sonner";
 
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { DataTable } from "@/components/tables/DataTable";
 import Badge from "@/components/ui/badge/Badge";
 import Button from "@/components/ui/button/Button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { cn } from "@/lib/utils";
+import { normalizeApiError, usersApi } from "@/lib/api";
 import { withAuth } from "@/utils/withAuth";
 
 import PermissionFormModal from "./components/PermissionFormModal";
 import RoleFormModal from "./components/RoleFormModal";
 import AssignPermissionModal from "./components/AssignPermissionModal";
-import { permissionsSeed, rolesSeed } from "./data";
 import type {
   PermissionFormValues,
   PermissionRecord,
   RoleFormValues,
   RoleRecord,
 } from "./types";
-import { usersSeed } from "../users/data";
 import type { UserRecord } from "../users/types";
 
-const USERS_STORAGE_KEY = "backoffice-users";
+const mapRoleType = (input: unknown): "admin" | "agency" | "player" => {
+  const type = String(input ?? "admin").toLowerCase();
+  if (type === "agency" || type === "player") return type;
+  return "admin";
+};
+
+const parseList = <T,>(input: unknown, key: string): T[] => {
+  if (Array.isArray(input)) return input as T[];
+  if (input && typeof input === "object") {
+    const record = input as Record<string, unknown>;
+    if (Array.isArray(record[key])) {
+      return record[key] as T[];
+    }
+    if (record.data && typeof record.data === "object") {
+      const nested = record.data as Record<string, unknown>;
+      if (Array.isArray(nested[key])) {
+        return nested[key] as T[];
+      }
+    }
+  }
+  return [];
+};
+
+const mapUserRecord = (row: Record<string, unknown>): UserRecord => {
+  const details = (row.userDetails as Record<string, unknown> | undefined) ?? {};
+  const role = (row.role as Record<string, unknown> | undefined) ?? {};
+  const firstName = String(details.firstName ?? "").trim();
+  const lastName = String(details.lastName ?? "").trim();
+  const fullName = `${firstName} ${lastName}`.trim();
+  const id = Number(row.id ?? 0);
+  const country = String(details.country ?? "");
+  const state = String(details.state ?? "");
+  const location = [state, country].filter(Boolean).join(", ");
+  const status = Number(row.status ?? 0);
+
+  return {
+    id: String(id),
+    numericId: id,
+    username: String(row.username ?? ""),
+    name: fullName || String(row.username ?? `User ${id}`),
+    email: String(details.email ?? ""),
+    role: String(role.name ?? "Unassigned"),
+    roleId: Number(role.id ?? row.roleId ?? 0) || null,
+    status: status === 1 ? "active" : status === 2 ? "suspended" : "invited",
+    lastActive: String(row.lastLogin ?? ""),
+    joinedAt: String(row.createdAt ?? row.lastLogin ?? ""),
+    phone: String(details.phone ?? ""),
+    location,
+    permissions: [],
+    teams: [],
+    country,
+    state,
+    language: String(details.language ?? ""),
+    currency: String(details.currency ?? ""),
+    gender: String(details.gender ?? ""),
+    address: String(details.address ?? ""),
+  };
+};
 
 function RolesPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [roles, setRoles] = useState<RoleRecord[]>(rolesSeed);
-  const [permissions, setPermissions] =
-    useState<PermissionRecord[]>(permissionsSeed);
-  const [userRecords, setUserRecords] = useState<UserRecord[]>(usersSeed);
+  const [roles, setRoles] = useState<RoleRecord[]>([]);
+  const [permissions, setPermissions] = useState<PermissionRecord[]>([]);
+  const [userRecords, setUserRecords] = useState<UserRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [activeTab, setActiveTab] = useState<"roles" | "permissions">("roles");
-
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [isPermissionModalOpen, setIsPermissionModalOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState<RoleRecord | null>(null);
   const [selectedPermission, setSelectedPermission] =
     useState<PermissionRecord | null>(null);
-  const [isUsersHydrated, setIsUsersHydrated] = useState(false);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [assignUser, setAssignUser] = useState<UserRecord | null>(null);
   const [preselectPermission, setPreselectPermission] = useState<string | null>(
     null
   );
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
+  const loadPageData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const [usersResponse, rolesResponse, agencyRolesResponse, permissionsResponse] =
+        await Promise.all([
+          usersApi.getUsers(),
+          usersApi.getRoles(),
+          usersApi.getAgencyRoles().catch(() => null),
+          usersApi.getPermissions(),
+        ]);
 
-    const storedUsers = window.localStorage.getItem(USERS_STORAGE_KEY);
-    if (storedUsers) {
-      try {
-        const parsed = JSON.parse(storedUsers) as UserRecord[];
-        setUserRecords(parsed);
-        setIsUsersHydrated(true);
-        return;
-      } catch (error) {
-        console.warn("Failed to parse stored users; using seed data.", error);
-      }
-    } else {
-      window.localStorage.setItem(
-        USERS_STORAGE_KEY,
-        JSON.stringify(usersSeed)
+      const users = parseList<Record<string, unknown>>(usersResponse, "data").map(
+        (item) => mapUserRecord(item)
       );
-    }
+      setUserRecords(users);
 
-    setUserRecords(usersSeed);
-    setIsUsersHydrated(true);
+      const allRoleRows = [
+        ...parseList<Record<string, unknown>>(rolesResponse, "data"),
+        ...parseList<Record<string, unknown>>(agencyRolesResponse, "data"),
+      ];
+
+      const memberCountByRoleName = users.reduce<Record<string, number>>(
+        (acc, user) => {
+          const roleName = user.role || "Unassigned";
+          acc[roleName] = (acc[roleName] ?? 0) + 1;
+          return acc;
+        },
+        {}
+      );
+
+      const mappedRoles = Array.from(
+        new Map(
+          allRoleRows.map((role) => {
+            const name = String(role.name ?? "");
+            const id = Number(role.id ?? 0);
+            return [
+              id,
+              {
+                id,
+                name,
+                type: mapRoleType(role.type),
+                description: String(role.description ?? ""),
+                permissions: [],
+                members: memberCountByRoleName[name] ?? 0,
+              } satisfies RoleRecord,
+            ];
+          })
+        ).values()
+      ).filter((role) => Number(role.id) > 0 && role.name);
+
+      const mappedPermissions = parseList<Record<string, unknown>>(
+        permissionsResponse,
+        "data"
+      )
+        .map((permission) => ({
+          id: Number(permission.id ?? 0),
+          name: String(permission.name ?? ""),
+          category: "General",
+          description: "",
+          isCore: false,
+        }))
+        .filter((permission) => Number(permission.id) > 0 && permission.name);
+
+      setRoles(mappedRoles);
+      setPermissions(mappedPermissions);
+    } catch (error) {
+      const apiError = normalizeApiError(error);
+      toast.error(apiError.message ?? "Failed to load roles and permissions");
+      setRoles([]);
+      setPermissions([]);
+      setUserRecords([]);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
   useEffect(() => {
-    if (!isUsersHydrated || typeof window === "undefined") return;
-    window.localStorage.setItem(
-      USERS_STORAGE_KEY,
-      JSON.stringify(userRecords)
-    );
-  }, [isUsersHydrated, userRecords]);
-
-  useEffect(() => {
-    if (!isUsersHydrated) return;
-    setRoles((prev) =>
-      prev.map((role) => ({
-        ...role,
-        members: userRecords.filter((user) => user.role === role.name).length,
-      }))
-    );
-  }, [isUsersHydrated, userRecords]);
+    void loadPageData();
+  }, [loadPageData]);
 
   const clearManageAccessQuery = useCallback(() => {
     if (typeof window === "undefined") return;
@@ -119,7 +212,7 @@ function RolesPage() {
   }, [router]);
 
   useEffect(() => {
-    if (!isUsersHydrated || userRecords.length === 0) return;
+    if (userRecords.length === 0) return;
     const userId = searchParams.get("userId");
     if (!userId) return;
 
@@ -130,7 +223,7 @@ function RolesPage() {
     setAssignUser(targetUser);
     setPreselectPermission(null);
     setIsAssignModalOpen(true);
-  }, [isUsersHydrated, searchParams, userRecords]);
+  }, [searchParams, userRecords]);
 
   const openAssignModal = useCallback(
     (user: UserRecord | null = null, permissionName: string | null = null) => {
@@ -148,42 +241,10 @@ function RolesPage() {
     clearManageAccessQuery();
   }, [clearManageAccessQuery]);
 
-  const handleAssignPermissions = useCallback(
-    ({ userId, permissions: updatedPermissions }: {
-      userId: string;
-      permissions: string[];
-    }) => {
-      const uniquePermissions = Array.from(new Set(updatedPermissions));
-
-      setUserRecords((prev) =>
-        prev.map((user) =>
-          user.id === userId
-            ? {
-                ...user,
-                permissions: uniquePermissions,
-              }
-            : user
-        )
-      );
-
-      setAssignUser((prev) =>
-        prev && prev.id === userId
-          ? {
-              ...prev,
-              permissions: uniquePermissions,
-            }
-          : prev
-      );
-
-      setIsAssignModalOpen(false);
-      setPreselectPermission(null);
-      clearManageAccessQuery();
-      if (typeof window !== "undefined") {
-        window.alert("Permissions updated for the selected user.");
-      }
-    },
-    [clearManageAccessQuery]
-  );
+  const handleAssignPermissions = useCallback(() => {
+    toast.success("Permission assignment endpoint is not available yet.");
+    handleCloseAssignModal();
+  }, [handleCloseAssignModal]);
 
   const closeModals = () => {
     setIsRoleModalOpen(false);
@@ -192,74 +253,54 @@ function RolesPage() {
     setSelectedPermission(null);
   };
 
-  const handleSaveRole = (values: RoleFormValues) => {
-    if (selectedRole) {
-      setRoles((prev) =>
-        prev.map((role) =>
-          role.id === selectedRole.id ? { ...role, ...values } : role
-        )
-      );
-    } else {
-      const newRole: RoleRecord = {
-        id: `role-${Date.now()}`,
+  const handleSaveRole = async (values: RoleFormValues) => {
+    setIsSubmitting(true);
+    try {
+      await usersApi.upsertRole({
         name: values.name,
         type: values.type,
         description: values.description,
-        permissions: [],
-        members: 0,
-      };
-      setRoles((prev) => [newRole, ...prev]);
+        roleID: selectedRole ? selectedRole.id : "",
+      });
+      toast.success(selectedRole ? "Role updated" : "Role created");
+      closeModals();
+      await loadPageData();
+    } catch (error) {
+      const apiError = normalizeApiError(error);
+      toast.error(apiError.message ?? "Failed to save role");
+    } finally {
+      setIsSubmitting(false);
     }
-    closeModals();
   };
 
-  const handleDeleteRole = (roleId: string) => {
-    const confirmed = window.confirm(
-      "Delete this role? Users assigned to it will lose access until reassigned."
-    );
-    if (!confirmed) return;
-    setRoles((prev) => prev.filter((role) => role.id !== roleId));
+  const handleDeleteRole = () => {
+    toast.error("Delete role endpoint is not available.");
   };
 
-  const handleSavePermission = (values: PermissionFormValues) => {
-    if (selectedPermission) {
-      setPermissions((prev) =>
-        prev.map((permission) =>
-          permission.id === selectedPermission.id
-            ? { ...permission, ...values }
-            : permission
-        )
-      );
-    } else {
-      const newPermission: PermissionRecord = {
-        id: `perm-${Date.now()}`,
-        ...values,
-      };
-      setPermissions((prev) => [newPermission, ...prev]);
+  const handleSavePermission = async (values: PermissionFormValues) => {
+    setIsSubmitting(true);
+    try {
+      await usersApi.upsertPermission({
+        name: values.name,
+        id: selectedPermission ? selectedPermission.id : undefined,
+      });
+      toast.success(selectedPermission ? "Permission updated" : "Permission created");
+      closeModals();
+      await loadPageData();
+    } catch (error) {
+      const apiError = normalizeApiError(error);
+      toast.error(apiError.message ?? "Failed to save permission");
+    } finally {
+      setIsSubmitting(false);
     }
-    closeModals();
   };
 
-  const handleDeletePermission = (permissionId: string) => {
-    const confirmed = window.confirm(
-      "Delete this permission? It will be removed from all roles."
-    );
-    if (!confirmed) return;
-    setPermissions((prev) =>
-      prev.filter((permission) => permission.id !== permissionId)
-    );
-    setRoles((prev) =>
-      prev.map((role) => ({
-        ...role,
-        permissions: role.permissions.filter(
-          (permission) => permission !== permissionId
-        ),
-      }))
-    );
+  const handleDeletePermission = () => {
+    toast.error("Delete permission endpoint is not available.");
   };
 
-  const roleColumns = useMemo<ColumnDef<RoleRecord>[]>(() => {
-    return [
+  const roleColumns = useMemo<ColumnDef<RoleRecord>[]>(
+    () => [
       {
         accessorKey: "name",
         header: "Role",
@@ -311,11 +352,6 @@ function RolesPage() {
                 No permissions assigned
               </span>
             )}
-            {row.original.permissions.length > 4 && (
-              <span className="text-xs text-gray-400 dark:text-gray-500">
-                +{row.original.permissions.length - 4} more
-              </span>
-            )}
           </div>
         ),
       },
@@ -325,7 +361,7 @@ function RolesPage() {
         meta: { cellClassName: "text-left" },
         cell: ({ row }) => (
           <span className="text-xs text-gray-500 dark:text-gray-400">
-            {row.original.description}
+            {row.original.description || "-"}
           </span>
         ),
       },
@@ -357,18 +393,19 @@ function RolesPage() {
               type="button"
               title="Delete Role"
               className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 transition hover:border-red-200 hover:bg-red-500/10 hover:text-red-600 dark:border-gray-700 dark:bg-gray-900 dark:hover:border-red-500/40 dark:hover:text-red-300"
-              onClick={() => handleDeleteRole(row.original.id)}
+              onClick={handleDeleteRole}
             >
               <Trash2 className="h-4 w-4" />
             </button>
           </div>
         ),
       },
-    ];
-  }, []);
+    ],
+    []
+  );
 
-  const permissionColumns = useMemo<ColumnDef<PermissionRecord>[]>(() => {
-    return [
+  const permissionColumns = useMemo<ColumnDef<PermissionRecord>[]>(
+    () => [
       {
         accessorKey: "name",
         header: "Permission",
@@ -393,7 +430,7 @@ function RolesPage() {
         meta: { cellClassName: "text-left" },
         cell: ({ row }) => (
           <span className="text-xs text-gray-500 dark:text-gray-400">
-            {row.original.description}
+            {row.original.description || "-"}
           </span>
         ),
       },
@@ -440,15 +477,16 @@ function RolesPage() {
               type="button"
               title="Delete Permission"
               className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 transition hover:border-red-200 hover:bg-red-500/10 hover:text-red-600 dark:border-gray-700 dark:bg-gray-900 dark:hover:border-red-500/40 dark:hover:text-red-300"
-              onClick={() => handleDeletePermission(row.original.id)}
+              onClick={handleDeletePermission}
             >
               <Trash2 className="h-4 w-4" />
             </button>
           </div>
         ),
       },
-    ];
-  }, [openAssignModal]);
+    ],
+    [openAssignModal]
+  );
 
   const totalRoles = roles.length;
   const totalPermissions = permissions.length;
@@ -515,7 +553,7 @@ function RolesPage() {
               {totalPermissions}
             </p>
             <p className="text-xs text-brand-500/80 dark:text-brand-200/70">
-              {permissions.filter((item) => item.isCore).length} core, cannot be removed
+              Managed via API
             </p>
           </div>
           <div className="rounded-2xl border border-dashed border-indigo-200 bg-indigo-500/5 p-4 dark:border-indigo-500/30 dark:bg-indigo-500/10">
@@ -547,9 +585,7 @@ function RolesPage() {
 
         <Tabs
           value={activeTab}
-          onValueChange={(value) =>
-            setActiveTab(value as "roles" | "permissions")
-          }
+          onValueChange={(value) => setActiveTab(value as "roles" | "permissions")}
           className="mt-6"
         >
           <TabsList className="flex w-full flex-wrap items-center gap-2 rounded-full border border-gray-100 bg-white p-1 shadow-sm dark:border-gray-800 dark:bg-gray-950">
@@ -582,7 +618,7 @@ function RolesPage() {
                   {roles.length} total records
                 </Badge>
               </div>
-              <DataTable columns={roleColumns} data={roles} />
+              <DataTable columns={roleColumns} data={roles} loading={isLoading} />
             </div>
           </TabsContent>
 
@@ -611,7 +647,11 @@ function RolesPage() {
                   </Button>
                 </div>
               </div>
-              <DataTable columns={permissionColumns} data={permissions} />
+              <DataTable
+                columns={permissionColumns}
+                data={permissions}
+                loading={isLoading}
+              />
             </div>
           </TabsContent>
         </Tabs>
@@ -640,9 +680,10 @@ function RolesPage() {
         onSubmit={handleSavePermission}
         onClose={closeModals}
       />
+
+      {isSubmitting ? <div className="sr-only">Submitting...</div> : null}
     </div>
   );
 }
 
 export default withAuth(RolesPage);
-

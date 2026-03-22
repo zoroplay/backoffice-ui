@@ -8,7 +8,7 @@ import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import Button from "@/components/ui/button/Button";
 import { EyeCloseIcon, EyeIcon } from "@/app/icons";
-import { authApi } from "@/lib/api/modules/auth";
+import { authApi } from "@/lib/api/modules/auth.service";
 import { toast } from "sonner";
 
 // Define the validation schema using Zod
@@ -34,11 +34,6 @@ export default function SignInForm() {
     resolver: zodResolver(loginSchema),
   });
 
-  // Handle form submission
-  const onSubmit = async (data: LoginFormInputs) => {
-    await handleLogin(data);
-  };
-
   const handleLogin = async (data: LoginFormInputs) => {
     setLoading(true);
 
@@ -49,9 +44,12 @@ export default function SignInForm() {
         (response as { token?: string })?.token;
 
       if (token) {
-        toast.success("Login successful");
         localStorage.setItem("token", token);
-        localStorage.setItem("authData", JSON.stringify(response));
+
+        const profile = await authApi.me();
+        localStorage.setItem("authData", JSON.stringify(profile));
+
+        toast.success("Login successful");
         router.push("/dashboard");
         return;
       }
@@ -71,6 +69,13 @@ export default function SignInForm() {
       setLoading(false);
     }
   };
+
+  // Handle form submission
+  const onSubmit = async (data: LoginFormInputs) => {
+    await handleLogin(data);
+  };
+
+  
 
   return (
     <div className="flex flex-col flex-1 lg:w-1/2 w-full">

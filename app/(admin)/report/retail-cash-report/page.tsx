@@ -11,6 +11,7 @@ import { normalizeApiError, reportsApi } from "@/lib/api";
 import { withAuth } from "@/utils/withAuth";
 import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
 import { Infotext } from "@/components/common/Info";
+import { LoadingState } from "@/components/common/LoadingState";
 
 
 function RetailCashReport() {
@@ -18,6 +19,8 @@ function RetailCashReport() {
   const [filteredData, setFilteredData] = useState<RetailCashRecord[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasSearched, setHasSearched] = useState(false);
+  const emptyStateText = "Search to see data.";
 
   const toNumber = (value: unknown): number => {
     const parsed = Number(value);
@@ -70,6 +73,7 @@ function RetailCashReport() {
     setDateRange(defaultDateRange);
     setFilteredData([]);
     setError(null);
+    setHasSearched(false);
   };
 
   // ----------------------
@@ -78,6 +82,7 @@ function RetailCashReport() {
   const handleSearch = async () => {
     setIsLoading(true);
     setError(null);
+    setHasSearched(true);
 
     try {
       const res = await reportsApi.getRetailCashReport();
@@ -110,7 +115,11 @@ function RetailCashReport() {
 
       {/* Table */}
       {isLoading ? (
-        <div className="flex justify-center py-8 text-gray-500">Loading...</div>
+        <LoadingState className="py-8" />
+      ) : !hasSearched ? (
+        <div className="flex justify-center py-8 text-gray-500">
+          {emptyStateText}
+        </div>
       ) : (
         <>
           {error && (

@@ -1,5 +1,25 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { TaxSummary, TaxDetail } from "./data";
+
+export type TaxSummary = {
+  period: string;
+  beforeTax: number;
+  afterTax: number;
+  taxOnStake: number;
+  taxOnWinnings: number;
+};
+
+export type TaxDetail = {
+  customer: string;
+  betslipId: string;
+  punterAmt: number;
+  stakeAmt: number;
+  exciseAmt: number;
+  odds: number;
+  type: string;
+  date: string;
+  potentialWinnings: number;
+  wthTax: number;
+};
 
 // ----------------------
 // Summary Columns
@@ -27,3 +47,4 @@ export const detailColumns: ColumnDef<TaxDetail>[] = [
   { accessorKey: "potentialWinnings", header: "Pot. Winnings" },
   { accessorKey: "wthTax", header: "WTH Tax" },
 ];
+

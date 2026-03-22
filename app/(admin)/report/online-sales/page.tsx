@@ -12,6 +12,7 @@ import { OnlineSalesTypes } from "./columns";
 import { withAuth } from "@/utils/withAuth";
 import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
 import { Infotext } from "@/components/common/Info";
+import { LoadingState } from "@/components/common/LoadingState";
 
 // ----------------------
 // Select Options
@@ -38,6 +39,8 @@ function OnlineSales() {
   const [filteredData, setFilteredData] = useState<OnlineSalesTypes[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasSearched, setHasSearched] = useState(false);
+  const emptyStateText = "Search to see data.";
 
   // ----------------------
   // Apply filters
@@ -53,6 +56,7 @@ function OnlineSales() {
   const handleSearch = async () => {
     setIsLoading(true);
     setError(null);
+    setHasSearched(true);
 
     try {
       const productMap: Record<string, string> = {
@@ -102,6 +106,8 @@ function OnlineSales() {
     setDateRange(defaultDateRange);
     setSelectedFilter(null);
     setFilteredData([]);
+    setError(null);
+    setHasSearched(false);
   };
 
   return (
@@ -130,7 +136,11 @@ function OnlineSales() {
 
       {/* Table */}
       {isLoading ? (
-        <div className="flex justify-center py-8 text-gray-500">Loading...</div>
+        <LoadingState className="py-8" />
+      ) : !hasSearched ? (
+        <div className="flex justify-center py-8 text-gray-500">
+          {emptyStateText}
+        </div>
       ) : (
         <>
           {error && (

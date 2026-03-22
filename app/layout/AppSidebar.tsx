@@ -47,7 +47,7 @@ const navItems: NavItem[] = [
     subItems: [
       {
         name: "Gaming Activities",
-        path: "/report/gaming_activities",
+        path: "/report/gaming-activities",
         pro: false,
       },
       { name: "Network Sales", path: "/report/network-sales", pro: false },
@@ -76,7 +76,7 @@ const navItems: NavItem[] = [
     icon: <TableIcon />,
     name: "Tickets",
     subItems: [
-      { name: "Quick Bet Search", path: "/tickets/quick_bet", pro: false },
+      { name: "Quick Bet Search", path: "/tickets/quick-bet", pro: false },
       { name: "Ticket On Hold", path: "/tickets/ticket-on-hold", pro: false },
       { name: "Open Bet (Sports)", path: "/tickets/open-bet", pro: false },
       { name: "Bets History", path: "/tickets/bets-history", pro: false },
@@ -181,10 +181,10 @@ const navItems: NavItem[] = [
     name: "Content Management",
     subItems: [
       { name: "Site Menu", path: "/content-management/site-menu", pro: false },
-      { name: "Messaging", path: "/content-management/messaging", pro: false },
       { name: "Sports Menu", path: "/content-management/sports-menu", pro: false },
       { name: "Pages", path: "/content-management/pages", pro: false },
       { name: "Banners", path: "/content-management/banners", pro: false },
+      { name: "Messaging", path:"/content-management/messaging", pro: false },
       { name: "Markets Manager", path: "/content-management/markets-manager", pro: false },
       { name: "Top Bets", path: "/content-management/top-bets", pro: false },
     ]
@@ -219,17 +219,46 @@ const othersItems: NavItem[] = [
     name: "Configurations",
     subItems: [
       { name: "General", path: "/configurations/general", pro: false },
-      { name: "Payment Method", path: "/configurations/payment-methods", pro: false },
       { name: "Tipster Settings", path: "/configurations/tipster-settings", pro: false },
       { name: "Exposure Monitor Settings", path: "/configurations/exposure-monitor-settings", pro: false },
+      {name: 'Payment Methods', path: '/configurations/payment-methods', pro: false},
+      { name: "Commision Bonus Group", path: "/configurations/commision-bonus-group", pro: false },
+      { name: "Game Keys", path: "/configurations/game-keys", pro: false },
     ]
   },
   {
     icon: <LockIcon />,
     name: "Change Password",
     path: "/change-password",
-    },
-    
+  },
+  // {
+  //   icon: <PieChartIcon />,
+  //   name: "Charts",
+  //   subItems: [
+  //     { name: "Line Chart", path: "/line-chart", pro: false },
+  //     { name: "Bar Chart", path: "/bar-chart", pro: false },
+  //   ],
+  // },
+  // {
+  //   icon: <BoxCubeIcon />,
+  //   name: "UI Elements",
+  //   subItems: [
+  //     { name: "Alerts", path: "/alerts", pro: false },
+  //     { name: "Avatar", path: "/avatars", pro: false },
+  //     { name: "Badge", path: "/badge", pro: false },
+  //     { name: "Buttons", path: "/buttons", pro: false },
+  //     { name: "Images", path: "/images", pro: false },
+  //     { name: "Videos", path: "/videos", pro: false },
+  //   ],
+  // },
+  // {
+  //   icon: <PlugInIcon />,
+  //   name: "Authentication",
+  //   subItems: [
+  //     { name: "Sign In", path: "/signin", pro: false },
+  //     { name: "Sign Up", path: "/signup", pro: false },
+  //   ],
+  // },
 ];
 
 const AppSidebar: React.FC = () => {

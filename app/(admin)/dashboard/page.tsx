@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
   Area,
@@ -13,7 +13,6 @@ import {
   YAxis,
   Bar,
 } from "recharts";
-import { TrendingDown, TrendingUp, Minus } from "lucide-react";
 
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { DateRangeFilter, defaultDateRange } from "@/components/common/DateRangeFilter";
@@ -22,50 +21,97 @@ import { DataTable } from "@/components/tables/DataTable";
 import Badge from "@/components/ui/badge/Badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTheme } from "@/context/ThemeContext";
-import { cn } from "@/lib/utils";
+import { dashboardApi } from "@/lib/api";
 import { withAuth } from "@/utils/withAuth";
 import type { Range } from "react-date-range";
+import { LoadingState } from "@/components/common/LoadingState";
 
-import {
-  financialPerformance,
-  openBets,
-  productTabs,
-  playerBalances,
-  realtimeMetrics,
-  summaryMetrics,
-  turnoverChartData,
-  type DashboardFinancialRow,
-  type DashboardSummaryMetric,
-  type DashboardProductTabKey,
-  type DashboardProductRow,
-} from "./data";
+type DashboardProductTabKey = "overall" | "sport" | "agents" | "mobile";
 
-type OpenBetTabKey = keyof typeof openBets;
+type DashboardProductRow = {
+  product: string;
+  turnover: number;
+  margin: number;
+  ggr: number;
+  bonusGiven: number;
+  bonusSpent: number;
+  ngr: number;
+};
 
-const realtimeAccentPalette = [
-  "bg-emerald-400/90",
-  "bg-brand-500/90",
-  "bg-orange-400/90",
-  "bg-sky-400/90",
-  "bg-purple-400/90",
-  "bg-rose-500/90",
-] as const;
+type DashboardFinancialRow = {
+  label: string;
+  value: string;
+};
 
-const trendIconMap: Record<NonNullable<DashboardSummaryMetric["delta"]>["trend"], React.ReactNode> = {
-  up: <TrendingUp className="h-4 w-4 text-success-500" />,
-  down: <TrendingDown className="h-4 w-4 text-error-500" />,
-  flat: <Minus className="h-4 w-4 text-gray-400" />,
+type RealtimeData = {
+  onlinePlayers: number;
+  newPlayers: number;
+  totalPlayers: number;
+};
+
+type StatisticsChartPoint = {
+  month: string;
+  games: number;
+  casino: number;
+  sport: number;
+  virtual: number;
+};
+
+const monthOrder = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+const productLabelMap: Record<DashboardProductTabKey, string> = {
+  overall: "Overall Gaming",
+  sport: "Sport",
+  agents: "Agents",
+  mobile: "Mobile",
 };
 
 function Dashboard() {
   const { theme } = useTheme();
   const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
-  const [activeBetTab, setActiveBetTab] = useState<OpenBetTabKey>("single");
   const [activeProductTab, setActiveProductTab] =
     useState<DashboardProductTabKey>("overall");
 
-  const normalizedTheme: "light" | "dark" = theme === "dark" ? "dark" : "light";
+  const [overallRows, setOverallRows] = useState<DashboardProductRow[]>([]);
+  const [sportRows, setSportRows] = useState<DashboardProductRow[]>([]);
+  const [agentRows, setAgentRows] = useState<DashboardProductRow[]>([]);
+  const [mobileRows, setMobileRows] = useState<DashboardProductRow[]>([]);
 
+  const [realtimeData, setRealtimeData] = useState<RealtimeData>({
+    onlinePlayers: 0,
+    newPlayers: 0,
+    totalPlayers: 0,
+  });
+  const [chartData, setChartData] = useState<StatisticsChartPoint[]>(
+    monthOrder.map((month) => ({
+      month: month.slice(0, 3),
+      games: 0,
+      casino: 0,
+      sport: 0,
+      virtual: 0,
+    }))
+  );
+  const [financialCards, setFinancialCards] = useState<DashboardFinancialRow[]>([]);
+  const [balanceCards, setBalanceCards] = useState<DashboardFinancialRow[]>([]);
+
+  const [isLoadingDashboard, setIsLoadingDashboard] = useState(true);
+  const [isLoadingTabs, setIsLoadingTabs] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const normalizedTheme: "light" | "dark" = theme === "dark" ? "dark" : "light";
   const isDark = normalizedTheme === "dark";
 
   const chartAxisColor = isDark ? "#98a2b3" : "#667085";
@@ -85,12 +131,221 @@ function Dashboard() {
 
   const percentFormatter = (value: number) => `${value.toFixed(1)}%`;
 
+  const toNumber = (value: unknown): number => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+
+  const parseMargin = (value: unknown): number => {
+    if (typeof value === "number") return value;
+    if (typeof value === "string") {
+      const parsed = Number(value.replace("%", "").trim());
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+    return 0;
+  };
+
+  const fmtDate = (date?: Date): string => {
+    if (!date) return "";
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const dd = String(date.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
+  const mapProductRows = useCallback((response: unknown): DashboardProductRow[] => {
+    const root = (response as { data?: unknown })?.data ?? response;
+    const list =
+      ((root as { data?: unknown })?.data as unknown[]) ||
+      (Array.isArray(root) ? root : []);
+
+    if (!Array.isArray(list)) return [];
+    return list.map((row) => {
+      const rec = (row as Record<string, unknown>) ?? {};
+      return {
+        product: String(rec.product ?? "-"),
+        turnover: toNumber(rec.turnover),
+        margin: parseMargin(rec.margin),
+        ggr: toNumber(rec.ggr),
+        bonusGiven: toNumber(rec.bonusGiven),
+        bonusSpent: toNumber(rec.bonusSpent),
+        ngr: toNumber(rec.ngr),
+      };
+    });
+  }, []);
+
+  const mapStatistics = useCallback((response: unknown): StatisticsChartPoint[] => {
+    const root = (response as { data?: unknown })?.data ?? response;
+    const rows =
+      ((root as { data?: unknown })?.data as unknown[]) ||
+      (Array.isArray(root) ? root : []);
+
+    const points = monthOrder.map((month) => ({
+      month: month.slice(0, 3),
+      games: 0,
+      casino: 0,
+      sport: 0,
+      virtual: 0,
+    }));
+
+    if (!Array.isArray(rows)) return points;
+
+    rows.forEach((item) => {
+      const rec = (item as Record<string, unknown>) ?? {};
+      const product = String(rec.product ?? "").toLowerCase();
+      const monthlyData = (rec.monthlyData as unknown[]) ?? [];
+
+      monthlyData.forEach((entry) => {
+        const e = (entry as Record<string, unknown>) ?? {};
+        const month = String(e.month ?? "");
+        const monthIndex = monthOrder.findIndex(
+          (label) => label.toLowerCase() === month.toLowerCase()
+        );
+        if (monthIndex < 0) return;
+        const turnover = toNumber(e.turnover);
+
+        if (product.includes("game")) points[monthIndex].games = turnover;
+        if (product.includes("casino")) points[monthIndex].casino = turnover;
+        if (product.includes("sport")) points[monthIndex].sport = turnover;
+        if (product.includes("virtual")) points[monthIndex].virtual = turnover;
+      });
+    });
+
+    return points;
+  }, []);
+
+  const loadTabData = useCallback(
+    async (range: Range) => {
+      setIsLoadingTabs(true);
+      setError(null);
+      try {
+        const params = {
+          from: fmtDate(range.startDate),
+          to: fmtDate(range.endDate),
+        };
+
+        const [overallRes, sportsRes, shopRes, onlineRes] = await Promise.all([
+          dashboardApi.getOverallGaming(params),
+          dashboardApi.getSportsData(params),
+          dashboardApi.getShopData(params),
+          dashboardApi.getOnlineData(params),
+        ]);
+
+        setOverallRows(mapProductRows(overallRes));
+        setSportRows(mapProductRows(sportsRes));
+        setAgentRows(mapProductRows(shopRes));
+        setMobileRows(mapProductRows(onlineRes));
+      } catch (err) {
+        const message =
+          (err as { message?: string })?.message ?? "Failed to fetch dashboard data";
+        setError(message);
+        setOverallRows([]);
+        setSportRows([]);
+        setAgentRows([]);
+        setMobileRows([]);
+      } finally {
+        setIsLoadingTabs(false);
+      }
+    },
+    [mapProductRows]
+  );
+
+  const loadStaticDashboardData = useCallback(async () => {
+    try {
+      const [realtimeRes, balanceRes, statsRes, financialRes] = await Promise.all([
+        dashboardApi.getRealtimeData(),
+        dashboardApi.getPlayerBalance(),
+        dashboardApi.getStatistics(),
+        dashboardApi.getFinancialPerformance(),
+      ]);
+
+      const realtimeRoot = (realtimeRes as Record<string, unknown>) ?? {};
+      const realtimePayload =
+        ((realtimeRoot.data as Record<string, unknown>) ??
+          (realtimeRoot.result as Record<string, unknown>) ??
+          realtimeRoot) as Record<string, unknown>;
+
+      setRealtimeData({
+        onlinePlayers: toNumber(realtimePayload.onlinePlayers),
+        newPlayers: toNumber(realtimePayload.newPlayers),
+        totalPlayers: toNumber(realtimePayload.totalPlayers),
+      });
+
+      const balanceRoot =
+        ((balanceRes as { data?: unknown })?.data as Record<string, unknown>) ??
+        (balanceRes as Record<string, unknown>) ??
+        {};
+      setBalanceCards([
+        {
+          label: "Total Online Player Balance",
+          value: currencyFormatter.format(toNumber(balanceRoot.totalOnlinePlayerBalance)),
+        },
+        {
+          label: "Total Online Player Bonus",
+          value: currencyFormatter.format(toNumber(balanceRoot.totalOnlinePlayerBonus)),
+        },
+        {
+          label: "Total Retail Balance",
+          value: currencyFormatter.format(toNumber(balanceRoot.totalRetailBalance)),
+        },
+        {
+          label: "Total Retail Trust Balance",
+          value: currencyFormatter.format(toNumber(balanceRoot.totalRetailTrustBalance)),
+        },
+      ]);
+
+      const finRoot =
+        ((financialRes as { data?: unknown })?.data as Record<string, unknown>) ??
+        (financialRes as Record<string, unknown>) ??
+        {};
+      setFinancialCards([
+        {
+          label: "Total Deposits",
+          value: currencyFormatter.format(toNumber(finRoot.totalDeposit)),
+        },
+        {
+          label: "Total Withdrawals",
+          value: currencyFormatter.format(toNumber(finRoot.totalWithdrawal)),
+        },
+      ]);
+
+      setChartData(mapStatistics(statsRes));
+    } catch (err) {
+      const message =
+        (err as { message?: string })?.message ??
+        "Failed to fetch dashboard summary data";
+      setError(message);
+      setRealtimeData({
+        onlinePlayers: 0,
+        newPlayers: 0,
+        totalPlayers: 0,
+      });
+      setFinancialCards([]);
+      setBalanceCards([]);
+    }
+  }, [currencyFormatter, mapStatistics]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const bootstrap = async () => {
+      setIsLoadingDashboard(true);
+      await Promise.all([loadTabData(defaultDateRange), loadStaticDashboardData()]);
+      if (!cancelled) setIsLoadingDashboard(false);
+    };
+    void bootstrap();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [loadStaticDashboardData, loadTabData]);
+
   const handleClearFilters = () => {
     setDateRange(defaultDateRange);
+    void loadTabData(defaultDateRange);
   };
 
   const handleApplyFilters = () => {
-    // Placeholder: would trigger data fetch / refresh in real integration
+    void loadTabData(dateRange);
   };
 
   const renderFinancialCards = (rows: DashboardFinancialRow[]) => (
@@ -100,7 +355,6 @@ function Dashboard() {
           key={metric.label}
           className="group relative overflow-hidden rounded-xl border border-gray-100 bg-gradient-to-br from-white via-white to-gray-50 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg dark:border-gray-800 dark:from-gray-900 dark:via-gray-950 dark:to-gray-900"
         >
-          <div className="pointer-events-none absolute inset-0 rounded-xl bg-gradient-to-br from-brand-500/0 via-brand-500/0 to-brand-500/0 opacity-0 transition group-hover:from-brand-500/8 group-hover:via-brand-500/0 group-hover:to-brand-500/12 group-hover:opacity-100 dark:group-hover:from-brand-400/15 dark:group-hover:to-brand-400/10" />
           <div className="relative flex flex-col gap-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
               {metric.label}
@@ -108,11 +362,6 @@ function Dashboard() {
             <p className="text-xl font-semibold text-gray-900 dark:text-gray-100">
               {metric.value}
             </p>
-            {metric.helper && (
-              <span className="inline-flex w-fit items-center rounded-full bg-brand-500/10 px-2 py-0.5 text-[11px] font-semibold text-brand-600 dark:bg-brand-500/20 dark:text-brand-200">
-                {metric.helper}
-              </span>
-            )}
           </div>
         </div>
       ))}
@@ -123,100 +372,75 @@ function Dashboard() {
     () => [
       {
         accessorKey: "product",
-        header: () => (
-          <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-            Product
-          </span>
-        ),
+        header: "Product",
         cell: ({ row }) => (
           <span className="font-semibold text-gray-900 dark:text-gray-100">
             {row.original.product}
           </span>
         ),
-        meta: { cellClassName: "text-center" },
       },
       {
         accessorKey: "turnover",
-        header: () => (
-          <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-            Turnover
-          </span>
-        ),
-        cell: ({ getValue }) => (
-          <span className="font-medium text-gray-700 dark:text-gray-200">
-            {currencyFormatter.format(getValue<number>())}
-          </span>
-        ),
+        header: "Turnover",
+        cell: ({ getValue }) => currencyFormatter.format(getValue<number>()),
       },
       {
         accessorKey: "margin",
-        header: () => (
-          <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-            Margin %
-          </span>
-        ),
-        cell: ({ getValue }) => (
-          <span className="font-medium text-gray-700 dark:text-gray-200">
-            {percentFormatter(getValue<number>())}
-          </span>
-        ),
+        header: "Margin %",
+        cell: ({ getValue }) => percentFormatter(getValue<number>()),
       },
       {
         accessorKey: "ggr",
-        header: () => (
-          <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-            GGR
-          </span>
-        ),
-        cell: ({ getValue }) => (
-          <span className="font-medium text-gray-700 dark:text-gray-200">
-            {currencyFormatter.format(getValue<number>())}
-          </span>
-        ),
+        header: "GGR",
+        cell: ({ getValue }) => currencyFormatter.format(getValue<number>()),
       },
       {
         accessorKey: "bonusGiven",
-        header: () => (
-          <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-            Bonus Given
-          </span>
-        ),
-        cell: ({ getValue }) => (
-          <span className="font-medium text-gray-700 dark:text-gray-200">
-            {currencyFormatter.format(getValue<number>())}
-          </span>
-        ),
-        meta: { cellClassName: "whitespace-nowrap" },
+        header: "Bonus Given",
+        cell: ({ getValue }) => currencyFormatter.format(getValue<number>()),
       },
       {
         accessorKey: "bonusSpent",
-        header: () => (
-          <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-            Bonus Spent
-          </span>
-        ),
-        cell: ({ getValue }) => (
-          <span className="font-medium text-gray-700 dark:text-gray-200">
-            {currencyFormatter.format(getValue<number>())}
-          </span>
-        ),
-        meta: { cellClassName: "whitespace-nowrap" },
+        header: "Bonus Spent",
+        cell: ({ getValue }) => currencyFormatter.format(getValue<number>()),
       },
       {
         accessorKey: "ngr",
-        header: () => (
-          <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-            NGR
-          </span>
-        ),
-        cell: ({ getValue }) => (
-          <span className="font-semibold text-gray-900 dark:text-gray-100">
-            {currencyFormatter.format(getValue<number>())}
-          </span>
-        ),
+        header: "NGR",
+        cell: ({ getValue }) => currencyFormatter.format(getValue<number>()),
       },
     ],
     [currencyFormatter]
+  );
+
+  const summaryCards = useMemo(() => {
+    const totals = overallRows.reduce(
+      (acc, row) => {
+        acc.turnover += row.turnover;
+        acc.ggr += row.ggr;
+        acc.bonusSpent += row.bonusSpent;
+        acc.ngr += row.ngr;
+        return acc;
+      },
+      { turnover: 0, ggr: 0, bonusSpent: 0, ngr: 0 }
+    );
+
+    return [
+      { id: "turnover", label: "Total Turnover", value: currencyFormatter.format(totals.turnover) },
+      { id: "ggr", label: "Gross Gaming Revenue", value: currencyFormatter.format(totals.ggr) },
+      { id: "bonus", label: "Bonus Spent", value: currencyFormatter.format(totals.bonusSpent) },
+      { id: "ngr", label: "Net Gaming Revenue", value: currencyFormatter.format(totals.ngr) },
+    ];
+  }, [currencyFormatter, overallRows]);
+
+  const productTabs = useMemo(
+    () => [
+      { key: "overall" as const, rows: overallRows },
+      { key: "sport" as const, rows: sportRows },
+      { key: "agents" as const, rows: agentRows },
+      { key: "mobile" as const, rows: mobileRows },
+    ],
+    [overallRows, sportRows, agentRows, mobileRows]
   );
 
   return (
@@ -235,48 +459,41 @@ function Dashboard() {
           </div>
         </div>
 
-        <div className=" w-full mt-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-
+        <div className="mt-6 flex w-full flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400 uppercase">Date Range</p>
+            <p className="text-sm uppercase text-gray-500 dark:text-gray-400">
+              Date Range
+            </p>
             <DateRangeFilter range={dateRange} onChange={setDateRange} />
           </div>
-
           <div className="w-full md:w-auto">
-            <FilterActions onSearch={handleApplyFilters} onClear={handleClearFilters} />
+            <FilterActions
+              onSearch={handleApplyFilters}
+              onClear={handleClearFilters}
+              isLoading={isLoadingTabs}
+            />
           </div>
         </div>
       </div>
 
+      {error ? (
+        <div className="rounded-md bg-red-50 p-3 text-sm text-red-700">{error}</div>
+      ) : null}
+
+      {isLoadingDashboard ? <LoadingState className="py-8" /> : null}
+
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {summaryMetrics.map((metric) => (
+        {summaryCards.map((metric) => (
           <div
             key={metric.id}
-            className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md dark:border-gray-800 dark:bg-gray-950"
+            className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-950"
           >
-            <div className="flex items-start justify-between gap-2">
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{metric.label}</p>
-              {metric.delta && (
-                <Badge variant="light" size="sm">
-                  {trendIconMap[metric.delta.trend]}
-                </Badge>
-              )}
-            </div>
+            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              {metric.label}
+            </p>
             <p className="mt-3 text-2xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">
               {metric.value}
             </p>
-            {metric.delta && (
-              <p
-                className={cn(
-                  "mt-2 text-sm font-medium",
-                  metric.delta.trend === "up" && "text-success-500",
-                  metric.delta.trend === "down" && "text-error-500",
-                  metric.delta.trend === "flat" && "text-gray-400 dark:text-gray-500"
-                )}
-              >
-                {`${metric.delta.value} ${metric.delta.label}`}
-              </p>
-            )}
           </div>
         ))}
       </div>
@@ -284,31 +501,37 @@ function Dashboard() {
       <div className="grid gap-6 xl:grid-cols-[minmax(0,2.3fr),minmax(0,1fr)]">
         <div className="space-y-6 min-w-0">
           <div className="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-950">
-            <Tabs value={activeProductTab} onValueChange={(value) => setActiveProductTab(value as DashboardProductTabKey)}>
+            <Tabs
+              value={activeProductTab}
+              onValueChange={(value) => setActiveProductTab(value as DashboardProductTabKey)}
+            >
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 px-5 py-4 dark:border-gray-800">
                 <div>
                   <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
                     Product Turnover Snapshot
                   </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Compare performance across product groups, channels, and partners.
-                  </p>
                 </div>
-                <TabsList className="hidden md:flex bg-transparent gap-2 rounded-full border border-gray-200 p-1 dark:border-gray-800">
-                  {productTabs.map((tab) => (
-                    <TabsTrigger
-                      key={tab.key}
-                      value={tab.key}
-                      className="rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500 transition data-[state=active]:bg-brand-500 data-[state=active]:text-white dark:text-gray-400 dark:data-[state=active]:bg-brand-400 dark:data-[state=active]:text-gray-950"
-                    >
-                      {tab.label}
-                    </TabsTrigger>
-                  ))}
+                <TabsList className="hidden gap-2 rounded-full border border-gray-200 bg-transparent p-1 md:flex dark:border-gray-800">
+                  {(["overall", "sport", "agents", "mobile"] as DashboardProductTabKey[]).map(
+                    (tab) => (
+                      <TabsTrigger
+                        key={tab}
+                        value={tab}
+                        className="rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500 transition data-[state=active]:bg-brand-500 data-[state=active]:text-white dark:text-gray-400 dark:data-[state=active]:bg-brand-400 dark:data-[state=active]:text-gray-950"
+                      >
+                        {productLabelMap[tab]}
+                      </TabsTrigger>
+                    )
+                  )}
                 </TabsList>
               </div>
               {productTabs.map((tab) => (
                 <TabsContent key={tab.key} value={tab.key} className="px-5 pb-5 pt-4">
-                  <DataTable columns={productColumns} data={tab.rows} />
+                  {isLoadingTabs ? (
+                    <LoadingState className="py-8" />
+                  ) : (
+                    <DataTable columns={productColumns} data={tab.rows} />
+                  )}
                 </TabsContent>
               ))}
             </Tabs>
@@ -320,17 +543,14 @@ function Dashboard() {
                 <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
                   Overall Turnover (YTD)
                 </h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Monthly turnover trends split across Games, Casino, Sport, and Virtual segments.
-                </p>
               </div>
               <Badge variant="light" color="info" size="sm">
-                Updated 5 mins ago
+                Live API
               </Badge>
             </div>
             <div className="mt-5 h-[320px] w-full min-w-0">
               <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={turnoverChartData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
+                <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
                   <CartesianGrid stroke={chartGridColor} strokeDasharray="4 6" />
                   <XAxis
                     dataKey="month"
@@ -343,15 +563,17 @@ function Dashboard() {
                     tickLine={false}
                     axisLine={false}
                     tick={{ fill: chartAxisColor, fontSize: 12 }}
-                    tickFormatter={(value) => `${value}`}
                   />
                   <Tooltip
-                    cursor={{ fill: isDark ? "rgba(148, 163, 184, 0.08)" : "rgba(59, 130, 246, 0.08)" }}
+                    cursor={{
+                      fill: isDark
+                        ? "rgba(148, 163, 184, 0.08)"
+                        : "rgba(59, 130, 246, 0.08)",
+                    }}
                     contentStyle={{
                       background: chartTooltipBg,
                       border: `1px solid ${chartTooltipBorder}`,
                       borderRadius: "12px",
-                      boxShadow: "0 12px 16px -4px rgba(15, 23, 42, 0.18)",
                     }}
                   />
                   <Legend iconType="circle" wrapperStyle={{ paddingTop: 12 }} />
@@ -363,7 +585,6 @@ function Dashboard() {
                     fill="rgba(124, 58, 237, 0.18)"
                     strokeWidth={2}
                     name="Casino"
-                    activeDot={{ r: 6 }}
                   />
                   <Area
                     type="monotone"
@@ -393,100 +614,47 @@ function Dashboard() {
               Realtime Data
             </h3>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              {realtimeMetrics.map((metric, index) => {
-                const accent = realtimeAccentPalette[index % realtimeAccentPalette.length];
-                return (
-                  <div
-                    key={metric.label}
-                    className="group relative overflow-hidden rounded-xl border border-gray-100 bg-white/80 p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-lg dark:border-gray-800 dark:bg-gray-950/80"
-                  >
-                    <div className="pointer-events-none absolute inset-0 rounded-xl bg-gradient-to-br from-brand-500/0 to-brand-500/0 opacity-0 transition group-hover:from-brand-500/10 group-hover:to-transparent group-hover:opacity-100 dark:group-hover:from-brand-400/15" />
-                    <div className="relative flex items-center justify-between">
-                      <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                        {metric.label}
-                      </span>
-                      <span
-                        className={cn(
-                          "h-2.5 w-2.5 rounded-full ring-2 ring-white/80 shadow-sm transition group-hover:scale-110 dark:ring-gray-950",
-                          accent
-                        )}
-                      />
-                    </div>
-                    <p className="relative mt-3 text-xl font-semibold text-gray-900 dark:text-gray-100">
-                      {metric.value}
-                    </p>
-                  </div>
-                );
-              })}
+              {[
+                { label: "Online Players", value: String(realtimeData.onlinePlayers) },
+                { label: "New Players", value: String(realtimeData.newPlayers) },
+                { label: "Total Players", value: String(realtimeData.totalPlayers) },
+              ].map((metric) => (
+                <div
+                  key={metric.label}
+                  className="rounded-xl border border-gray-100 p-4 shadow-sm dark:border-gray-800"
+                >
+                  <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    {metric.label}
+                  </span>
+                  <p className="mt-3 text-xl font-semibold text-gray-900 dark:text-gray-100">
+                    {metric.value}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
 
           <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-950">
-            <Tabs
-              value={activeBetTab}
-              onValueChange={(value) => setActiveBetTab(value as OpenBetTabKey)}
-            >
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 pb-4 dark:border-gray-800">
-                <div>
-                  <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
-                    Open Bets
-                  </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Exposure overview by bet type and market risk.
-                  </p>
-                </div>
-                <TabsList className="bg-transparent gap-2 rounded-full border border-gray-100 p-1 dark:border-gray-800">
-                  <TabsTrigger
-                    value="single"
-                    className="rounded-full px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500 transition data-[state=active]:bg-brand-500 data-[state=active]:text-white dark:text-gray-400 dark:data-[state=active]:bg-brand-400 dark:data-[state=active]:text-gray-950"
-                  >
-                    Single Bets
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="combo"
-                    className="rounded-full px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500 transition data-[state=active]:bg-brand-500 data-[state=active]:text-white dark:text-gray-400 dark:data-[state=active]:bg-brand-400 dark:data-[state=active]:text-gray-950"
-                  >
-                    Combo Bets
-                  </TabsTrigger>
-                </TabsList>
-              </div>
-              {(["single", "combo"] as OpenBetTabKey[]).map((key) => (
-                <TabsContent key={key} value={key} className="pt-4">
-                  <div className="space-y-3">
-                    {openBets[key].map((metric) => (
-                      <div
-                        key={metric.label}
-                        className="rounded-xl border border-gray-100 px-4 py-3 dark:border-gray-800"
-                      >
-                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
-                          {metric.label}
-                        </p>
-                        <p className="mt-1 text-lg font-semibold text-gray-900 dark:text-gray-100">
-                          {metric.value}
-                        </p>
-                        {metric.trend && (
-                          <p className="text-xs text-gray-400 dark:text-gray-500">{metric.trend}</p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </TabsContent>
-              ))}
-            </Tabs>
+            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+              Open Bets
+            </h3>
+            <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
+              Open bets API is currently unavailable.
+            </p>
           </div>
 
           <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-950">
             <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
               Financial Performance
             </h3>
-            <div className="mt-4">{renderFinancialCards(financialPerformance)}</div>
+            <div className="mt-4">{renderFinancialCards(financialCards)}</div>
           </div>
 
           <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-950">
             <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
               Player Balances
             </h3>
-            <div className="mt-4">{renderFinancialCards(playerBalances)}</div>
+            <div className="mt-4">{renderFinancialCards(balanceCards)}</div>
           </div>
         </div>
       </div>

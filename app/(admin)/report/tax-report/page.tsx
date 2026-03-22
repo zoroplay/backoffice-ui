@@ -5,15 +5,16 @@ import React, { useState } from "react";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { DataTable } from "@/components/tables/DataTable";
 import type { Range } from "react-date-range";
-import type { TaxDetail, TaxSummary } from "./data";
+import type { TaxDetail, TaxSummary } from "./columns";
 import { defaultDateRange } from "@/components/common/DateRangeFilter";
 import { summaryColumns, detailColumns } from "./columns";
 import { withAuth } from "@/utils/withAuth";
 import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
 import type { SingleValue } from "react-select";
 import { Infotext } from "@/components/common/Info";
-import { betsApi } from "@/lib/api/modules/bets";
+import { betsApi } from "@/lib/api/modules/bets.service";
 import { normalizeApiError } from "@/lib/api";
+import { LoadingState } from "@/components/common/LoadingState";
 
 
 
@@ -42,6 +43,8 @@ function TaxReport() {
   const [filteredData, setFilteredData] = useState<TaxDetail[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasSearched, setHasSearched] = useState(false);
+  const emptyStateText = "Search to see data.";
 
   const fmt = (d?: Date, endOfDay = false) => {
     if (!d) return "";
@@ -99,6 +102,7 @@ function TaxReport() {
   const applyFilters = async () => {
     setIsLoading(true);
     setError(null);
+    setHasSearched(true);
 
     try {
       const payload = {
@@ -153,6 +157,7 @@ function TaxReport() {
     setFilteredData([]);
     setSummaryData([]);
     setError(null);
+    setHasSearched(false);
   };
 
   return (
@@ -181,28 +186,40 @@ function TaxReport() {
       />
 
 
-      {/* Summary Table */}
-      <div>
-        <h2 className="text-lg dark:text-gray-50 font-semibold mb-2">Summary</h2>
-        <DataTable columns={summaryColumns} data={summaryData} />
-      </div>
+      {!hasSearched ? (
+        <div className="flex justify-center py-8 text-gray-500">
+          {emptyStateText}
+        </div>
+      ) : (
+        <>
+          {/* Summary Table */}
+          <div>
+            <h2 className="text-lg dark:text-gray-50 font-semibold mb-2">
+              Summary
+            </h2>
+            <DataTable columns={summaryColumns} data={summaryData} />
+          </div>
 
-      {/* Detailed Table */}
-      <div>
-        <h2 className="text-lg font-semibold dark:text-gray-50 mb-2">Results</h2>
-        {isLoading ? (
-          <div className="flex justify-center py-8 text-gray-500">Loading...</div>
-        ) : (
-          <>
-            {error && (
-              <div className="mb-3 rounded-md bg-red-50 p-3 text-sm text-red-700">
-                {error}
-              </div>
+          {/* Detailed Table */}
+          <div>
+            <h2 className="text-lg font-semibold dark:text-gray-50 mb-2">
+              Results
+            </h2>
+            {isLoading ? (
+              <LoadingState className="py-8" />
+            ) : (
+              <>
+                {error && (
+                  <div className="mb-3 rounded-md bg-red-50 p-3 text-sm text-red-700">
+                    {error}
+                  </div>
+                )}
+                <DataTable columns={detailColumns} data={filteredData} />
+              </>
             )}
-            <DataTable columns={detailColumns} data={filteredData} />
-          </>
-        )}
-      </div>
+          </div>
+        </>
+      )}
     </section>
   );
 }

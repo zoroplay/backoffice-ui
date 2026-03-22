@@ -10,8 +10,14 @@ import {
   ModalHeader,
 } from "@/components/ui/modal/Modal";
 
-import { roleTypeOptions } from "../data";
 import type { RoleFormValues, RoleRecord } from "../types";
+
+const roleTypeOptions: Array<{ label: string; value: RoleFormValues["type"] }> =
+  [
+    { label: "Admin", value: "admin" },
+    { label: "Agency", value: "agency" },
+    { label: "Player", value: "player" },
+  ];
 
 type RoleFormModalProps = {
   isOpen: boolean;

@@ -20,7 +20,7 @@ import {
   DashboardRow
 } from "./data";
 import { configColumns, assignmentColumns, dashboardColumns } from "./columns";
-import { bonusesApi } from "@/lib/api/modules/bonuses";
+import { bonusesApi } from "@/lib/api/modules/bonus.service";
 
 const sectionHeaderClassName = "flex items-center gap-2 bg-brand-500 p-4 text-white font-semibold rounded-t-2xl";
 

@@ -10,6 +10,7 @@ export type MassBonusPlayer = {
   balance: number;
   verified: boolean;
   status: "Active" | "Inactive" | "Suspended";
+  raw?: Record<string, unknown>;
 };
 
 export const columns: ColumnDef<MassBonusPlayer>[] = [

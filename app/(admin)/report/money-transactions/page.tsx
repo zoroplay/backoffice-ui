@@ -11,6 +11,7 @@ import { useSearch } from "@/context/SearchContext";
 import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
 import { Infotext } from "@/components/common/Info";
 import { normalizeApiError, reportsApi } from "@/lib/api";
+import { LoadingState } from "@/components/common/LoadingState";
 
 const defaultDateRange: Range = {
   startDate: new Date(new Date().setDate(new Date().getDate() - 30)), 
@@ -60,6 +61,8 @@ function MoneyTransactions() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { query, setPlaceholder, resetPlaceholder, resetQuery } = useSearch();
+  const [hasSearched, setHasSearched] = useState(false);
+  const emptyStateText = "Search to see data.";
 
   const handleOperationChange = useCallback(
     (option: SingleValue<OperationOption>) => {
@@ -167,6 +170,7 @@ function MoneyTransactions() {
   const applyFilters = async () => {
     setIsLoading(true);
     setError(null);
+    setHasSearched(true);
 
     const nextAppliedOperation = operationFilter;
     const nextAppliedDateRange = dateRange;
@@ -211,6 +215,7 @@ function MoneyTransactions() {
     setFilteredData([]);
     setError(null);
     resetQuery();
+    setHasSearched(false);
   };
 
   return (
@@ -238,7 +243,11 @@ function MoneyTransactions() {
       />
 
       {isLoading ? (
-        <div className="flex justify-center py-8 text-gray-500">Loading...</div>
+        <LoadingState className="py-8" />
+      ) : !hasSearched ? (
+        <div className="flex justify-center py-8 text-gray-500">
+          {emptyStateText}
+        </div>
       ) : (
         <>
           {error && (

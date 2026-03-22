@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Select, {
-  type ActionMeta,
   type GroupBase,
   type SingleValue,
   type StylesConfig,
@@ -15,8 +14,6 @@ import { cn } from "@/lib/utils";
 import { reactSelectStyles } from "@/utils/reactSelectStyles";
 
 import {
-  booleanOptions,
-  countryOptions,
   currencySymbols,
   dialCodes,
   paydayOptions,
@@ -28,7 +25,9 @@ import LogoUploader from "./LogoUploader";
 
 type GeneralSettingsFormProps = {
   initialValues: GeneralSettings;
-  onSubmit?: (values: GeneralSettings) => void;
+  countryOptions: SelectOption[];
+  onSubmit?: (values: GeneralSettings) => Promise<void> | void;
+  isSubmitting?: boolean;
 };
 
 type NumberFieldProps = {
@@ -130,7 +129,9 @@ function RangeField({ label, from, to, onChange, helper }: RangeFieldProps) {
 
 export function GeneralSettingsForm({
   initialValues,
+  countryOptions,
   onSubmit,
+  isSubmitting = false,
 }: GeneralSettingsFormProps) {
   const { theme } = useTheme();
   const normalizedTheme =
@@ -147,8 +148,11 @@ export function GeneralSettingsForm({
   );
 
   const [formValues, setFormValues] = useState<GeneralSettings>(initialValues);
-  const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    setFormValues(initialValues);
+  }, [initialValues]);
 
   const handleChange = (
     field: keyof GeneralSettings,
@@ -169,8 +173,7 @@ export function GeneralSettingsForm({
     };
 
   const handleCountryChange = (
-    option: SingleValue<SelectOption>,
-    _meta: ActionMeta<SelectOption>
+    option: SingleValue<SelectOption>
   ) => {
     const country = option?.value ?? "";
     setFormValues((prev) => ({
@@ -181,16 +184,15 @@ export function GeneralSettingsForm({
     }));
   };
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    setIsSaving(true);
     setSaveMessage(null);
-
-    window.setTimeout(() => {
-      setIsSaving(false);
+    try {
+      await onSubmit?.(formValues);
       setSaveMessage("Settings saved successfully.");
-      onSubmit?.(formValues);
-    }, 750);
+    } catch {
+      setSaveMessage(null);
+    }
   };
 
   return (
@@ -597,11 +599,12 @@ export function GeneralSettingsForm({
             type="button"
             variant="outline"
             onClick={() => setFormValues(initialValues)}
+            disabled={isSubmitting}
           >
             Reset
           </Button>
-          <Button type="submit" disabled={isSaving}>
-            {isSaving ? "Saving..." : "Save Changes"}
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Saving..." : "Save Changes"}
           </Button>
         </div>
       </div>

@@ -15,6 +15,7 @@ export type PlayerBonus = {
   betType: string;
   maxWinnings: number;
   status: "Active" | "Inactive" | "Expired";
+  raw?: Record<string, unknown>;
 };
 
 export type BonusActionsCallbacks = {

@@ -2,7 +2,17 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 
-import type { NetworkSalesReport } from "./data";
+export interface NetworkSalesReport {
+  id: string;
+  name: string;
+  onlineSales: number;
+  totalOnlineSales: number;
+  onlineWithdrawal: number;
+  totalOnlineWithdrawals: number;
+  onlineBalance: number;
+  availableBalance: number;
+}
+
 
 const formatCurrency = (amount: number) =>
   `₦${amount.toLocaleString("en-NG", {

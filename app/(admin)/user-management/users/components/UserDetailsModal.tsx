@@ -1,9 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import Image from "next/image";
 import {
-  BadgeCheck,
   Mail,
   MapPin,
   Phone,
@@ -88,15 +86,13 @@ export function UserDetailsModal({ isOpen, user, onClose, onSave, onDelete }: Us
         <ModalBody>
         <div className="flex flex-col gap-6 md:flex-row">
           <div className="flex-shrink-0">
-            <div className="relative h-24 w-24 overflow-hidden rounded-2xl border border-gray-200 shadow-md dark:border-gray-700">
-              <Image
-                src={`/images/user/user-${Math.floor(Math.random() * 37) + 1}.jpg`}
-                alt={user.name}
-                fill
-                sizes="96px"
-                className="object-cover"
-                unoptimized
-              />
+            <div className="flex h-24 w-24 items-center justify-center rounded-2xl border border-gray-200 bg-brand-500/10 text-2xl font-semibold text-brand-700 shadow-md dark:border-gray-700 dark:bg-brand-500/20 dark:text-brand-200">
+              {(user.name || "U")
+                .split(" ")
+                .filter(Boolean)
+                .slice(0, 2)
+                .map((part) => part[0]?.toUpperCase())
+                .join("") || "U"}
             </div>
           </div>
           <div className="flex flex-1 flex-col gap-3">

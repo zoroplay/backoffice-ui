@@ -10,7 +10,8 @@ import { withAuth } from "@/utils/withAuth";
 import { useSearch } from "@/context/SearchContext";
 import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
 import { Infotext } from "@/components/common/Info";
-import { betsApi, normalizeApiError } from "@/lib/api";
+import { betsApi, normalizeApiError, apiEnv } from "@/lib/api";
+import { LoadingState } from "@/components/common/LoadingState";
 
 //  Default last 30 days range
 const defaultDateRange: Range = {
@@ -146,7 +147,20 @@ function OpenBetsPage() {
     const dd = String(d.getDate()).padStart(2, "0");
     const mm = String(d.getMonth() + 1).padStart(2, "0");
     const yyyy = d.getFullYear();
-    return `${dd}-${mm}-${yyyy} ${endOfDay ? "23:59:59" : "00:00:00"}`;
+    return `${yyyy}-${mm}-${dd} ${endOfDay ? "23:59:59" : "00:00:00"}`;
+  };
+
+  const isSameDay = (a?: Date, b?: Date) =>
+    Boolean(a && b) &&
+    a!.getFullYear() === b!.getFullYear() &&
+    a!.getMonth() === b!.getMonth() &&
+    a!.getDate() === b!.getDate();
+
+  const getFilterValue = (groupLabel: string) => {
+    const entry = appliedOperationFilters.find(
+      (opt) => filterOptionGroupMap.get(opt.value) === groupLabel
+    );
+    return entry?.value ?? "";
   };
 
   const toNumber = (value: unknown): number => {
@@ -284,12 +298,40 @@ function OpenBetsPage() {
 
     const nextOperations = operationFilters;
     const nextDateRange = dateRange;
+    const fromDate = dateRange.startDate ?? undefined;
+    const toDate = dateRange.endDate ?? undefined;
+    const isToday =
+      isSameDay(fromDate, toDate) && isSameDay(fromDate, new Date());
+
+    const clientType = getFilterValue("Client Type");
+    const betType = getFilterValue("Bet Type");
+    const ticketTypeValue = getFilterValue("Ticket Type");
+    const eventType = getFilterValue("Pre-Match/Live");
+    const amountRange =
+      getFilterValue("Stake Range") || getFilterValue("Potential Return");
+
+    const ticketType =
+      ticketTypeValue === "real" ? 0 : ticketTypeValue === "simulated" ? 1 : 0;
+
     const payload = {
-      from: fmt(dateRange.startDate ?? undefined, false),
-      to: fmt(dateRange.endDate ?? undefined, true),
-      search: query.trim(),
-      filters: nextOperations.map((option) => option.value),
-      status: "open",
+      period: isToday ? "today" : "custom",
+      username: "",
+      from: fmt(fromDate, false),
+      to: fmt(toDate, true),
+      betType,
+      eventType,
+      sport: "",
+      league: "",
+      market: "",
+      state: "",
+      clientType,
+      groupType: "",
+      ticketType,
+      amountRange,
+      betslipId: query.trim(),
+      status: 0,
+      paidStatus: "",
+      clientId: Number(apiEnv.clientId),
     } as const;
 
     try {
@@ -350,7 +392,7 @@ function OpenBetsPage() {
 
       {/* Table */}
       {isLoading ? (
-        <div className="flex justify-center py-8 text-gray-500">Loading...</div>
+        <LoadingState className="py-8" />
       ) : (
         <>
           {error && (

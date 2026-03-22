@@ -1,5 +1,34 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { NetCashSummary, NetCashGroup } from "./data";
+
+
+export type NetCashSummary = {
+  deposits: number;
+  depositAmount: number;
+  avgDepositAmount: number;
+  withdrawals: number;
+  withdrawalAmount: number;
+  avgWithdrawalAmount: number;
+  netCash: number;
+  ratio: number;
+  date: string;
+  paymentMethod: string;
+  clientType: string;
+};
+
+export type NetCashGroup = {
+  group: string;
+  deposits: number;
+  depositAmount: number;
+  avgDepositAmount: number;
+  withdrawals: number;
+  withdrawalAmount: number;
+  avgWithdrawalAmount: number;
+  netCash: number;
+  ratio: number;
+  date: string;
+  paymentMethod: string;
+  clientType: string;
+};
 
 // ----------------------
 // First table: Summary
@@ -8,7 +37,7 @@ export const summaryColumns: ColumnDef<NetCashSummary>[] = [
   {
      accessorKey: "deposits", 
      header: "Deposits" 
-  },
+  }, 
   { 
     accessorKey: "depositAmount", 
     header: "Deposit Amount", 

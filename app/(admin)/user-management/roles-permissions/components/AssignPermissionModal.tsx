@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from "react";
-import Image from "next/image";
 import Select, {
   type GroupBase,
   type SingleValue,
@@ -41,7 +40,7 @@ type UserOption = {
 };
 
 type PermissionOption = {
-  id: string;
+  id: string | number;
   name: string;
   category: string;
   description: string;
@@ -210,15 +209,13 @@ export function AssignPermissionModal({
 
             {selectedUser ? (
               <div className="flex items-center gap-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-                <div className="relative h-12 w-12 overflow-hidden rounded-full border border-gray-200 dark:border-gray-700">
-                  <Image
-                    src={selectedUser.avatar}
-                    alt={selectedUser.name}
-                    fill
-                    className="object-cover"
-                    sizes="48px"
-                    unoptimized
-                  />
+                <div className="flex h-12 w-12 items-center justify-center rounded-full border border-gray-200 bg-brand-500/10 text-sm font-semibold text-brand-700 dark:border-gray-700 dark:bg-brand-500/20 dark:text-brand-200">
+                  {(selectedUser.name || selectedUser.username || "U")
+                    .split(" ")
+                    .filter(Boolean)
+                    .slice(0, 2)
+                    .map((part) => part[0]?.toUpperCase())
+                    .join("") || "U"}
                 </div>
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-gray-900 dark:text-gray-100">

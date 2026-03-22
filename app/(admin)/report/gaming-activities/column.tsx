@@ -1,5 +1,17 @@
 import { ColumnDef } from "@tanstack/react-table"
-import { TableDataTypes } from "./data" // adjust path if you keep the interface & mock data elsewhere
+
+
+export interface TableDataTypes {
+  group: number
+  bets: number
+  turnover: number
+  winnings: number
+  ggr: number
+  margin: string
+} 
+
+
+
 
 // Define columns for the Gaming Activities table
 export const columns: ColumnDef<TableDataTypes>[] = [

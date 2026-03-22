@@ -7,6 +7,7 @@ export type MultibetBonus = {
   numberOfEvents: number;
   bonusPercentage: number;
   type: "Onliners" | "Shop";
+  raw?: Record<string, unknown>;
 };
 
 export type MultibetBonusActionsCallbacks = {

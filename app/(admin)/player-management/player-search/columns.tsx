@@ -6,30 +6,54 @@ import Button from "@/components/ui/button/Button";
 import { Dropdown } from "@/components/ui/dropdown/Dropdown";
 import { DropdownItem } from "@/components/ui/dropdown/DropdownItem";
 import Badge from "@/components/ui/badge/Badge";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 export type Player = {
+  id: number;
   code: string;
   username: string;
   fullName: string;
+  status: number;
   playerStatus: string;
   email: string;
   phone: string;
   registeredOn: string;
   country: string;
   currency: string;
+  verified: number;
   verificationStatus: string;
 };
 
-// Dropdown cell component
-const ActionsCell = ({ player }: { player: Player }) => {
+type PlayerActionCallbacks = {
+  onChangePassword: (player: Player) => void;
+  onManualDeposit: (player: Player) => void;
+  onManualWithdrawal: (player: Player) => void;
+  onGiveBonus: (player: Player) => void;
+  onVerifyUser: (player: Player) => void;
+  onFreezeUser: (player: Player) => void;
+  onUnfreezeUser: (player: Player) => void;
+  onTerminateUser: (player: Player) => void;
+};
+
+const statusBadgeColor = (status: number): "success" | "warning" | "error" => {
+  if (status === 1) return "success";
+  if (status === 2) return "warning";
+  return "error";
+};
+
+const ActionsCell = ({
+  player,
+  callbacks,
+}: {
+  player: Player;
+  callbacks: PlayerActionCallbacks;
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [position, setPosition] = useState<"top" | "bottom">("bottom");
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isOpen && containerRef.current) {
-      // Use requestAnimationFrame to ensure DOM is updated
       requestAnimationFrame(() => {
         if (!containerRef.current) return;
 
@@ -37,23 +61,20 @@ const ActionsCell = ({ player }: { player: Player }) => {
         const viewportHeight = window.innerHeight;
         const spaceBelow = viewportHeight - containerRect.bottom;
         const spaceAbove = containerRect.top;
-        
-        // More accurate dropdown height estimation (header + 6 items + padding)
-        const estimatedDropdownHeight = 280;
-        const buffer = 30; // Extra buffer for safety
-        
-        // Only position on top if we're really at the bottom of the viewport
-        // Be very conservative - only flip if there's clearly not enough space below
-        // and clearly enough space above
-        const needsTopPosition = 
-          spaceBelow < estimatedDropdownHeight && // Not enough space below
-          spaceAbove >= estimatedDropdownHeight + buffer && // Enough space above with buffer
-          spaceBelow < spaceAbove - 100; // Above has significantly more space (100px difference)
+        const estimatedDropdownHeight = 320;
+        const buffer = 30;
+
+        const needsTopPosition =
+          spaceBelow < estimatedDropdownHeight &&
+          spaceAbove >= estimatedDropdownHeight + buffer &&
+          spaceBelow < spaceAbove - 100;
 
         setPosition(needsTopPosition ? "top" : "bottom");
       });
     }
   }, [isOpen]);
+
+  const closeMenu = () => setIsOpen(false);
 
   return (
     <div className="relative" ref={containerRef}>
@@ -61,28 +82,28 @@ const ActionsCell = ({ player }: { player: Player }) => {
         variant="outline"
         size="sm"
         className="dropdown-toggle flex items-center gap-1 text-xs"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => setIsOpen((prev) => !prev)}
       >
-        <MoreHorizontal className="h-4 w-4" />       
+        <MoreHorizontal className="h-4 w-4" />
       </Button>
 
-      <Dropdown 
-        isOpen={isOpen} 
-        onClose={() => setIsOpen(false)} 
-        position={position} 
+      <Dropdown
+        isOpen={isOpen}
+        onClose={closeMenu}
+        position={position}
         anchorRef={containerRef as React.RefObject<HTMLElement>}
-        className="w-48"
+        className="w-52"
       >
         <div className="py-2">
           <div className="px-4 py-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
             Quick Actions
           </div>
-          <div className="my-1 h-px bg-gray-200 dark:bg-gray-700 dark:text-white" />
+          <div className="my-1 h-px bg-gray-200 dark:bg-gray-700" />
 
           <DropdownItem
             onClick={() => {
-              console.log("Change Password", player);
-              setIsOpen(false);
+              callbacks.onChangePassword(player);
+              closeMenu();
             }}
           >
             Change Password
@@ -90,8 +111,8 @@ const ActionsCell = ({ player }: { player: Player }) => {
 
           <DropdownItem
             onClick={() => {
-              console.log("Manual Deposit", player);
-              setIsOpen(false);
+              callbacks.onManualDeposit(player);
+              closeMenu();
             }}
           >
             Manual Deposit
@@ -99,8 +120,8 @@ const ActionsCell = ({ player }: { player: Player }) => {
 
           <DropdownItem
             onClick={() => {
-              console.log("Manual Withdrawal", player);
-              setIsOpen(false);
+              callbacks.onManualWithdrawal(player);
+              closeMenu();
             }}
           >
             Manual Withdrawal
@@ -108,37 +129,63 @@ const ActionsCell = ({ player }: { player: Player }) => {
 
           <DropdownItem
             onClick={() => {
-              console.log("Edit Information", player);
-              setIsOpen(false);
-            }}
-          >
-            Edit Information
-          </DropdownItem>
-
-          <DropdownItem
-            onClick={() => {
-              console.log("Activate Account", player);
-              setIsOpen(false);
-            }}
-          >
-            Activate Account
-          </DropdownItem>
-
-          <DropdownItem
-            onClick={() => {
-              console.log("Give Bonus", player);
-              setIsOpen(false);
+              callbacks.onGiveBonus(player);
+              closeMenu();
             }}
           >
             Give Bonus
           </DropdownItem>
+
+          {player.verified !== 1 ? (
+            <DropdownItem
+              onClick={() => {
+                callbacks.onVerifyUser(player);
+                closeMenu();
+              }}
+            >
+              Verify User
+            </DropdownItem>
+          ) : null}
+
+          {player.status === 2 ? (
+            <DropdownItem
+              onClick={() => {
+                callbacks.onUnfreezeUser(player);
+                closeMenu();
+              }}
+            >
+              Unfreeze Account
+            </DropdownItem>
+          ) : (
+            <DropdownItem
+              onClick={() => {
+                callbacks.onFreezeUser(player);
+                closeMenu();
+              }}
+            >
+              Freeze Account
+            </DropdownItem>
+          )}
+
+          {player.status !== 2 && player.status !== 3 ? (
+            <DropdownItem
+              onClick={() => {
+                callbacks.onTerminateUser(player);
+                closeMenu();
+              }}
+            >
+              Terminate Account
+            </DropdownItem>
+          ) : null}
         </div>
       </Dropdown>
     </div>
   );
 };
 
-export const columns: ColumnDef<Player>[] = [
+export const createColumns = (
+  callbacks: PlayerActionCallbacks
+): ColumnDef<Player>[] => [
   {
     accessorKey: "code",
     header: "Code",
@@ -154,23 +201,12 @@ export const columns: ColumnDef<Player>[] = [
   {
     accessorKey: "playerStatus",
     header: "Player Status",
-    cell: ({ row }) => {
-      const status = row.original.playerStatus
-      return (
-        <Badge
-          variant="light"
-          color={
-            status === "Active"
-              ? "success"
-              : "error"            
-              }
-        >
-          {status}
-        </Badge>
-      )
-    },
+    cell: ({ row }) => (
+      <Badge variant="light" color={statusBadgeColor(row.original.status)}>
+        {row.original.playerStatus}
+      </Badge>
+    ),
   },
-
   {
     accessorKey: "email",
     header: "Email",
@@ -182,6 +218,19 @@ export const columns: ColumnDef<Player>[] = [
   {
     accessorKey: "registeredOn",
     header: "Registered On",
+    cell: ({ row }) => {
+      const raw = row.original.registeredOn;
+      const parsed = new Date(raw);
+      if (Number.isNaN(parsed.getTime())) return raw;
+
+      return parsed.toLocaleString([], {
+        year: "numeric",
+        month: "short",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    },
   },
   {
     accessorKey: "country",
@@ -198,6 +247,6 @@ export const columns: ColumnDef<Player>[] = [
   {
     id: "actions",
     header: "Quick Actions",
-    cell: ({ row }) => <ActionsCell player={row.original} />,
+    cell: ({ row }) => <ActionsCell player={row.original} callbacks={callbacks} />,
   },
 ];
