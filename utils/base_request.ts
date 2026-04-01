@@ -1,5 +1,4 @@
 import axios from "axios";
-import { s } from "vitest/dist/chunks/reporters.d.DL9pg5DB.js";
 
 const fullEndpoint = (url: string) =>
   `${process.env.NEXT_PUBLIC_BASE_URL}${
