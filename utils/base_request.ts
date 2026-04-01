@@ -1,35 +1,25 @@
-import axios from "axios";
-
 const fullEndpoint = (url: string) =>
   `${process.env.NEXT_PUBLIC_BASE_URL}${
     url.startsWith("/") ? url.replace("/", "") : url
   }`;
 
 export const ApiRequest = async (url: string, method: string, data = null) => {
-  const options = {
-    method: method,
-    url: fullEndpoint(url),
-    headers: {
-      "Content-Type": "application/json",
-      "client-code": "SBE",
-      "sbe-client-id": 4,
-    },
-    data: data,
-  };
-
   try {
-    const response = await axios(options);
+    const response = await fetch(fullEndpoint(url), {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        "client-code": process.env.NEXT_PUBLIC_CLIENT_CODE ?? "",
+        "sbe-client-id": process.env.NEXT_PUBLIC_CLIENT_ID ?? "",
+      },
+      ...(data ? { body: JSON.stringify(data) } : {}),
+    });
+    const responseData = await response.json().catch(() => null);
     return {
-      data: response.data,
+      data: responseData,
       status: response.status,
     };
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response) {
-      return {
-        data: error.response.data,
-        status: error.response.status,
-      };
-    }
+  } catch {
     return {
       data: null,
       status: 500,
