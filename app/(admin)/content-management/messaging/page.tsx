@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useCallback } from "react";
-import { Plus, MessageSquare, Upload } from "lucide-react";
+import { Plus, MessageSquare, Settings, Upload } from "lucide-react";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import Button from "@/components/ui/button/Button";
 import { DataTable } from "@/components/tables/DataTable";
@@ -12,13 +12,14 @@ import { withAuth } from "@/utils/withAuth";
 
 import { columns, createActionColumn, MessageRow } from "./columns";
 import { cmsApi } from "@/lib/api/modules/cms.service";
+import { playerApi } from "@/lib/api/modules/player.service";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings } from "lucide-react";
 
 const inputClassName =
   "w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm text-gray-700 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100";
 
 function MessagingPage() {
+  const [segmentOptions, setSegmentOptions] = useState<Array<{ value: string; label: string }>>([]);
   const [activeTab, setActiveTab] = useState("messages");
   const [messages, setMessages] = useState<MessageRow[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -37,6 +38,7 @@ function MessagingPage() {
     title: "",
     content: "",
     image: "",
+    segmentId: "",
   });
   const [imagePreview, setImagePreview] = useState<string>("");
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -50,12 +52,48 @@ function MessagingPage() {
     }
   }, [activeTab]);
 
+  React.useEffect(() => {
+    let cancelled = false;
+
+    const loadSegments = async () => {
+      try {
+        const data = await playerApi.getPlayerSegments();
+        if (cancelled) return;
+
+        const rows = Array.isArray(data)
+          ? data
+          : Array.isArray((data as { data?: unknown[] })?.data)
+            ? ((data as { data: unknown[] }).data ?? [])
+            : [];
+
+        const options = rows
+          .map((segment) => {
+            const row = (segment ?? {}) as Record<string, unknown>;
+            const id = String(row.id ?? row.segmentId ?? row.value ?? "");
+            const name = String(row.name ?? row.title ?? row.segmentName ?? row.label ?? "");
+            if (!id || !name) return null;
+            return { value: id, label: name };
+          })
+          .filter((option): option is { value: string; label: string } => Boolean(option));
+
+        setSegmentOptions(options);
+      } catch {
+        setSegmentOptions([]);
+      }
+    };
+
+    void loadSegments();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const loadMessages = async () => {
     try {
       setIsLoading(true);
       const data = await cmsApi.fetchMessages();
       setMessages(Array.isArray(data) ? data : []);
-    } catch (error) {
+    } catch {
       toast.error("Failed to load messages");
     } finally {
       setIsLoading(false);
@@ -69,7 +107,7 @@ function MessagingPage() {
       if (data && typeof data === "object" && !Array.isArray(data)) {
         setSmsSettings((prev) => ({ ...prev, ...data }));
       }
-    } catch (error) {
+    } catch {
        // Silently fail if settings haven't been created yet
     } finally {
       setIsLoading(false);
@@ -78,7 +116,7 @@ function MessagingPage() {
 
   const openCreateModal = () => {
     setEditingMessage(null);
-    setFormValues({ title: "", content: "", image: "" });
+    setFormValues({ title: "", content: "", image: "", segmentId: "" });
     setImagePreview("");
     setIsModalOpen(true);
   };
@@ -89,6 +127,7 @@ function MessagingPage() {
       title: message.title,
       content: message.content,
       image: message.image || "",
+      segmentId: message.segmentId || "",
     });
     setImagePreview(message.image || "");
     setIsModalOpen(true);
@@ -113,11 +152,15 @@ function MessagingPage() {
       await cmsApi.deleteMessage(id);
       setMessages((prev) => prev.filter((m) => m.id !== id));
       toast.success("Message deleted");
-    } catch (error) {
+    } catch {
       toast.error("Failed to delete message");
     } finally {
       setIsLoading(false);
     }
+  }, []);
+
+  const handleSendNow = useCallback((message: MessageRow) => {
+    toast.info(`"Send now" endpoint for "${message.title}" will be wired when available.`);
   }, []);
 
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -138,7 +181,7 @@ function MessagingPage() {
       }
       setIsModalOpen(false);
       loadMessages();
-    } catch (error) {
+    } catch {
       toast.error(editingMessage ? "Failed to update" : "Failed to create");
     } finally {
       setIsLoading(false);
@@ -151,7 +194,7 @@ function MessagingPage() {
       setIsLoading(true);
       await cmsApi.saveSmsSettings(smsSettings);
       toast.success("SMS Settings saved successfully");
-    } catch (error) {
+    } catch {
       toast.error("Failed to save SMS settings");
     } finally {
       setIsLoading(false);
@@ -159,8 +202,8 @@ function MessagingPage() {
   };
 
   const columnsWithActions = useMemo(
-    () => [...columns, createActionColumn({ onEdit: handleEdit, onDelete: handleDelete })],
-    [handleEdit, handleDelete]
+    () => [...columns, createActionColumn({ onEdit: handleEdit, onDelete: handleDelete, onSendNow: handleSendNow })],
+    [handleEdit, handleDelete, handleSendNow]
   );
 
   return (
@@ -272,6 +315,24 @@ function MessagingPage() {
                 placeholder="Enter message title"
                 required
               />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+                Segment
+              </label>
+              <select
+                className={inputClassName}
+                value={formValues.segmentId}
+                onChange={(e) => setFormValues({ ...formValues, segmentId: e.target.value })}
+              >
+                <option value="">All Segments</option>
+                {segmentOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="space-y-2">

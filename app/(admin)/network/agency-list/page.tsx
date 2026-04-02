@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import type { GroupBase } from "react-select";
-import { Info } from "lucide-react";
+import { Info, Send } from "lucide-react";
 
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { DataTable } from "@/components/tables/DataTable";
@@ -10,9 +10,12 @@ import { withAuth } from "@/utils/withAuth";
 import { useSearch } from "@/context/SearchContext";
 import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
 import Button from "@/components/ui/button/Button";
-import { agentsApi, normalizeApiError } from "@/lib/api";
+import { agentsApi, normalizeApiError, usersApi } from "@/lib/api";
+import { cmsApi } from "@/lib/api/modules/cms.service";
+import { Modal, ModalBody, ModalFooter, ModalHeader } from "@/components/ui/modal";
+import { toast } from "sonner";
 
-import { columns, Agency } from "./columns";
+import { createColumns, Agency } from "./columns";
 
 type FilterOption = {
   value: string;
@@ -21,6 +24,12 @@ type FilterOption = {
 
 const ALL_ROLE_OPTION: FilterOption = { value: "", label: "All" };
 const PAGE_SIZE = 20;
+
+type MessageOption = {
+  id: string;
+  title: string;
+  content: string;
+};
 
 const parseList = <T,>(input: unknown, key: string): T[] => {
   if (Array.isArray(input)) return input as T[];
@@ -70,8 +79,42 @@ function AgencyListPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+  const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
+  const [isSendingToAllAgents, setIsSendingToAllAgents] = useState(false);
+  const [selectedAgency, setSelectedAgency] = useState<Agency | null>(null);
+  const [messageOptions, setMessageOptions] = useState<MessageOption[]>([]);
+  const [selectedMessageId, setSelectedMessageId] = useState("");
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
 
   const { query, resetQuery, setPlaceholder, resetPlaceholder } = useSearch();
+
+  const loadAgencyRoles = async () => {
+    try {
+      const response = await usersApi.getAgencyRoles();
+      const roleRows = parseList<Record<string, unknown>>(response, "data");
+      const options = roleRows
+        .map((role) => {
+          const id = String(role.id ?? "");
+          const name = String(role.name ?? "");
+          if (!id || !name) return null;
+          return {
+            value: id,
+            label: name,
+          } satisfies FilterOption;
+        })
+        .filter((option): option is FilterOption => Boolean(option));
+
+      setRoleOptions([ALL_ROLE_OPTION, ...options]);
+    } catch (err) {
+      const apiError = normalizeApiError(err);
+      setError(apiError.message ?? "Failed to load agency roles");
+    }
+  };
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.sessionStorage.setItem("agency-list-cache", JSON.stringify(rows));
+  }, [rows]);
 
   useEffect(() => {
     setPlaceholder("Search by Name or Username");
@@ -82,33 +125,10 @@ function AgencyListPage() {
 
   useEffect(() => {
     let cancelled = false;
-
-    const loadAgencyRoles = async () => {
-      try {
-        const response = await agentsApi.getAgencyRoles();
-        if (cancelled) return;
-
-        const roleRows = parseList<Record<string, unknown>>(response, "data");
-        const options = roleRows
-          .map((role) => {
-            const id = String(role.id ?? "");
-            const name = String(role.name ?? "");
-            if (!id || !name) return null;
-            return {
-              value: id,
-              label: name,
-            } satisfies FilterOption;
-          })
-          .filter((option): option is FilterOption => Boolean(option));
-
-        setRoleOptions([ALL_ROLE_OPTION, ...options]);
-      } catch (err) {
-        const apiError = normalizeApiError(err);
-        setError(apiError.message ?? "Failed to load agency roles");
-      }
-    };
-
-    void loadAgencyRoles();
+    void (async () => {
+      await loadAgencyRoles();
+      if (cancelled) return;
+    })();
     return () => {
       cancelled = true;
     };
@@ -188,6 +208,98 @@ function AgencyListPage() {
     };
   }, [appliedRoleId, appliedSearch, hasSearched, page]);
 
+  const fetchMessages = async () => {
+    setIsLoadingMessages(true);
+    try {
+      const data = await cmsApi.fetchMessages();
+      const rows = Array.isArray(data)
+        ? data
+        : Array.isArray((data as { data?: unknown[] })?.data)
+          ? ((data as { data: unknown[] }).data ?? [])
+          : [];
+
+      const parsed = rows
+        .map((item) => {
+          const row = (item ?? {}) as Record<string, unknown>;
+          const id = String(row.id ?? "");
+          const title = String(row.title ?? "");
+          const content = String(row.content ?? "");
+          if (!id || !title) return null;
+          return { id, title, content } satisfies MessageOption;
+        })
+        .filter((option): option is MessageOption => Boolean(option));
+
+      setMessageOptions(parsed);
+    } catch {
+      setMessageOptions([]);
+      toast.error("Failed to load messages");
+    } finally {
+      setIsLoadingMessages(false);
+    }
+  };
+
+  const openSendToAgentModal = async (agency: Agency) => {
+    setIsSendingToAllAgents(false);
+    setSelectedAgency(agency);
+    setSelectedMessageId("");
+    setIsMessageModalOpen(true);
+    await fetchMessages();
+  };
+
+  const openSendToAllAgentsModal = async () => {
+    setIsSendingToAllAgents(true);
+    setSelectedAgency(null);
+    setSelectedMessageId("");
+    setIsMessageModalOpen(true);
+    await fetchMessages();
+  };
+
+  const selectedMessage = messageOptions.find((message) => message.id === selectedMessageId) ?? null;
+
+  const handleSendMessage = () => {
+    if (!selectedMessageId) {
+      toast.error("Please select a message");
+      return;
+    }
+
+    if (isSendingToAllAgents) {
+      toast.info(`Send-to-all endpoint pending. Selected: "${selectedMessage?.title ?? "message"}".`);
+    } else {
+      toast.info(
+        `Send-to-agent endpoint pending for ${selectedAgency?.username ?? "agent"}. Selected: "${selectedMessage?.title ?? "message"}".`
+      );
+    }
+
+    setIsMessageModalOpen(false);
+  };
+
+  const tableColumns = createColumns({
+    onSendToAgent: (agency) => {
+      void openSendToAgentModal(agency);
+    },
+    onSendToAllAgents: () => {
+      void openSendToAllAgentsModal();
+    },
+    onToggleTempBlock: (agency) => {
+      setRows((prev) =>
+        prev.map((row) =>
+          row.id === agency.id
+            ? {
+                ...row,
+                tempBlock: !row.tempBlock,
+                status: row.tempBlock ? "Active" : "Inactive",
+              }
+            : row
+        )
+      );
+      toast.success(
+        agency.tempBlock
+          ? `${agency.username} is now unblocked`
+          : `${agency.username} is now temporarily blocked`
+      );
+    },
+  });
+
   const paginationLabel = useMemo(
     () => `Page ${page} of ${totalPages} (${total} total rows)`,
     [page, total, totalPages]
@@ -211,6 +323,11 @@ function AgencyListPage() {
           onChange: (option) => {
             setSelectedRoleOption(option ?? ALL_ROLE_OPTION);
           },
+          onMenuOpen: () => {
+            if (roleOptions.length <= 1) {
+              void loadAgencyRoles();
+            }
+          },
           isMulti: false,
           placeholder: "All",
           containerClassName: "w-full sm:w-[260px]",
@@ -231,8 +348,22 @@ function AgencyListPage() {
               {error}
             </div>
           ) : null}
+          <div className="mb-3 flex items-center justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                void openSendToAllAgentsModal();
+              }}
+              className="text-emerald-600 hover:bg-emerald-50"
+              title="Send message to all agents"
+              aria-label="Send message to all agents"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
           <DataTable
-            columns={columns}
+            columns={tableColumns}
             data={rows}
             loading={isLoading}
             pageSize={PAGE_SIZE}
@@ -277,9 +408,58 @@ function AgencyListPage() {
           </div>
         </>
       )}
+
+      <Modal isOpen={isMessageModalOpen} onClose={() => setIsMessageModalOpen(false)} size="lg">
+        <ModalHeader>
+          {isSendingToAllAgents
+            ? "Send Message to All Agents"
+            : `Send Message to ${selectedAgency?.username ?? "Agent"}`}
+        </ModalHeader>
+        <ModalBody className="space-y-4 py-6">
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+              Select Message
+            </label>
+            <select
+              value={selectedMessageId}
+              onChange={(event) => setSelectedMessageId(event.target.value)}
+              className="w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm text-gray-700 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+              disabled={isLoadingMessages}
+            >
+              <option value="">
+                {isLoadingMessages ? "Loading messages..." : "Choose a message"}
+              </option>
+              {messageOptions.map((message) => (
+                <option key={message.id} value={message.id}>
+                  {message.title}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {selectedMessage ? (
+            <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900">
+              <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{selectedMessage.title}</p>
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">{selectedMessage.content}</p>
+            </div>
+          ) : null}
+        </ModalBody>
+        <ModalFooter>
+          <div className="flex w-full items-center justify-end gap-3">
+            <Button variant="outline" onClick={() => setIsMessageModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSendMessage}
+              disabled={!selectedMessageId || isLoadingMessages || messageOptions.length === 0}
+            >
+              Send
+            </Button>
+          </div>
+        </ModalFooter>
+      </Modal>
     </div>
   );
 }
 
 export default withAuth(AgencyListPage);
-

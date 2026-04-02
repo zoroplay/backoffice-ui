@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { withAuth } from "@/utils/withAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,9 +8,9 @@ import Button from "@/components/ui/button/Button";
 import { DataTable } from "@/components/tables/DataTable";
 import { Plus, Trash2, Settings, Users, Calculator, Wallet, Search, RefreshCw, Layers } from "lucide-react";
 import { toast } from "sonner";
-import Badge from "@/components/ui/badge/Badge";
 import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
+import { agentsApi, normalizeApiError } from "@/lib/api";
 
 import { 
   providers, 
@@ -24,9 +24,15 @@ import { bonusesApi } from "@/lib/api/modules/bonus.service";
 
 const sectionHeaderClassName = "flex items-center gap-2 bg-brand-500 p-4 text-white font-semibold rounded-t-2xl";
 
+type AgentOption = {
+  value: string;
+  label: string;
+};
+
 const PowerBonusReportPage = () => {
-  const [activeTab, setActiveTab] = useState("configurations");
   const [isLoading, setIsLoading] = useState(false);
+  const [isAgentsLoading, setIsAgentsLoading] = useState(false);
+  const [agentOptions, setAgentOptions] = useState<AgentOption[]>([]);
 
   const providerOptions = providers.map(p => ({ value: p, label: p }));
 
@@ -62,13 +68,15 @@ const PowerBonusReportPage = () => {
   const [dashForm, setDashForm] = useState({
     provider: "",
     from: "",
-    to: ""
+    to: "",
+    agentId: "",
   });
   const [dashboardData, setDashboardData] = useState<DashboardRow[]>([]);
 
   // Fetch Configurations on mount
-  React.useEffect(() => {
+  useEffect(() => {
     fetchConfigs();
+    fetchAgentOptions();
   }, []);
 
   const fetchConfigs = async () => {
@@ -80,6 +88,67 @@ const PowerBonusReportPage = () => {
       toast.error("Failed to fetch configurations");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchAgentOptions = async () => {
+    try {
+      setIsAgentsLoading(true);
+
+      let page = 1;
+      let lastPage = 1;
+      const collected = new Map<string, AgentOption>();
+
+      do {
+        const response = await agentsApi.getAgents({
+          page,
+          search: "",
+          agent_type: "",
+          state_id: "",
+        });
+
+        const payload = response as {
+          data?: {
+            data?: unknown[];
+            meta?: {
+              lastPage?: number;
+            };
+          };
+        };
+
+        const rows = Array.isArray(payload?.data?.data) ? payload.data.data : [];
+
+        rows.forEach((item) => {
+          const row = (item ?? {}) as Record<string, unknown>;
+          const id = String(row.id ?? row.username ?? "").trim();
+          if (!id) return;
+
+          const username = String(row.username ?? "").trim();
+          const fullName = String(
+            row.name ?? `${row.firstName ?? ""} ${row.lastName ?? ""}`.trim()
+          ).trim();
+
+          const label = fullName
+            ? `${fullName} (${username || id})`
+            : username && username !== id
+              ? `${username} (${id})`
+              : id;
+
+          collected.set(id, { value: id, label });
+        });
+
+        const parsedLastPage = Number(payload?.data?.meta?.lastPage ?? 1);
+        lastPage = Number.isFinite(parsedLastPage) && parsedLastPage > 0 ? parsedLastPage : 1;
+        page += 1;
+      } while (page <= lastPage);
+
+      setAgentOptions(Array.from(collected.values()));
+    } catch (error) {
+      const apiError = normalizeApiError(error);
+      toast.error(apiError.message || "Failed to load available agents");
+      setAgentOptions([]);
+    } finally {
+      setIsAgentsLoading(false);
     }
   };
 
@@ -122,7 +191,7 @@ const PowerBonusReportPage = () => {
 
   const fetchAgentAssignments = async () => {
     if (!searchAgentId) {
-      toast.error("Please enter an Agent ID");
+      toast.error("Please select an agent");
       return;
     }
     try {
@@ -178,7 +247,11 @@ const PowerBonusReportPage = () => {
         return;
       }
       setIsLoading(true);
-      await bonusesApi.payPowerBonusToAgents(dashForm);
+      await bonusesApi.payPowerBonusToAgents({
+        provider: dashForm.provider,
+        from: dashForm.from,
+        to: dashForm.to,
+      });
       toast.success("Payout process triggered successfully");
     } catch (error) {
       toast.error("Failed to trigger payout");
@@ -199,7 +272,7 @@ const PowerBonusReportPage = () => {
     <div className="space-y-6 p-4">
       <PageBreadcrumb pageTitle="Power Bonus Report" />
 
-      <Tabs defaultValue="configurations" onValueChange={setActiveTab} className="w-full">
+      <Tabs defaultValue="configurations" className="w-full">
         <TabsList className="mb-6 p-1 bg-gray-100 dark:bg-gray-800 rounded-xl">
           <TabsTrigger value="configurations" className="px-6 py-2.5 rounded-lg"><Settings className="w-4 h-4 mr-2" /> Configurations</TabsTrigger>
           <TabsTrigger value="assignments" className="px-6 py-2.5 rounded-lg"><Users className="w-4 h-4 mr-2" /> Assignments</TabsTrigger>
@@ -221,7 +294,7 @@ const PowerBonusReportPage = () => {
                   <Select 
                     options={providerOptions} 
                     placeholder="Select provider" 
-                    onChange={(val: any) => setNewConfig({ ...newConfig, provider: val.value })} 
+                    onChange={(provider) => setNewConfig({ ...newConfig, provider })} 
                   />
                 </div>
                 <div className="space-y-2">
@@ -368,11 +441,13 @@ const PowerBonusReportPage = () => {
               <div className={sectionHeaderClassName}><Plus className="w-5 h-5" /> Assign Agent to Power Bonus</div>
               <div className="p-6 space-y-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold">Agent ID</label>
-                  <Input 
-                    placeholder="Ex: AGENT-123" 
+                  <label className="text-sm font-semibold">Agent</label>
+                  <Select
+                    options={agentOptions}
+                    placeholder={isAgentsLoading ? "Loading agents..." : "Select agent"}
                     value={assignForm.agentId}
-                    onChange={(e) => setAssignForm({ ...assignForm, agentId: e.target.value })}
+                    onChange={(agentId) => setAssignForm({ ...assignForm, agentId })}
+                    className={isAgentsLoading ? "opacity-75" : ""}
                   />
                 </div>
                 <div className="space-y-2">
@@ -388,7 +463,7 @@ const PowerBonusReportPage = () => {
                   <Select 
                     options={providerOptions} 
                     placeholder="Select provider" 
-                    onChange={(val: any) => setAssignForm({ ...assignForm, provider: val.value })} 
+                    onChange={(provider) => setAssignForm({ ...assignForm, provider })} 
                   />
                 </div>
                 <Button className="w-full mt-2" onClick={handleAssignAgent} disabled={isLoading}>
@@ -401,12 +476,14 @@ const PowerBonusReportPage = () => {
               <div className={sectionHeaderClassName}><Search className="w-5 h-5" /> Fetch Agent Assignments</div>
               <div className="p-6 space-y-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold">Agent ID</label>
-                  <div className="flex gap-2">
-                    <Input 
-                      placeholder="Search Agent ID" 
+                  <label className="text-sm font-semibold">Agent</label>
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <Select
+                      options={agentOptions}
+                      placeholder={isAgentsLoading ? "Loading agents..." : "Select agent"}
                       value={searchAgentId}
-                      onChange={(e) => setSearchAgentId(e.target.value)}
+                      onChange={setSearchAgentId}
+                      className={isAgentsLoading ? "opacity-75" : ""}
                     />
                     <Button onClick={fetchAgentAssignments} disabled={isLoading}>
                       {isLoading ? "Loading..." : "Load"}
@@ -440,31 +517,34 @@ const PowerBonusReportPage = () => {
               <div className={sectionHeaderClassName}><RefreshCw className="w-5 h-5" /> Calculate For Agent</div>
               <div className="p-6 grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold">Provider</label>
+                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-200">Provider</label>
                   <Select 
                     options={providerOptions} 
-                    onChange={(val: any) => setCalcForm({ ...calcForm, provider: val.value })} 
+                    onChange={(provider) => setCalcForm({ ...calcForm, provider })} 
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold">From</label>
+                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-200">From</label>
                   <Input 
                     type="date" 
                     onChange={(e) => setCalcForm({ ...calcForm, from: e.target.value })}
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold">To</label>
+                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-200">To</label>
                   <Input 
                     type="date" 
                     onChange={(e) => setCalcForm({ ...calcForm, to: e.target.value })}
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold">Agent ID</label>
-                  <Input 
-                    placeholder="Optional" 
-                    onChange={(e) => setCalcForm({ ...calcForm, agentId: e.target.value })}
+                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-200">Agent</label>
+                  <Select
+                    options={agentOptions}
+                    placeholder={isAgentsLoading ? "Loading agents..." : "Select agent (optional)"}
+                    value={calcForm.agentId}
+                    onChange={(agentId) => setCalcForm({ ...calcForm, agentId })}
+                    className={isAgentsLoading ? "opacity-75" : ""}
                   />
                 </div>
                 <Button onClick={handleRunCalculation} disabled={isLoading}>
@@ -475,26 +555,36 @@ const PowerBonusReportPage = () => {
 
             <section className="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-950 overflow-hidden">
               <div className={sectionHeaderClassName}><Calculator className="w-5 h-5" /> Dashboard Breakdown</div>
-              <div className="p-6 border-b border-gray-100 dark:border-gray-800 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+              <div className="p-6 border-b border-gray-100 dark:border-gray-800 grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold">Provider</label>
+                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-200">Provider</label>
                   <Select 
                     options={providerOptions} 
-                    onChange={(val: any) => setDashForm({ ...dashForm, provider: val.value })} 
+                    onChange={(provider) => setDashForm({ ...dashForm, provider })} 
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold">From</label>
+                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-200">From</label>
                   <Input 
                     type="date" 
                     onChange={(e) => setDashForm({ ...dashForm, from: e.target.value })}
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold">To</label>
+                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-200">To</label>
                   <Input 
                     type="date" 
                     onChange={(e) => setDashForm({ ...dashForm, to: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-200">Agent</label>
+                  <Select
+                    options={agentOptions}
+                    placeholder={isAgentsLoading ? "Loading agents..." : "Select agent (optional)"}
+                    value={dashForm.agentId}
+                    onChange={(agentId) => setDashForm({ ...dashForm, agentId })}
+                    className={isAgentsLoading ? "opacity-75" : ""}
                   />
                 </div>
                 <Button onClick={handleLoadDashboard} disabled={isLoading}>
@@ -520,7 +610,7 @@ const PowerBonusReportPage = () => {
                   <label className="text-sm font-semibold">Provider</label>
                   <Select 
                     options={providerOptions} 
-                    onChange={(val: any) => setDashForm({ ...dashForm, provider: val.value })} 
+                    onChange={(provider) => setDashForm({ ...dashForm, provider })} 
                   />
                 </div>
                 <div className="space-y-2">

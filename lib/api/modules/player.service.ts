@@ -31,7 +31,31 @@ type WalletAdjustmentPayload = {
   channel: "admin";
 };
 
+type PlayerRegistrationReportPayload = {
+  from: string;
+  to: string;
+  source: string;
+  period: "date_range" | "today" | "yesterday" | "this_week" | "this_month";
+  status: "all" | "active" | "inactive";
+  clientId?: number;
+};
 
+type PlayerListReportPayload = {
+  country: string;
+  state: string;
+  username: string;
+  source: string;
+  type?: "frozen" | "inactive";
+  clientId?: number;
+};
+
+type GetPlayerTransactionsParams = {
+  playerId: number | string;
+  page?: number;
+  startDate: string;
+  endDate: string;
+  clientId?: number;
+};
 
 export const playerApi = {
   searchPlayers(payload: PlayerSearchPayload) {
@@ -56,7 +80,7 @@ export const playerApi = {
         clientId,
         ...payload,
       })
-    );
+    ); 
   },
   verifyAccount(id: number) {
     return unwrapData(newApiClient.put(`/admin/player-management/verify-account/${id}`));
@@ -70,6 +94,50 @@ export const playerApi = {
    return unwrapData(
      newApiClient.get(`/admin/player-management/segments?clientId=${clientId}`)
    );
+  },
+  getRegistrationReport(page: number, payload: PlayerRegistrationReportPayload) {
+    return unwrapData(
+      newApiClient.post(`/admin/players/registration?page=${page}`, {
+        clientId,
+        ...payload,
+      })
+    );
+  },
+  getFrozenAccountsReport(page: number, payload: Omit<PlayerListReportPayload, "type">) {
+    return unwrapData(
+      newApiClient.post(`/admin/players/list?page=${page}`, {
+        type: "frozen",
+        clientId,
+        ...payload,
+      })
+    );
+  },
+  getInactivePlayersReport(page: number, payload: Omit<PlayerListReportPayload, "type">) {
+    return unwrapData(
+      newApiClient.post(`/admin/players/list?page=${page}`, {
+        type: "inactive",
+        clientId,
+        ...payload,
+      })
+    );
+  },
+  getOnlinePlayersReport(page: number, payload: Omit<PlayerListReportPayload, "type">) {
+    return unwrapData(
+      newApiClient.post(`/admin/players/list?page=${page}`, {
+        clientId,
+        ...payload,
+      })
+    );
+  },
+  getPlayerTransactions(params: GetPlayerTransactionsParams) {
+    const query = new URLSearchParams({
+      clientId: String(params.clientId ?? clientId),
+      page: String(params.page ?? 1),
+      startDate: params.startDate,
+      endDate: params.endDate,
+    });
+    return unwrapData(
+      newApiClient.get(`/admin/players/${params.playerId}/transactions?${query.toString()}`)
+    );
   }
 };
-

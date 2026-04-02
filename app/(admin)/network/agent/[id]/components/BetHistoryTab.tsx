@@ -3,7 +3,6 @@
 import React, { useCallback, useEffect, useState, useMemo } from "react";
 import { DataTable } from "@/components/tables/DataTable";
 import { createColumns, BetHistory } from "@/app/(admin)/tickets/bets-history/columns";
-import { betHistory } from "@/app/(admin)/tickets/bets-history/data";
 import type { SingleValue } from "react-select";
 import type { Range } from "react-date-range";
 import { useSearch } from "@/context/SearchContext";
@@ -11,6 +10,7 @@ import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
 import { Info } from "lucide-react";
 import type { Agency } from "@/app/(admin)/network/agency-list/columns";
 import BetDetailsModal from "@/app/(admin)/tickets/bets-history/components/BetDetailsModal";
+import { betsApi, normalizeApiError } from "@/lib/api";
 
 const defaultDateRange: Range = {
   startDate: new Date(new Date().setDate(new Date().getDate() - 30)),
@@ -103,14 +103,14 @@ interface BetHistoryTabProps {
 }
 
 function BetHistoryTab({ agentId, agent }: BetHistoryTabProps) {
-  const [filteredData, setFilteredData] = useState<BetHistory[]>(betHistory);
+  const effectiveAgentId = agentId || agent.id || agent.username;
+  const [rows, setRows] = useState<BetHistory[]>([]);
   const [operationFilter, setOperationFilter] = useState<FilterOption | null>(
     null
   );
   const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
-  const [appliedOperationFilter, setAppliedOperationFilter] =
-    useState<FilterOption | null>(null);
-  const [appliedDateRange, setAppliedDateRange] = useState<Range | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [selectedBet, setSelectedBet] = useState<BetHistory | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { query, setPlaceholder, resetPlaceholder, resetQuery } = useSearch();
@@ -144,112 +144,128 @@ function BetHistoryTab({ agentId, agent }: BetHistoryTabProps) {
     };
   }, [resetPlaceholder, setPlaceholder]);
 
-  // Filter data by agent - in a real app, this would filter by agentId
-  const agentFilteredData = useMemo(() => {
-    // For now, we'll return all data. In production, filter by agentId
-    return betHistory;
-  }, [agentId]);
+  const toNumber = (value: unknown) => {
+    const num = Number(value ?? 0);
+    return Number.isFinite(num) ? num : 0;
+  };
 
-  const filterBets = useCallback(
-    (
-      value: string,
-      operation: { value: string; label: string } | null = appliedOperationFilter,
-      range: Range | null = appliedDateRange
-    ) => {
-      const searchTerm = value.trim().toLowerCase();
+  const formatDateTime = (date: Date | undefined, endOfDay = false) => {
+    const d = date ? new Date(date) : new Date();
+    if (endOfDay) {
+      d.setHours(23, 59, 0, 0);
+    } else {
+      d.setHours(0, 0, 0, 0);
+    }
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
 
-      return agentFilteredData.filter((row) => {
-        let match = true;
+  const parseList = (input: unknown): Record<string, unknown>[] => {
+    if (Array.isArray(input)) return input as Record<string, unknown>[];
+    if (input && typeof input === "object") {
+      const record = input as Record<string, unknown>;
+      if (Array.isArray(record.data)) return record.data as Record<string, unknown>[];
+      if (record.data && typeof record.data === "object") {
+        const nested = record.data as Record<string, unknown>;
+        if (Array.isArray(nested.data)) return nested.data as Record<string, unknown>[];
+      }
+    }
+    return [];
+  };
 
-        if (searchTerm) {
-          const matchesSearch = searchableFields.some((field) =>
-            String(row[field] ?? "").toLowerCase().includes(searchTerm)
-          );
+  const mapStatus = (value: unknown): BetHistory["betStatus"] => {
+    const normalized = String(value ?? "").toLowerCase();
+    if (normalized.includes("won")) return "Won";
+    if (normalized.includes("lost")) return "Lost";
+    if (normalized.includes("cancel")) return "Cancelled";
+    return "Pending";
+  };
 
-          if (!matchesSearch) {
-            return false;
-          }
-        }
+  const mapRow = (row: Record<string, unknown>): BetHistory => {
+    const returns = toNumber(row.returns ?? row.return ?? row.potential_winnings);
+    const stake = toNumber(row.stake);
+    const winLossAmount = returns - stake;
 
-        if (operation) {
-          const val = operation.value.toLowerCase();
+    return {
+      betslipId: String(row.betslipId ?? row.betslip_id ?? row.coupon_id ?? ""),
+      betType: String(row.betType ?? row.bet_type ?? ""),
+      placedOn: String(row.placedOn ?? row.placed_on ?? row.created_at ?? ""),
+      placedBy: String(row.placedBy ?? row.placed_by ?? row.username ?? ""),
+      betStatus: mapStatus(row.betStatus ?? row.status ?? row.state),
+      odds: toNumber(row.odds ?? row.total_odds),
+      stake,
+      returns,
+      winLoss: `${winLossAmount >= 0 ? "+" : "-"}₦${Math.abs(winLossAmount).toLocaleString()}`,
+      sport: String(row.sport ?? ""),
+      league: String(row.league ?? ""),
+      event: String(row.event ?? row.event_name ?? ""),
+      market: String(row.market ?? row.market_name ?? ""),
+      lostEvents: toNumber(row.lostEvents ?? row.lost_events),
+      clientType: "Agent",
+      bonus: toNumber(row.bonus),
+      settledAt: String(row.settledAt ?? row.settled_at ?? ""),
+    };
+  };
 
-          if (["website", "cashier", "mobile"].includes(val)) {
-            match = match && row.clientType.toLowerCase() === val;
-          }
-
-          if (["single", "multi", "system", "split"].includes(val)) {
-            match = match && row.betType.toLowerCase() === val;
-          }
-
-          if (val.startsWith("stake_")) {
-            const stake = row.stake;
-            if (val === "stake_low") match = match && stake < 1000;
-            if (val === "stake_medium")
-              match = match && stake >= 1000 && stake <= 5000;
-            if (val === "stake_high") match = match && stake > 5000;
-          }
-
-          if (val.startsWith("return_")) {
-            const returns = row.returns;
-            if (val === "return_low") match = match && returns < 5000;
-            if (val === "return_medium")
-              match = match && returns >= 5000 && returns <= 10000;
-            if (val === "return_high") match = match && returns > 10000;
-          }
-
-          if (["prematch", "live"].includes(val)) {
-            const text = `${row.market} ${row.event}`.toLowerCase();
-            match = match && text.includes(val);
-          }
-
-          if (["pending", "won", "lost", "canceled", "cut 2"].includes(val)) {
-            match = match && row.betStatus.toLowerCase() === val;
-          }
-
-          if (["paid", "unpaid"].includes(val)) {
-            const paidStatus = row.winLoss.startsWith("+") ? "paid" : "unpaid";
-            match = match && paidStatus === val;
-          }
-        }
-
-        if (range && range.startDate && range.endDate) {
-          const rowDate = new Date(row.placedOn);
-          const start = new Date(range.startDate);
-          const end = new Date(range.endDate);
-
-          start.setHours(0, 0, 0, 0);
-          end.setHours(23, 59, 59, 999);
-
-          match = match && rowDate >= start && rowDate <= end;
-        }
-
-        return match;
-      });
-    },
-    [appliedDateRange, appliedOperationFilter, agentFilteredData]
-  );
+  const fetchBetHistory = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const payload = {
+        period: "",
+        username: "",
+        from: formatDateTime(dateRange.startDate),
+        to: formatDateTime(dateRange.endDate, true),
+        bet_type: "",
+        event_type: "",
+        sport: "",
+        league: "",
+        market: "",
+        state: "",
+        group_type: "",
+        amount_range: "",
+        status: "settled",
+      };
+      const response = await betsApi.getAgentBetList(
+        effectiveAgentId,
+        payload,
+        1,
+        100
+      );
+      const list = parseList(response).map(mapRow);
+      setRows(list);
+    } catch (err) {
+      const apiError = normalizeApiError(err);
+      setError(apiError.message ?? "Failed to fetch bet history");
+      setRows([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [dateRange.endDate, dateRange.startDate, effectiveAgentId]);
 
   useEffect(() => {
-    setFilteredData(filterBets(query));
-  }, [filterBets, query]);
+    void fetchBetHistory();
+  }, [fetchBetHistory]);
+
+  const filteredData = useMemo(() => {
+    const searchTerm = query.trim().toLowerCase();
+    if (!searchTerm) return rows;
+    return rows.filter((row) =>
+      searchableFields.some((field) =>
+        String(row[field] ?? "").toLowerCase().includes(searchTerm)
+      )
+    );
+  }, [query, rows]);
 
   const applyFilters = () => {
-    const nextOperation = operationFilter;
-    const nextDateRange = dateRange;
-
-    setAppliedOperationFilter(nextOperation);
-    setAppliedDateRange(nextDateRange);
-    setFilteredData(filterBets(query, nextOperation, nextDateRange));
+    void fetchBetHistory();
   };
 
   const clearFilters = () => {
     setOperationFilter(null);
     setDateRange(defaultDateRange);
-    setAppliedOperationFilter(null);
-    setAppliedDateRange(null);
-    setFilteredData(agentFilteredData);
     resetQuery();
+    void fetchBetHistory();
   };
 
   return (
@@ -278,7 +294,13 @@ function BetHistoryTab({ agentId, agent }: BetHistoryTabProps) {
         }}
       />
 
-      <DataTable columns={columns} data={filteredData} />
+      {error ? (
+        <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          {error}
+        </div>
+      ) : null}
+
+      <DataTable columns={columns} data={filteredData} loading={isLoading} />
 
       {/* Bet Details Modal */}
       <BetDetailsModal

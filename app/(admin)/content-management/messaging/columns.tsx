@@ -1,7 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { Edit2, Trash2 } from "lucide-react";
+import { Edit2, Send, Trash2 } from "lucide-react";
 import Button from "@/components/ui/button/Button";
 
 export interface Message {
@@ -9,15 +9,18 @@ export interface Message {
   title: string;
   content: string;
   image?: string;
+  segmentId?: string;
+  segmentName?: string;
   status?: string;
   createdAt?: string;
 }
 
-export interface MessageRow extends Message {}
+export type MessageRow = Message;
 
 interface ActionColumnProps {
   onEdit: (row: MessageRow) => void;
   onDelete: (id: string) => void;
+  onSendNow: (row: MessageRow) => void;
 }
 
 export const columns: ColumnDef<MessageRow>[] = [
@@ -50,11 +53,19 @@ export const columns: ColumnDef<MessageRow>[] = [
   },
 ];
 
-export const createActionColumn = ({ onEdit, onDelete }: ActionColumnProps): ColumnDef<MessageRow> => ({
+export const createActionColumn = ({ onEdit, onDelete, onSendNow }: ActionColumnProps): ColumnDef<MessageRow> => ({
   id: "action",
   header: "Action",
   cell: ({ row }) => (
     <div className="flex items-center justify-center gap-2">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => onSendNow(row.original)}
+        className="p-2 h-auto text-brand-600 hover:bg-brand-50"
+      >
+        <Send className="h-3.5 w-3.5" />
+      </Button>
       <Button
         variant="outline"
         size="sm"

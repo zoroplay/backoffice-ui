@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useState, useMemo } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import type { SingleValue } from "react-select";
 import { DataTable } from "@/components/tables/DataTable";
 import type { Range } from "react-date-range";
@@ -9,6 +9,7 @@ import { useSearch } from "@/context/SearchContext";
 import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
 import { Info } from "lucide-react";
 import type { Agency } from "@/app/(admin)/network/agency-list/columns";
+import { normalizeApiError, playerApi, usersApi } from "@/lib/api";
 
 const defaultDateRange: Range = {
   startDate: new Date(new Date().setDate(new Date().getDate() - 30)),
@@ -16,26 +17,7 @@ const defaultDateRange: Range = {
   key: "selection",
 };
 
-type OperationOption = { value: string; label: string };
-
-const operationOptions: Array<{
-  label: string;
-  options: OperationOption[];
-}> = [
-  {
-    label: "Operation Type",
-    options: [
-      { value: "bet deposit", label: "Bet Deposit" },
-      { value: "bet winnings", label: "Bet Winnings" },
-      { value: "deposit", label: "Deposit" },
-      { value: "withdrawals", label: "Withdrawals" },
-      { value: "bonuses", label: "Bonuses" },
-      { value: "interaccount transfers", label: "Interaccount Transfers" },
-      { value: "cut stake", label: "CUT(1) Stake" },
-      { value: "cut 5%", label: "CUT(1) 5%" },
-    ],
-  },
-];
+type UserOption = { value: string; label: string };
 
 const searchableFields: Array<keyof Transaction> = [
   "transactionId",
@@ -48,214 +30,187 @@ interface TransactionsTabProps {
   agent: Agency;
 }
 
-// Generate agent-specific transaction data
-const generateAgentTransactions = (agentUsername: string): Transaction[] => {
-  // Transactions with amounts (in chronological order, oldest first)
-  const transactionData: Array<{
-    date: string;
-    transactionId: string;
-    operationType: string;
-    description: string;
-    amount: number;
-  }> = [
-    {
-      date: "2025-11-08",
-      transactionId: `TXN-${agentUsername}-012`,
-      operationType: "cut 5%",
-      description: `CUT(1) 5% commission`,
-      amount: -2500,
-    },
-    {
-      date: "2025-11-09",
-      transactionId: `TXN-${agentUsername}-011`,
-      operationType: "cut stake",
-      description: `CUT(1) Stake deduction`,
-      amount: -5000,
-    },
-    {
-      date: "2025-11-09",
-      transactionId: `TXN-${agentUsername}-010`,
-      operationType: "Deposit",
-      description: `Bank deposit from ${agentUsername}`,
-      amount: 40000,
-    },
-    {
-      date: "2025-11-10",
-      transactionId: `TXN-${agentUsername}-009`,
-      operationType: "Bet Winnings",
-      description: `Winning payout to player004`,
-      amount: -25000,
-    },
-    {
-      date: "2025-11-10",
-      transactionId: `TXN-${agentUsername}-008`,
-      operationType: "Interaccount Transfers",
-      description: `Transfer to sub-agent`,
-      amount: -15000,
-    },
-    {
-      date: "2025-11-11",
-      transactionId: `TXN-${agentUsername}-007`,
-      operationType: "Bet Deposit",
-      description: `Bet stake from player003`,
-      amount: -10000,
-    },
-    {
-      date: "2025-11-11",
-      transactionId: `TXN-${agentUsername}-006`,
-      operationType: "Bonuses",
-      description: `Bonus credit to ${agentUsername}`,
-      amount: 5000,
-    },
-    {
-      date: "2025-11-12",
-      transactionId: `TXN-${agentUsername}-005`,
-      operationType: "Withdrawals",
-      description: `Withdrawal request by ${agentUsername}`,
-      amount: -20000,
-    },
-    {
-      date: "2025-11-12",
-      transactionId: `TXN-${agentUsername}-004`,
-      operationType: "Deposit",
-      description: `Bank deposit from ${agentUsername}`,
-      amount: 30000,
-    },
-    {
-      date: "2025-11-13",
-      transactionId: `TXN-${agentUsername}-003`,
-      operationType: "Bet Winnings",
-      description: `Winning payout to player002`,
-      amount: -30000,
-    },
-    {
-      date: "2025-11-13",
-      transactionId: `TXN-${agentUsername}-002`,
-      operationType: "Bet Deposit",
-      description: `Bet stake from player001`,
-      amount: -15000,
-    },
-    {
-      date: "2025-11-14",
-      transactionId: `TXN-${agentUsername}-001`,
-      operationType: "Deposit",
-      description: `Bank deposit from ${agentUsername}`,
-      amount: 50000,
-    },
-  ];
-
-  // Calculate balances in chronological order
-  // Start with initial balance before first transaction
-  let balance = 100000;
-  
-  const transactionsWithBalances: Transaction[] = transactionData.map((tx) => {
-    const prevBalance = balance;
-    balance = prevBalance + tx.amount; // Add amount (can be negative)
-    
-    return {
-      date: tx.date,
-      transactionId: tx.transactionId,
-      username: agentUsername,
-      operationType: tx.operationType,
-      description: tx.description,
-      amount: tx.amount,
-      prevBalance,
-      balance,
-    };
-  });
-
-  // Reverse to show newest first
-  return transactionsWithBalances.reverse();
-};
-
 function TransactionsTab({ agentId, agent }: TransactionsTabProps) {
-  const [operationFilter, setOperationFilter] = useState<OperationOption | null>(
-    null
-  );
+  const effectiveAgentId = agentId || agent.id || agent.username;
+  const [userOptions, setUserOptions] = useState<UserOption[]>([]);
+  const [selectedUser, setSelectedUser] = useState<UserOption | null>(null);
   const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
-  const [appliedOperationFilter, setAppliedOperationFilter] = useState<
-    OperationOption | null
-  >(null);
-  const [appliedDateRange, setAppliedDateRange] = useState<Range | null>(null);
+  const [rows, setRows] = useState<Transaction[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { query, setPlaceholder, resetPlaceholder, resetQuery } = useSearch();
 
-  const handleOperationChange = useCallback(
-    (option: SingleValue<OperationOption>) => {
-      setOperationFilter(option ?? null);
-    },
-    []
-  );
+  const toNumber = (value: unknown) => {
+    const num = Number(value ?? 0);
+    return Number.isFinite(num) ? num : 0;
+  };
+
+  const formatDateTime = (date: Date | undefined, endOfDay = false) => {
+    const d = date ? new Date(date) : new Date();
+    if (endOfDay) {
+      d.setHours(23, 59, 59, 0);
+    } else {
+      d.setHours(0, 0, 0, 0);
+    }
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(
+      d.getHours()
+    )}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  };
+
+  const formatTransactionDate = (value: unknown) => {
+    const raw = String(value ?? "").trim();
+    if (!raw) return "";
+    const parsed = new Date(raw);
+    if (Number.isNaN(parsed.getTime())) {
+      return raw.replace(/\sGMT.*$/, "");
+    }
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${parsed.getFullYear()}-${pad(parsed.getMonth() + 1)}-${pad(
+      parsed.getDate()
+    )} ${pad(parsed.getHours())}:${pad(parsed.getMinutes())}:${pad(
+      parsed.getSeconds()
+    )}`;
+  };
 
   useEffect(() => {
     setPlaceholder("Search by Transaction ID, Keyword, or Username");
-
     return () => {
       resetPlaceholder();
     };
   }, [resetPlaceholder, setPlaceholder]);
 
-  // Generate agent-specific transaction data
-  const agentFilteredData = useMemo(() => {
-    return generateAgentTransactions(agent.username);
-  }, [agent.username]);
+  useEffect(() => {
+    let cancelled = false;
 
-  // Compute filtered data based on search, operation filter, and date range
+    const parseList = (input: unknown): Record<string, unknown>[] => {
+      if (Array.isArray(input)) return input as Record<string, unknown>[];
+      if (input && typeof input === "object") {
+        const record = input as Record<string, unknown>;
+        if (Array.isArray(record.data)) return record.data as Record<string, unknown>[];
+      }
+      return [];
+    };
+
+    const fetchUsers = async () => {
+      try {
+        const response = await usersApi.getAgentUsers({
+          agentId: effectiveAgentId,
+          page: 1,
+          user_type: "",
+        });
+        if (cancelled) return;
+
+        const options = parseList(response).map((row) => ({
+          value: String(row.id ?? ""),
+          label: String(row.username ?? row.code ?? row.id ?? ""),
+        }));
+
+        setUserOptions(options);
+        setSelectedUser(options[0] ?? null);
+      } catch (err) {
+        if (cancelled) return;
+        const apiError = normalizeApiError(err);
+        setError(apiError.message ?? "Failed to fetch agent users");
+      }
+    };
+
+    void fetchUsers();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [effectiveAgentId]);
+
+  const fetchTransactions = useCallback(async () => {
+    if (!selectedUser?.value) {
+      setRows([]);
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await playerApi.getPlayerTransactions({
+        playerId: selectedUser.value,
+        page: 1,
+        startDate: formatDateTime(dateRange.startDate),
+        endDate: formatDateTime(dateRange.endDate, true),
+      });
+
+      const parseList = (input: unknown): Record<string, unknown>[] => {
+        if (Array.isArray(input)) return input as Record<string, unknown>[];
+        if (input && typeof input === "object") {
+          const record = input as Record<string, unknown>;
+          if (Array.isArray(record.data)) return record.data as Record<string, unknown>[];
+          if (record.data && typeof record.data === "object") {
+            const nested = record.data as Record<string, unknown>;
+            if (Array.isArray(nested.data)) return nested.data as Record<string, unknown>[];
+          }
+        }
+        return [];
+      };
+
+      const mapped = parseList(response).map((row) => ({
+        date: formatTransactionDate(row.transactionDate ?? row.date ?? row.created_at),
+        transactionId: String(
+          row.referenceNo ?? row.transactionId ?? row.transaction_id ?? row.reference ?? row.id ?? ""
+        ),
+        username: String(row.username ?? row.user_name ?? selectedUser.label),
+        operationType: String(row.subject ?? row.operationType ?? row.operation_type ?? ""),
+        description: String(row.description ?? ""),
+        amount:
+          String(row.type ?? "").toLowerCase() === "debit"
+            ? -Math.abs(toNumber(row.amount))
+            : Math.abs(toNumber(row.amount)),
+        prevBalance: (() => {
+          const amount = toNumber(row.amount);
+          const balance = toNumber(row.balance);
+          const type = String(row.type ?? "").toLowerCase();
+          if (type === "debit") return balance + amount;
+          if (type === "credit") return balance - amount;
+          return toNumber(row.prevBalance ?? row.prev_balance);
+        })(),
+        balance: toNumber(row.balance),
+      })) satisfies Transaction[];
+
+      setRows(mapped);
+    } catch (err) {
+      const apiError = normalizeApiError(err);
+      setError(apiError.message ?? "Failed to fetch transactions");
+      setRows([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [dateRange.endDate, dateRange.startDate, selectedUser]);
+
+  useEffect(() => {
+    if (!selectedUser) return;
+    void fetchTransactions();
+  }, [fetchTransactions, selectedUser]);
+
   const filteredData = useMemo(() => {
     const normalizedSearch = query.trim().toLowerCase();
-    const operation = appliedOperationFilter;
-    const range = appliedDateRange;
+    if (!normalizedSearch) return rows;
+    return rows.filter((row) =>
+      searchableFields.some((field) =>
+        String(row[field] ?? "").toLowerCase().includes(normalizedSearch)
+      )
+    );
+  }, [query, rows]);
 
-    return agentFilteredData.filter((row: Transaction) => {
-      // Search filter
-      const matchesSearch =
-        !normalizedSearch ||
-        searchableFields.some((field) =>
-          String(row[field] ?? "").toLowerCase().includes(normalizedSearch)
-        );
-
-      if (!matchesSearch) return false;
-
-      // Operation filter
-      const matchesOperation = operation
-        ? row.operationType.toLowerCase() === operation.value.toLowerCase()
-        : true;
-
-      if (!matchesOperation) return false;
-
-      // Date range filter
-      const matchesDate =
-        range && range.startDate && range.endDate
-          ? (() => {
-              // Handle date format - could be "YYYY-MM-DD" or "YYYY-MM-DD HH:MM:SS"
-              const dateStr = row.date.split(" ")[0]; // Get just the date part
-              const rowDate = new Date(dateStr);
-              const start = new Date(range.startDate);
-              const end = new Date(range.endDate);
-
-              // Set to start/end of day for proper comparison
-              rowDate.setHours(0, 0, 0, 0);
-              start.setHours(0, 0, 0, 0);
-              end.setHours(23, 59, 59, 999);
-
-              return rowDate >= start && rowDate <= end;
-            })()
-          : true;
-
-      return matchesDate;
-    });
-  }, [query, appliedOperationFilter, appliedDateRange, agentFilteredData]);
+  const handleUserChange = (option: SingleValue<UserOption>) => {
+    setSelectedUser(option ?? null);
+  };
 
   const applyFilters = () => {
-    setAppliedOperationFilter(operationFilter);
-    setAppliedDateRange(dateRange);
+    void fetchTransactions();
   };
 
   const clearFilters = () => {
-    setOperationFilter(null);
     setDateRange(defaultDateRange);
-    setAppliedOperationFilter(null);
-    setAppliedDateRange(null);
     resetQuery();
+    void fetchTransactions();
   };
 
   return (
@@ -263,12 +218,11 @@ function TransactionsTab({ agentId, agent }: TransactionsTabProps) {
       <span className="flex items-center gap-1 mb-2 text-gray-500 dark:text-gray-400">
         <Info className="h-4 w-4" />
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          Use the global search to filter by Transaction ID, Keyword, or
-          Username, or use the filters below to narrow down the results.
+          Select a user to view transactions, then filter by date range.
         </p>
       </span>
 
-      <TableFilterToolbar<OperationOption>
+      <TableFilterToolbar<UserOption>
         dateRange={dateRange}
         onDateRangeChange={(range) => setDateRange(range)}
         actions={{
@@ -276,18 +230,23 @@ function TransactionsTab({ agentId, agent }: TransactionsTabProps) {
           onClear: clearFilters,
         }}
         selectProps={{
-          containerClassName: "max-w-[15rem]",
-          options: operationOptions,
-          placeholder: "Operation Type",
-          value: operationFilter,
-          onChange: handleOperationChange,
+          containerClassName: "max-w-[20rem]",
+          options: userOptions,
+          placeholder: "Select User",
+          value: selectedUser,
+          onChange: handleUserChange,
         }}
       />
 
-      <DataTable columns={columns} data={filteredData} />
+      {error ? (
+        <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          {error}
+        </div>
+      ) : null}
+
+      <DataTable columns={columns} data={filteredData} loading={isLoading} />
     </div>
   );
 }
 
 export default TransactionsTab;
-

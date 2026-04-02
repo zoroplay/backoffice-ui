@@ -153,7 +153,7 @@ export const bonusesApi = {
     );
   },
 
-  getPowerBonusDashboard(payload: { provider: string; from: string; to: string }) {
+  getPowerBonusDashboard(payload: { provider: string; from: string; to: string; agentId?: string }) {
     return unwrapData(
       newApiClient.post(`/commission/${clientId}/power-bonus/dashboard`, payload)
     );

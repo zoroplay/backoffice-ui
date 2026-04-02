@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useState, useMemo } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { DataTable } from "@/components/tables/DataTable";
 import type { SingleValue } from "react-select";
 import type { Range } from "react-date-range";
@@ -10,6 +10,7 @@ import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
 import { Info } from "lucide-react";
 import type { Agency } from "@/app/(admin)/network/agency-list/columns";
 import Badge from "@/components/ui/badge/Badge";
+import { betsApi, normalizeApiError } from "@/lib/api";
 
 const defaultDateRange: Range = {
   startDate: new Date(new Date().setDate(new Date().getDate() - 30)),
@@ -26,81 +27,6 @@ export type VirtualSportBet = {
   jackpot: number;
   status: "Won" | "Lost" | "Pending";
 };
-
-const mockVirtualSportData: VirtualSportBet[] = [
-  {
-    player: "player001",
-    ticketNumber: "VS-2025-001234",
-    stake: 5000,
-    placedOn: "2025-11-14 10:30:00",
-    amountWon: 15000,
-    jackpot: 50000,
-    status: "Won",
-  },
-  {
-    player: "player002",
-    ticketNumber: "VS-2025-001235",
-    stake: 3000,
-    placedOn: "2025-11-14 11:15:00",
-    amountWon: 0,
-    jackpot: 0,
-    status: "Lost",
-  },
-  {
-    player: "player003",
-    ticketNumber: "VS-2025-001236",
-    stake: 7500,
-    placedOn: "2025-11-14 12:00:00",
-    amountWon: 22500,
-    jackpot: 75000,
-    status: "Won",
-  },
-  {
-    player: "player004",
-    ticketNumber: "VS-2025-001237",
-    stake: 2000,
-    placedOn: "2025-11-14 13:45:00",
-    amountWon: 0,
-    jackpot: 0,
-    status: "Pending",
-  },
-  {
-    player: "player005",
-    ticketNumber: "VS-2025-001238",
-    stake: 10000,
-    placedOn: "2025-11-14 14:20:00",
-    amountWon: 30000,
-    jackpot: 100000,
-    status: "Won",
-  },
-  {
-    player: "player006",
-    ticketNumber: "VS-2025-001239",
-    stake: 1500,
-    placedOn: "2025-11-14 15:10:00",
-    amountWon: 0,
-    jackpot: 0,
-    status: "Lost",
-  },
-  {
-    player: "player007",
-    ticketNumber: "VS-2025-001240",
-    stake: 6000,
-    placedOn: "2025-11-14 16:00:00",
-    amountWon: 18000,
-    jackpot: 60000,
-    status: "Won",
-  },
-  {
-    player: "player008",
-    ticketNumber: "VS-2025-001241",
-    stake: 4000,
-    placedOn: "2025-11-14 17:30:00",
-    amountWon: 0,
-    jackpot: 0,
-    status: "Pending",
-  },
-];
 
 const columns: ColumnDef<VirtualSportBet>[] = [
   { accessorKey: "player", header: "Player" },
@@ -130,11 +56,7 @@ const columns: ColumnDef<VirtualSportBet>[] = [
         <Badge
           variant="light"
           color={
-            status === "Won"
-              ? "success"
-              : status === "Lost"
-              ? "error"
-              : "info"
+            status === "Won" ? "success" : status === "Lost" ? "error" : "info"
           }
         >
           {status}
@@ -167,10 +89,7 @@ const operationOptions: Array<{
   },
 ];
 
-const searchableFields: Array<keyof VirtualSportBet> = [
-  "player",
-  "ticketNumber",
-];
+const searchableFields: Array<keyof VirtualSportBet> = ["player", "ticketNumber"];
 
 interface VirtualSportTabProps {
   agentId: string;
@@ -178,119 +97,140 @@ interface VirtualSportTabProps {
 }
 
 function VirtualSportTab({ agentId, agent }: VirtualSportTabProps) {
-  const [filteredData, setFilteredData] =
-    useState<VirtualSportBet[]>(mockVirtualSportData);
-  const [operationFilter, setOperationFilter] = useState<FilterOption | null>(
-    null
-  );
+  const effectiveAgentId = agentId || agent.id || agent.username;
+  const [rows, setRows] = useState<VirtualSportBet[]>([]);
+  const [operationFilter, setOperationFilter] = useState<FilterOption | null>(null);
   const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
-  const [appliedOperationFilter, setAppliedOperationFilter] =
-    useState<FilterOption | null>(null);
-  const [appliedDateRange, setAppliedDateRange] = useState<Range | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { query, setPlaceholder, resetPlaceholder, resetQuery } = useSearch();
 
-  // Initialize with all data
-  useEffect(() => {
-    setFilteredData(mockVirtualSportData);
+  const handleOperationChange = useCallback((option: SingleValue<FilterOption>) => {
+    setOperationFilter(option ?? null);
   }, []);
-
-  const handleOperationChange = useCallback(
-    (option: SingleValue<FilterOption>) => {
-      setOperationFilter(option ?? null);
-    },
-    []
-  );
 
   useEffect(() => {
     setPlaceholder("Search by Player or Ticket Number");
-
     return () => {
       resetPlaceholder();
     };
   }, [resetPlaceholder, setPlaceholder]);
 
-  const agentFilteredData = useMemo(() => {
-    return mockVirtualSportData;
-  }, [agentId]);
+  const toNumber = (value: unknown) => {
+    const num = Number(value ?? 0);
+    return Number.isFinite(num) ? num : 0;
+  };
 
-  const filterBets = useCallback(
-    (
-      value: string,
-      operation: { value: string; label: string } | null = appliedOperationFilter,
-      range: Range | null = appliedDateRange
-    ) => {
-      const searchTerm = value.trim().toLowerCase();
+  const mapStatus = (value: unknown): VirtualSportBet["status"] => {
+    const normalized = String(value ?? "").toLowerCase();
+    if (normalized.includes("won")) return "Won";
+    if (normalized.includes("lost")) return "Lost";
+    return "Pending";
+  };
 
-      return agentFilteredData.filter((row) => {
-        let match = true;
+  const formatDateTime = (date: Date | undefined, endOfDay = false) => {
+    const d = date ? new Date(date) : new Date();
+    if (endOfDay) {
+      d.setHours(23, 59, 59, 0);
+    } else {
+      d.setHours(0, 0, 0, 0);
+    }
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${pad(d.getDate())}-${pad(d.getMonth() + 1)}-${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  };
 
-        if (searchTerm) {
-          const matchesSearch = searchableFields.some((field) =>
-            String(row[field] ?? "").toLowerCase().includes(searchTerm)
-          );
+  const parseList = (input: unknown): Record<string, unknown>[] => {
+    if (Array.isArray(input)) return input as Record<string, unknown>[];
+    if (input && typeof input === "object") {
+      const record = input as Record<string, unknown>;
+      if (Array.isArray(record.data)) return record.data as Record<string, unknown>[];
+      if (record.data && typeof record.data === "object") {
+        const nested = record.data as Record<string, unknown>;
+        if (Array.isArray(nested.data)) return nested.data as Record<string, unknown>[];
+      }
+    }
+    return [];
+  };
 
-          if (!matchesSearch) {
-            return false;
-          }
-        }
+  const mapRow = (row: Record<string, unknown>): VirtualSportBet => ({
+    player: String(row.player ?? row.username ?? ""),
+    ticketNumber: String(row.ticketNumber ?? row.ticket_number ?? row.betslip_id ?? ""),
+    stake: toNumber(row.stake),
+    placedOn: String(row.placedOn ?? row.placed_on ?? row.created_at ?? ""),
+    amountWon: toNumber(row.amountWon ?? row.amount_won ?? row.winnings),
+    jackpot: toNumber(row.jackpot),
+    status: mapStatus(row.status ?? row.state),
+  });
 
-        if (operation) {
-          const val = operation.value.toLowerCase();
-          if (["won", "lost", "pending"].includes(val)) {
-            match = match && row.status.toLowerCase() === val;
-          }
-        }
-
-        if (range && range.startDate && range.endDate) {
-          const rowDate = new Date(row.placedOn);
-          const start = new Date(range.startDate);
-          const end = new Date(range.endDate);
-
-          start.setHours(0, 0, 0, 0);
-          end.setHours(23, 59, 59, 999);
-
-          match = match && rowDate >= start && rowDate <= end;
-        }
-
-        return match;
-      });
-    },
-    [appliedDateRange, appliedOperationFilter, agentFilteredData]
-  );
+  const fetchVirtualBets = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const payload = {
+        period: "",
+        username: "",
+        from: formatDateTime(dateRange.startDate),
+        to: formatDateTime(dateRange.endDate, true),
+        bet_type: "",
+        event_type: "",
+        sport: "",
+        league: "",
+        market: "",
+        state: "",
+        group_type: "",
+        amount_range: "",
+        status: "",
+      };
+      const response = await betsApi.getAgentVirtualBets(
+        effectiveAgentId,
+        payload,
+        1,
+        100
+      );
+      setRows(parseList(response).map(mapRow));
+    } catch (err) {
+      const apiError = normalizeApiError(err);
+      setError(apiError.message ?? "Failed to fetch virtual bets");
+      setRows([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [dateRange.endDate, dateRange.startDate, effectiveAgentId]);
 
   useEffect(() => {
-    setFilteredData(filterBets(query));
-  }, [filterBets, query]);
+    void fetchVirtualBets();
+  }, [fetchVirtualBets]);
+
+  const filteredData = useMemo(() => {
+    const searchTerm = query.trim().toLowerCase();
+    if (!searchTerm) return rows;
+    return rows.filter((row) =>
+      searchableFields.some((field) =>
+        String(row[field] ?? "").toLowerCase().includes(searchTerm)
+      )
+    );
+  }, [query, rows]);
 
   const applyFilters = () => {
-    const nextOperation = operationFilter;
-    const nextDateRange = dateRange;
-
-    setAppliedOperationFilter(nextOperation);
-    setAppliedDateRange(nextDateRange);
-    setFilteredData(filterBets(query, nextOperation, nextDateRange));
+    void fetchVirtualBets();
   };
 
   const clearFilters = () => {
     setOperationFilter(null);
     setDateRange(defaultDateRange);
-    setAppliedOperationFilter(null);
-    setAppliedDateRange(null);
-    setFilteredData(agentFilteredData);
     resetQuery();
+    void fetchVirtualBets();
   };
 
-  const totalTickets = useMemo(() => {
-    return filteredData.length;
-  }, [filteredData]);
-
-  const totalStake = useMemo(() => {
-    return filteredData.reduce((sum, bet) => sum + bet.stake, 0);
-  }, [filteredData]);
-
-  const totalWinnings = useMemo(() => {
-    return filteredData.reduce((sum, bet) => sum + bet.amountWon, 0);
-  }, [filteredData]);
+  const totalTickets = useMemo(() => filteredData.length, [filteredData]);
+  const totalStake = useMemo(
+    () => filteredData.reduce((sum, bet) => sum + bet.stake, 0),
+    [filteredData]
+  );
+  const totalWinnings = useMemo(
+    () => filteredData.reduce((sum, bet) => sum + bet.amountWon, 0),
+    [filteredData]
+  );
 
   return (
     <div className="space-y-6">
@@ -317,6 +257,12 @@ function VirtualSportTab({ agentId, agent }: VirtualSportTabProps) {
           onChange: handleOperationChange,
         }}
       />
+
+      {error ? (
+        <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          {error}
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 shadow-sm">
@@ -345,10 +291,9 @@ function VirtualSportTab({ agentId, agent }: VirtualSportTabProps) {
         </div>
       </div>
 
-      <DataTable columns={columns} data={filteredData} />
+      <DataTable columns={columns} data={filteredData} loading={isLoading} />
     </div>
   );
 }
 
 export default VirtualSportTab;
-

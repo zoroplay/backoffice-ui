@@ -1,9 +1,10 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { DollarSign, Lock, Check } from "lucide-react";
+import { DollarSign, Lock, Check, Send, Users } from "lucide-react";
 import Link from "next/link";
 import Badge from "@/components/ui/badge/Badge";
+import Button from "@/components/ui/button/Button";
 
 export type Agency = {
   id?: string;
@@ -20,6 +21,12 @@ export type Agency = {
   tempBlock: boolean;
 };
 
+type AgencyActionCallbacks = {
+  onSendToAgent: (agency: Agency) => void;
+  onSendToAllAgents: () => void;
+  onToggleTempBlock: (agency: Agency) => void;
+};
+
 const formatCurrency = (amount: number) => {
   return `₦${amount.toLocaleString("en-NG", {
     minimumFractionDigits: 0,
@@ -27,7 +34,7 @@ const formatCurrency = (amount: number) => {
   })}`;
 };
 
-export const columns: ColumnDef<Agency>[] = [
+const baseColumns: ColumnDef<Agency>[] = [
   {
     accessorKey: "username",
     header: "Username",
@@ -129,27 +136,78 @@ export const columns: ColumnDef<Agency>[] = [
       </span>
     ),
   },
+];
+
+export const createColumns = (
+  callbacks: AgencyActionCallbacks
+): ColumnDef<Agency>[] => [
+  ...baseColumns,
   {
     id: "tempBlock",
     header: "Temp. Block",
     cell: ({ row }) => {
-      const hasBalance = row.original.balance > 0;
-      const isBlocked = row.original.tempBlock;
-      
+      const agency = row.original;
+      const agentId = agency.id || agency.username;
+      const isBlocked = agency.tempBlock;
+
       return (
         <div className="flex items-center justify-center gap-2">
-          {hasBalance && (
-            <DollarSign className="h-4 w-4 text-green-600 dark:text-green-400" />
-          )}
-          <span className="text-gray-400">|</span>
-          {isBlocked ? (
-            <Lock className="h-4 w-4 text-error-600 dark:text-error-400" />
-          ) : (
-            <Check className="h-4 w-4 text-success-600 dark:text-success-400" />
-          )}
+          <Link
+            href={`/network/agent/${agentId}`}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-emerald-500 text-white transition hover:bg-emerald-600"
+            title="Open Agent Overview"
+            aria-label="Open Agent Overview"
+          >
+            <DollarSign className="h-4 w-4" />
+          </Link>
+          <button
+            type="button"
+            onClick={() => callbacks.onToggleTempBlock(agency)}
+            className={`inline-flex h-8 w-8 items-center justify-center rounded-md text-white transition ${
+              isBlocked
+                ? "bg-amber-500 hover:bg-amber-600"
+                : "bg-gray-500 hover:bg-gray-600"
+            }`}
+            title={isBlocked ? "Unblock agent" : "Temporarily block agent"}
+            aria-label={isBlocked ? "Unblock agent" : "Temporarily block agent"}
+          >
+            {isBlocked ? (
+              <Lock className="h-4 w-4" />
+            ) : (
+              <Check className="h-4 w-4" />
+            )}
+          </button>
         </div>
       );
     },
+  },
+  {
+    id: "actions",
+    header: "Actions",
+    cell: ({ row }) => (
+      <div className="flex items-center justify-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => callbacks.onSendToAgent(row.original)}
+          className="p-2 h-auto text-brand-600 hover:bg-brand-50"
+          title="Send message to this agent"
+          aria-label="Send message to this agent"
+        >
+          <Send className="h-3.5 w-3.5" />
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={callbacks.onSendToAllAgents}
+          className="p-2 h-auto text-emerald-600 hover:bg-emerald-50"
+          title="Send message to all agents"
+          aria-label="Send message to all agents"
+        >
+          <Users className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+    ),
   },
 ];
 

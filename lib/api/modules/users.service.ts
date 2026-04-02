@@ -112,6 +112,32 @@ export type GetAllLogsParams = {
   from?: string;
   to?: string;
   clientId?: number;
+}; 
+
+export type GetAgentUsersParams = {
+  agentId: number | string;
+  page?: number;
+  user_type?: string;
+};
+
+export type RemoveAgentUserPayload = {
+  agentId: string;
+  userId: number;
+  type: "remove";
+};
+
+export type UpdateAgentUserPayload = {
+  clientId: number;
+  id: number;
+  username: string;
+  code: string;
+  role_id: number;
+  firstName: string;
+  lastName: string;
+  phone_number: string;
+  email: string;
+  rolename: string;
+  balance: number;
 };
 
 export const usersApi = {
@@ -175,5 +201,23 @@ export const usersApi = {
     });
 
     return unwrapData(newApiClient.get(`/admin/get_all_logs?${query.toString()}`));
+  },
+  getAgentUsers(params: GetAgentUsersParams) {
+    const query = new URLSearchParams({
+      agentId: String(params.agentId),
+      page: String(params.page ?? 1),
+      user_type: params.user_type ?? "",
+    });
+    return unwrapData(newApiClient.get(`/admin/retail/${clientId}/agent-users?${query.toString()}`));
+  },
+  removeAgentUser(payload: RemoveAgentUserPayload) {
+    return unwrapData(
+      newApiClient.post(`/admin/retail/add-remove-user/${clientId}`, payload)
+    );
+  },
+  updateAgentUser(agentId: string | number, payload: UpdateAgentUserPayload) {
+    return unwrapData(
+      newApiClient.post(`/admin/agent-management/agent/${agentId}/update-user`, payload)
+    );
   }
 };

@@ -1,17 +1,17 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import type { GroupBase } from "react-select";
 import { DataTable } from "@/components/tables/DataTable";
 import type { Range } from "react-date-range";
 import { defaultDateRange } from "@/components/common/DateRangeFilter";
-import { columns } from "@/app/(admin)/report/gaming-activities/column";
-import { tableData } from "@/app/(admin)/report/gaming-activities/data";
+import { columns, type TableDataTypes } from "@/app/(admin)/report/gaming-activities/column";
 import { useSearch } from "@/context/SearchContext";
 import type { MultiValue } from "react-select";
 import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
 import { Info } from "lucide-react";
 import type { Agency } from "@/app/(admin)/network/agency-list/columns";
+import { normalizeApiError, reportsApi } from "@/lib/api";
 
 type FilterSelection = { value: string; label: string };
 
@@ -73,8 +73,14 @@ interface GamingActivityTabProps {
 }
 
 function GamingActivityTab({ agentId, agent }: GamingActivityTabProps) {
+  const effectiveAgentId = agentId || agent.id || agent.username;
+  void effectiveAgentId;
+  void agent;
   const [filters, setFilters] = useState<FilterSelection[]>([]);
   const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
+  const [rows, setRows] = useState<TableDataTypes[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { query, setPlaceholder, resetPlaceholder } = useSearch();
 
   useEffect(() => {
@@ -85,23 +91,89 @@ function GamingActivityTab({ agentId, agent }: GamingActivityTabProps) {
     };
   }, [resetPlaceholder, setPlaceholder]);
 
-  // Filter data by agent - in a real app, this would filter by agentId
-  const agentFilteredData = useMemo(() => {
-    // For now, we'll return all data. In production, filter by agentId
-    return tableData;
-  }, [agentId]);
+  const toNumber = (value: unknown) => {
+    const num = Number(value ?? 0);
+    return Number.isFinite(num) ? num : 0;
+  };
+
+  const formatDateTime = (date: Date | undefined, endOfDay = false) => {
+    const d = date ? new Date(date) : new Date();
+    if (endOfDay) {
+      d.setHours(23, 59, 0, 0);
+    } else {
+      d.setHours(0, 0, 0, 0);
+    }
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+
+  const parseList = (input: unknown): Record<string, unknown>[] => {
+    if (Array.isArray(input)) return input as Record<string, unknown>[];
+    if (input && typeof input === "object") {
+      const record = input as Record<string, unknown>;
+      if (Array.isArray(record.data)) return record.data as Record<string, unknown>[];
+      if (record.data && typeof record.data === "object") {
+        const nested = record.data as Record<string, unknown>;
+        if (Array.isArray(nested.data)) return nested.data as Record<string, unknown>[];
+      }
+    }
+    return [];
+  };
+
+  const mapRow = (row: Record<string, unknown>): TableDataTypes => ({
+    group: toNumber(row.group),
+    bets: toNumber(row.bets ?? row.total_bets),
+    turnover: toNumber(row.turnover),
+    winnings: toNumber(row.winnings),
+    ggr: toNumber(row.ggr),
+    margin: String(row.margin ?? "0%"),
+  });
+
+  const fetchGamingActivity = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const payload = {
+        period: "",
+        username: "",
+        from: formatDateTime(dateRange.startDate),
+        to: formatDateTime(dateRange.endDate, true),
+        bet_type: "",
+        event_type: "",
+        sport: "",
+        league: "",
+        market: "",
+        group_type: "",
+        amount_range: "",
+        status: "",
+      };
+      const response = await reportsApi.getGamingActivity(payload, 1);
+      const list = parseList(response).map(mapRow);
+      setRows(list);
+    } catch (err) {
+      const apiError = normalizeApiError(err);
+      setError(apiError.message ?? "Failed to fetch gaming activity");
+      setRows([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [dateRange.endDate, dateRange.startDate]);
+
+  useEffect(() => {
+    void fetchGamingActivity();
+  }, [fetchGamingActivity]);
 
   const filteredData = useMemo(() => {
     const searchTerm = query.trim().toLowerCase();
 
     if (!searchTerm) {
-      return agentFilteredData;
+      return rows;
     }
 
-    return agentFilteredData.filter((row) =>
+    return rows.filter((row) =>
       row.group.toString().toLowerCase().includes(searchTerm)
     );
-  }, [query, agentFilteredData]);
+  }, [query, rows]);
 
   const handleFilterChange = (value: MultiValue<FilterSelection>) => {
     const latestSelections = new Map<string, FilterSelection>();
@@ -143,6 +215,15 @@ function GamingActivityTab({ agentId, agent }: GamingActivityTabProps) {
       <TableFilterToolbar<FilterSelection, true, GroupBase<FilterSelection>>
         dateRange={dateRange}
         onDateRangeChange={setDateRange}
+        actions={{
+          onSearch: () => {
+            void fetchGamingActivity();
+          },
+          onClear: () => {
+            setDateRange(defaultDateRange);
+            void fetchGamingActivity();
+          },
+        }}
         selectProps={{
           containerClassName: "max-w-[26rem]",
           options: groupedOptions,
@@ -153,7 +234,13 @@ function GamingActivityTab({ agentId, agent }: GamingActivityTabProps) {
         }}
       />
 
-      <DataTable columns={columns} data={filteredData} />
+      {error ? (
+        <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          {error}
+        </div>
+      ) : null}
+
+      <DataTable columns={columns} data={filteredData} loading={isLoading} />
     </div>
   );
 }
