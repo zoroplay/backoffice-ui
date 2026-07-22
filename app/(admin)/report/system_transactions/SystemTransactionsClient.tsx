@@ -1,7 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
+import { toast } from "sonner";
 import { Calendar, Search, X } from "lucide-react";
+
+import { POSTREQUEST } from "@/utils/base_request";
 
 type Period =
   | "today"
@@ -38,58 +41,14 @@ type SystemTransaction = {
   fromUserBalance: number;
 };
 
-const pageSize = 3;
-
-const systemTransactions: SystemTransaction[] = [
-  {
-    id: "sys-1001",
-    createdAt: "22/07/2026 09:20:12",
-    referenceNo: "SYS-1001",
-    fromUser: "finance@sbe",
-    toUser: "john_doe",
-    subject: "Manual Credit",
-    description: "Wallet adjustment for verified payout reversal",
-    amount: 120000,
-    transactionType: "credit",
-    fromUserBalance: 380000,
-  },
-  {
-    id: "sys-1002",
-    createdAt: "22/07/2026 11:05:40",
-    referenceNo: "SYS-1002",
-    fromUser: "risk@sbe",
-    toUser: "ticket-engine",
-    subject: "Ticket Void",
-    description: "Risk void on duplicated bet slip",
-    amount: 42500,
-    transactionType: "debit",
-    fromUserBalance: 157500,
-  },
-  {
-    id: "sys-1003",
-    createdAt: "22/07/2026 12:17:08",
-    referenceNo: "SYS-1003",
-    fromUser: "admin@sbe",
-    toUser: "bonus-wallet",
-    subject: "Bonus Adjustment",
-    description: "Campaign bonus correction",
-    amount: 15000,
-    transactionType: "debit",
-    fromUserBalance: 985000,
-  },
-  {
-    id: "sys-1004",
-    createdAt: "21/07/2026 18:42:55",
-    referenceNo: "SYS-1004",
-    fromUser: "cashier-345678-1",
-    toUser: "shop-lagos-12",
-    subject: "Cash Transfer",
-    description: "Retail float transfer",
-    amount: 75000,
-    transactionType: "credit",
-    fromUserBalance: 225000,
-  },
-];
+type Pagination = {
+  total: number;
+  per_page: number;
+  from: number;
+  to: number;
+  current_page: number;
+  last_page?: number;
+};
 
 const periodOptions: { value: Period; label: string }[] = [
   { value: "today", label: "Today" },
@@ -103,10 +62,11 @@ const periodOptions: { value: Period; label: string }[] = [
 ];
 
 function defaultFilters(): FilterState {
+  const today = new Date();
   return {
     period: "today",
-    from: "22-07-2026 00:00:00",
-    to: "22-07-2026 23:59:59",
+    from: formatDateTime(startOfDay(today)),
+    to: formatDateTime(endOfDay(today)),
     transactionType: "",
     transactionId: "",
     keyword: "",
@@ -115,23 +75,25 @@ function defaultFilters(): FilterState {
 }
 
 function rangeForPeriod(period: Period): Pick<FilterState, "from" | "to"> {
+  const today = new Date();
   switch (period) {
     case "yesterday":
-      return { from: "21-07-2026 00:00:00", to: "21-07-2026 23:59:59" };
+      return rangeForDate(addDays(today, -1));
     case "current_week":
-      return { from: "20-07-2026 00:00:00", to: "26-07-2026 23:59:59" };
+      return { from: formatDateTime(startOfIsoWeek(today)), to: formatDateTime(endOfIsoWeek(today)) };
     case "last_week":
-      return { from: "13-07-2026 00:00:00", to: "19-07-2026 23:59:59" };
+      return { from: formatDateTime(startOfIsoWeek(addDays(today, -7))), to: formatDateTime(endOfIsoWeek(addDays(today, -7))) };
     case "current_month":
-      return { from: "01-07-2026 00:00:00", to: "31-07-2026 23:59:59" };
+      return { from: formatDateTime(startOfMonth(today)), to: formatDateTime(endOfMonth(today)) };
     case "last_month":
-      return { from: "01-06-2026 00:00:00", to: "30-06-2026 23:59:59" };
+      return { from: formatDateTime(startOfMonth(addMonths(today, -1))), to: formatDateTime(endOfMonth(addMonths(today, -1))) };
     case "last_30_days":
-      return { from: "22-06-2026 00:00:00", to: "22-07-2026 23:59:59" };
+      return { from: formatDateTime(startOfDay(addDays(today, -30))), to: formatDateTime(endOfDay(today)) };
     case "today":
+      return rangeForDate(today);
     case "date_range":
     default:
-      return { from: "22-07-2026 00:00:00", to: "22-07-2026 23:59:59" };
+      return rangeForDate(today);
   }
 }
 
@@ -140,49 +102,167 @@ function money(value: number, type?: TransactionType) {
   return `NGN ${sign}${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 }
 
+function pad(value: number) {
+  return String(value).padStart(2, "0");
+}
+
+function formatDateTime(date: Date) {
+  return `${pad(date.getDate())}-${pad(date.getMonth() + 1)}-${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+}
+
+function startOfDay(date: Date) {
+  const copy = new Date(date);
+  copy.setHours(0, 0, 0, 0);
+  return copy;
+}
+
+function endOfDay(date: Date) {
+  const copy = new Date(date);
+  copy.setHours(23, 59, 59, 999);
+  return copy;
+}
+
+function startOfIsoWeek(date: Date) {
+  const copy = startOfDay(date);
+  const day = copy.getDay() || 7;
+  copy.setDate(copy.getDate() - day + 1);
+  return copy;
+}
+
+function endOfIsoWeek(date: Date) {
+  const copy = startOfIsoWeek(date);
+  copy.setDate(copy.getDate() + 6);
+  copy.setHours(23, 59, 59, 999);
+  return copy;
+}
+
+function startOfMonth(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), 1, 0, 0, 0);
+}
+
+function endOfMonth(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59);
+}
+
+function addDays(date: Date, days: number) {
+  const copy = new Date(date);
+  copy.setDate(copy.getDate() + days);
+  return copy;
+}
+
+function addMonths(date: Date, months: number) {
+  const copy = new Date(date);
+  copy.setMonth(copy.getMonth() + months);
+  return copy;
+}
+
+function rangeForDate(date: Date) {
+  return { from: formatDateTime(startOfDay(date)), to: formatDateTime(endOfDay(date)) };
+}
+
+function clientId() {
+  return process.env.NEXT_PUBLIC_CLIENT_ID ?? "";
+}
+
+function asRecord(value: unknown): Record<string, any> {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, any> : {};
+}
+
+function toNumber(value: unknown, fallback = 0) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function formatResultDate(value: unknown) {
+  if (!value) return "-";
+  const date = new Date(String(value));
+  if (Number.isNaN(date.getTime())) return String(value);
+  return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+}
+
+function mapRow(itemValue: unknown, index: number): SystemTransaction {
+  const item = asRecord(itemValue);
+  const tranxType = String(item.tranx_type ?? item.transactionType ?? item.transaction_type ?? "").toLowerCase();
+  return {
+    id: String(item.id ?? item.reference_no ?? item.referenceNo ?? `system-${index}`),
+    createdAt: formatResultDate(item.created_at ?? item.createdAt),
+    referenceNo: String(item.reference_no ?? item.referenceNo ?? "-"),
+    fromUser: String(item.from_user ?? item.fromUser ?? "-"),
+    toUser: String(item.to_user ?? item.toUser ?? "-"),
+    subject: String(item.subject ?? item.operation_type ?? item.operationType ?? "-"),
+    description: String(item.description ?? "-"),
+    amount: toNumber(item.amount),
+    transactionType: tranxType === "debit" ? "debit" : "credit",
+    fromUserBalance: toNumber(item.from_user_balance ?? item.fromUserBalance),
+  };
+}
+
+function paginationFrom(metaValue: unknown, page: number, count: number): Pagination {
+  const meta = asRecord(metaValue);
+  const perPage = toNumber(meta.perPage ?? meta.per_page ?? meta.limit, count || 10);
+  const total = toNumber(meta.total ?? meta.count, count);
+  const currentPage = toNumber(meta.page ?? meta.current_page ?? meta.currentPage, page);
+
+  return {
+    total,
+    per_page: perPage,
+    from: total ? (currentPage - 1) * perPage + 1 : 0,
+    to: Math.min(currentPage * perPage, total),
+    current_page: currentPage,
+    last_page: toNumber(meta.lastPage ?? meta.last_page ?? meta.lastPage, perPage ? Math.max(1, Math.ceil(total / perPage)) : 1),
+  };
+}
+
 export default function SystemTransactionsClient() {
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
   const [paging, setPaging] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
-
-  const rows = useMemo(() => {
-    const transactionId = filters.transactionId.trim().toLowerCase();
-    const keyword = filters.keyword.trim().toLowerCase();
-    const username = filters.username.trim().toLowerCase();
-    return systemTransactions.filter((row) => {
-      const matchesType = !filters.transactionType || row.transactionType === filters.transactionType;
-      const matchesId = !transactionId || row.referenceNo.toLowerCase().includes(transactionId);
-      const matchesKeyword =
-        !keyword ||
-        row.subject.toLowerCase().includes(keyword) ||
-        row.description.toLowerCase().includes(keyword);
-      const matchesUsername =
-        !username ||
-        row.fromUser.toLowerCase().includes(username) ||
-        row.toUser.toLowerCase().includes(username);
-      return matchesType && matchesId && matchesKeyword && matchesUsername;
-    });
-  }, [filters.keyword, filters.transactionId, filters.transactionType, filters.username]);
-
-  const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
-  const visibleRows = paging ? rows.slice((currentPage - 1) * pageSize, currentPage * pageSize) : rows;
+  const [rows, setRows] = useState<SystemTransaction[]>([]);
+  const [pagination, setPagination] = useState<Pagination>({ total: 0, per_page: 10, from: 0, to: 0, current_page: 1 });
+  const [loading, setLoading] = useState(false);
   const totalAmount = rows.reduce((sum, row) => sum + (row.transactionType === "debit" ? -row.amount : row.amount), 0);
 
   function updatePeriod(period: Period) {
     setFilters((current) => ({ ...current, period, ...rangeForPeriod(period) }));
-    setCurrentPage(1);
+  }
+
+  async function search(page = 1) {
+    setLoading(true);
+    const payload = {
+      period: filters.period,
+      from: filters.from,
+      to: filters.to,
+      transaction_type: filters.transactionType,
+      transaction_id: filters.transactionId,
+      keyword: filters.keyword,
+      username: filters.username,
+    };
+    const response = await POSTREQUEST<any>(`/admin/wallet/${clientId()}/get-system-transactions?page=${page}`, payload);
+    setLoading(false);
+
+    const body = asRecord(response.data);
+    const data = asRecord(body.data ?? body);
+    if (!response.ok || body.success === false || data.success === false) {
+      toast.error(response.error || body.message || data.message || "An error occured");
+      return;
+    }
+
+    const rawRows = Array.isArray(data.result) ? data.result : Array.isArray(data.data) ? data.data : [];
+    const mappedRows = rawRows.map(mapRow);
+    setRows(mappedRows);
+    setPagination(paginationFrom(data.meta, page, mappedRows.length));
   }
 
   function resetFilter() {
     setFilters(defaultFilters());
     setPaging(true);
-    setCurrentPage(1);
+    setRows([]);
+    setPagination({ total: 0, per_page: 10, from: 0, to: 0, current_page: 1 });
   }
 
   return (
     <div className="space-y-6">
       <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-950">
-        <form className="space-y-4">
+        <form className="space-y-4" onSubmit={(event) => { event.preventDefault(); void search(1); }}>
           <div className="grid gap-3 md:grid-cols-3">
             <select
               value={filters.period}
@@ -202,10 +282,7 @@ export default function SystemTransactionsClient() {
           <div className="grid gap-3 md:grid-cols-4">
             <select
               value={filters.transactionType}
-              onChange={(event) => {
-                setFilters((current) => ({ ...current, transactionType: event.target.value as TransactionType }));
-                setCurrentPage(1);
-              }}
+              onChange={(event) => setFilters((current) => ({ ...current, transactionType: event.target.value as TransactionType }))}
               className="h-10 rounded-md border border-gray-300 px-3 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white"
             >
               <option value="">Transaction Type</option>
@@ -237,9 +314,9 @@ export default function SystemTransactionsClient() {
               <input type="checkbox" checked={paging} onChange={(event) => setPaging(event.target.checked)} className="h-4 w-4 rounded border-gray-300 text-brand-500" />
               Enable Paging
             </label>
-            <button type="button" onClick={() => setCurrentPage(1)} className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-info-500 px-4 text-sm font-medium text-white hover:bg-info-600">
+            <button type="submit" disabled={loading} className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-info-500 px-4 text-sm font-medium text-white hover:bg-info-600 disabled:opacity-60">
               <Search size={16} />
-              Search
+              {loading ? "Searching" : "Search"}
             </button>
             <button type="button" onClick={resetFilter} className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-gray-300 px-4 text-sm font-medium dark:border-gray-700">
               <X size={16} />
@@ -254,7 +331,7 @@ export default function SystemTransactionsClient() {
           </div>
 
           <div className="rounded-md bg-gray-50 px-3 py-2 text-xs text-gray-600 dark:bg-white/[0.03] dark:text-gray-400">
-            Reports.getSystemTransactions(filterData, page) with period, from, to, transaction_type, transaction_id, keyword, and username.
+            POST /admin/wallet/{clientId}/get-system-transactions?page={pagination.current_page} with period, from, to, transaction_type, transaction_id, keyword, and username.
           </div>
         </form>
       </section>
@@ -278,7 +355,7 @@ export default function SystemTransactionsClient() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-900">
-              {visibleRows.map((row) => (
+              {rows.map((row) => (
                 <tr key={row.id}>
                   <td className="whitespace-nowrap px-4 py-3 text-gray-700 dark:text-gray-300">{row.createdAt}</td>
                   <td className="whitespace-nowrap px-4 py-3 text-gray-700 dark:text-gray-300">{row.referenceNo}</td>
@@ -295,10 +372,10 @@ export default function SystemTransactionsClient() {
                   <td className="whitespace-nowrap px-4 py-3 text-gray-700 dark:text-gray-300">{money(row.fromUserBalance)}</td>
                 </tr>
               ))}
-              {!visibleRows.length ? (
+              {!rows.length ? (
                 <tr>
                   <td colSpan={9} className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-                    No record found
+                    {loading ? "Loading report" : "No record found"}
                   </td>
                 </tr>
               ) : null}
@@ -307,21 +384,14 @@ export default function SystemTransactionsClient() {
         </div>
         {paging ? (
           <div className="flex items-center justify-end gap-3 border-t border-gray-200 px-5 py-4 dark:border-gray-800">
-            <button
-              type="button"
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
-              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm disabled:opacity-40 dark:border-gray-700"
-            >
+            <span className="text-sm text-gray-600 dark:text-gray-300">
+              Showing {pagination.total ? `${pagination.from} to ${pagination.to} of ${pagination.total}` : rows.length} entries
+            </span>
+            <button type="button" disabled={pagination.current_page <= 1 || loading} onClick={() => void search(pagination.current_page - 1)} className="rounded-md border border-gray-300 px-3 py-1.5 text-sm disabled:opacity-40 dark:border-gray-700">
               Previous
             </button>
-            <span className="text-sm text-gray-600 dark:text-gray-300">Page {currentPage} of {pageCount}</span>
-            <button
-              type="button"
-              disabled={currentPage === pageCount}
-              onClick={() => setCurrentPage((page) => Math.min(pageCount, page + 1))}
-              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm disabled:opacity-40 dark:border-gray-700"
-            >
+            <span className="text-sm text-gray-600 dark:text-gray-300">Page {pagination.current_page} of {pagination.last_page ?? 1}</span>
+            <button type="button" disabled={pagination.current_page >= (pagination.last_page ?? 1) || loading} onClick={() => void search(pagination.current_page + 1)} className="rounded-md border border-gray-300 px-3 py-1.5 text-sm disabled:opacity-40 dark:border-gray-700">
               Next
             </button>
           </div>
