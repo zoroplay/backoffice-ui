@@ -439,6 +439,71 @@ const nextConfig: NextConfig = {
         destination: "/jackpots/jackpot-tickets",
         permanent: false,
       },
+      {
+        source: "/ContentManagement/SiteMenu",
+        destination: "/content-management/site-menu",
+        permanent: false,
+      },
+      {
+        source: "/ContentManagement/SportsMenu",
+        destination: "/content-management/sports-menu",
+        permanent: false,
+      },
+      {
+        source: "/ContentManagement/Messaging",
+        destination: "/content-management/messaging",
+        permanent: false,
+      },
+      {
+        source: "/ContentManagement/MarketsManager",
+        destination: "/content-management/markets-manager",
+        permanent: false,
+      },
+      {
+        source: "/ContentManagement/TopBets",
+        destination: "/content-management/top-bets",
+        permanent: false,
+      },
+      {
+        source: "/ContentManagement/WeeklyCoupon",
+        destination: "/content-management/weekly-coupon",
+        permanent: false,
+      },
+      {
+        source: "/ContentManagement/SoccerSpecials",
+        destination: "/content-management/soccer-specials",
+        permanent: false,
+      },
+      {
+        source: "/ContentManagement/SureOdds",
+        destination: "/content-management/sure-odds",
+        permanent: false,
+      },
+      {
+        source: "/ContentManagement/SureOdds/AddNew",
+        destination: "/content-management/sure-odds/add-new",
+        permanent: false,
+      },
+      {
+        source: "/ContentManagement/SureOdds/Payments",
+        destination: "/content-management/sure-odds/payments",
+        permanent: false,
+      },
+      {
+        source: "/ContentManagement/SureOdds/:EditSureOdd",
+        destination: "/content-management/sure-odds/:EditSureOdd",
+        permanent: false,
+      },
+      {
+        source: "/ContentManagement/BookOdds",
+        destination: "/risk-management/manual-odds-adjustment",
+        permanent: false,
+      },
+      {
+        source: "/ContentManagement/Events",
+        destination: "/risk-management/event-odds-margins",
+        permanent: false,
+      },
     ];
   },
   webpack(config) {
