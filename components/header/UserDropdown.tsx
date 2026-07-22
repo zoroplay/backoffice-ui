@@ -4,23 +4,22 @@ import React, { useState, useEffect } from "react";
 import { User, Settings, HelpCircle, LogOut } from "lucide-react";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
+import { useAuth } from "@/context/AuthContext";
 
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const [username, setUsername] = useState("Unknown");
   const [userEmail, setUserEmail] = useState("");
   const [userName, setUserName] = useState("");
+  const { session, signOut } = useAuth();
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const authData = JSON.parse(
-        window.localStorage.getItem("authData") || "{}"
-      );
-      setUsername(authData?.data?.username?.toUpperCase() || "Unknown");
-      setUserEmail(authData?.data?.email || "user@example.com");
-      setUserName(authData?.data?.name || authData?.data?.username || "User");
-    }
-  }, []);
+    const user = session?.user;
+
+    setUsername(user?.username?.toUpperCase() || "Unknown");
+    setUserEmail(user?.email || "user@example.com");
+    setUserName(user?.name || user?.username || "User");
+  }, [session]);
 
   function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
     e.stopPropagation();
@@ -109,11 +108,9 @@ export default function UserDropdown() {
         </ul>
         <Link
           href="/"
-          onClick={() => {
-            if (typeof window !== "undefined") {
-              localStorage.removeItem("token");
-              localStorage.removeItem("authData");
-            }
+          onClick={(event) => {
+            event.preventDefault();
+            signOut();
             closeDropdown();
           }}
           className="flex items-center gap-3 px-3 py-2 mt-3 font-medium text-red-600 rounded-lg group text-theme-sm hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-500/10 dark:hover:text-red-300"

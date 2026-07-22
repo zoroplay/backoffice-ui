@@ -1,4 +1,5 @@
 "use client";
+import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { toast } from "sonner";
@@ -6,10 +7,10 @@ import { toast } from "sonner";
 export function withAuth(Component: React.FC) {
   return function AuthenticatedComponent(props: any) {
     const router = useRouter();
+    const { isReady, isAuthenticated } = useAuth();
 
     useEffect(() => {
-      const token = localStorage?.getItem("token");
-      if (!token) {
+      if (isReady && !isAuthenticated) {
         router.push("/");
         toast("You're required to sign in to continue", {
           action: {
@@ -18,7 +19,9 @@ export function withAuth(Component: React.FC) {
           },
         });
       }
-    }, [router]);
+    }, [isAuthenticated, isReady, router]);
+
+    if (!isReady || !isAuthenticated) return null;
 
     return <Component {...props} />;
   };

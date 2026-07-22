@@ -7,6 +7,8 @@ import Backdrop from "@/app/layout/Backdrop";
 import React from "react";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { SearchProvider } from "@/context/SearchContext";
+import { AuthProvider } from "@/context/AuthContext";
+import { Toaster } from "@/components/ui/sonner";
 import { Outfit } from "next/font/google";
 import "react-date-range/dist/styles.css"; // main style file
 import "react-date-range/dist/theme/default.css";
@@ -25,11 +27,14 @@ export default function AdminLayout({
   return (
     <div className="">
       <ThemeProvider>
-        <SearchProvider>
-          <SidebarProvider>
-            <AdminLayoutContent>{children}</AdminLayoutContent>
-          </SidebarProvider>
-        </SearchProvider>
+        <AuthProvider requireAuth>
+          <SearchProvider>
+            <SidebarProvider>
+              <AdminLayoutContent>{children}</AdminLayoutContent>
+            </SidebarProvider>
+          </SearchProvider>
+          <Toaster />
+        </AuthProvider>
       </ThemeProvider>
     </div>
   );

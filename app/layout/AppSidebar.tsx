@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSidebar } from "@/context/SidebarContext";
+import { useAuth } from "@/context/AuthContext";
 import {
   BoxCubeIcon,
   CalenderIcon,
@@ -31,7 +32,14 @@ type NavItem = {
   name: string;
   icon: React.ReactNode;
   path?: string;
-  subItems?: { name: string; path: string; pro?: boolean; new?: boolean }[];
+  permission?: string;
+  subItems?: {
+    name: string;
+    path: string;
+    pro?: boolean;
+    new?: boolean;
+    permission?: string;
+  }[];
 };
 
 const navItems: NavItem[] = [
@@ -44,6 +52,7 @@ const navItems: NavItem[] = [
   {
     icon: <CalenderIcon />,
     name: "Reporting & BI",
+    permission: "Reporting and BI",
     subItems: [
       {
         name: "Gaming Activities",
@@ -73,9 +82,10 @@ const navItems: NavItem[] = [
   {
     icon: <TableIcon />,
     name: "Tickets",
+    permission: "Tickets",
     subItems: [
       { name: "Quick Bet Search", path: "/tickets/quick_bet", pro: false },
-      { name: "Ticket On Hold", path: "/tickets/ticket-on-hold", pro: false },
+      { name: "Ticket On Hold", path: "/tickets/ticket-on-hold", pro: false, permission: "Tickets on Hold" },
       { name: "Open Bet (Sports)", path: "/tickets/open_bet", pro: false },
       { name: "Bets History", path: "/tickets/bets-history", pro: false },
       { name: "Pending Cashout Bets", path: "/tickets/pending-cashout-bets", pro: false },
@@ -86,11 +96,12 @@ const navItems: NavItem[] = [
   {
     icon: <UserCircleIcon />,
     name: "Player Management",
+    permission: "Player Management",
     subItems: [
       { name: "Player Search", path: "/player-management/player-search", pro: false },
       { name: "Online Players Report", path: "/player-management/online-players-report", pro: false },
       { name: "Registration Report", path: "/player-management/registration-report", pro: false },
-      { name: "Player Segmentation", path: "/player-management/player-segmentation", pro: false },
+      { name: "Player Segmentation", path: "/player-management/player-segmentation", pro: false, permission: "Player Segmentation" },
       { name: "Inactive Players Report", path: "/player-management/inactive-players-report", pro: false },
       { name: "Frozen Account Report", path: "/player-management/frozen-account-report", pro: false },
     ],
@@ -99,17 +110,19 @@ const navItems: NavItem[] = [
   {
     icon: <GroupIcon />,
     name: "Network",
+    permission: "Network",
     subItems: [
       { name: "Agency List", path: "/network/agency-list", pro: false },
       { name: "Pending Requests", path: "/network/pending-requests", pro: false },
       { name: "Add New Agent", path: "/network/add-new-agent", pro: false },
-      { name: "Commissions", path: "/network/commissions", pro: false },
+      { name: "Commissions", path: "/network/commissions", pro: false, permission: "Commission" },
     ],
   },
 
   {
     icon: <DollarLineIcon />,
     name: "Banking",
+    permission: "Banking",
     subItems: [
       { name: "Deposits/Withdrawals Manager", path: "/banking/deposits-withdrawals", pro: false },
       { name: "Retail Cash Sales", path: "/banking/retail-cash-sales", pro: false },
@@ -120,13 +133,14 @@ const navItems: NavItem[] = [
   {
     icon: <Gift />,
     name: "Bonus Management",
+    permission: "Bonus Management",
     subItems: [
       { name: "Player Bonuses", path: "/bonus-management/player-bonuses", pro: false },
       { name: "Bonus Campaigns", path: "/bonus-management/bonus-campaigns", pro: false },
       { name: "Multibet Bonus", path: "/bonus-management/multibet-bonus", pro: false },
       { name: "Grant Mass Bonuses", path: "/bonus-management/grant-mass-bonuses", pro: false },
       // { name: "Mass Free Spins", path: "/bonus-management/mass-free-spins", pro: false },
-      { name: "Cashout", path: "/bonus-management/cashout", pro: false },
+      { name: "Cashout", path: "/bonus-management/cashout", pro: false, permission: "Cashout Settings" },
       { name: "Player Bonuses Report", path: "/bonus-management/player-bonuses-report", pro: false },
       { name: "Power Bonus Report", path: "/bonus-management/power-bonus-report", pro: false },
     ],
@@ -145,6 +159,7 @@ const navItems: NavItem[] = [
   {
     icon: <ChatIcon />,
     name: "Communications",
+    permission: "Communications",
     subItems: [
       { name: "Player Messages", path: "/communications/player-messages", pro: false },
       { name: "Network Messsages", path: "/communications/network-messages", pro: false },
@@ -156,8 +171,9 @@ const navItems: NavItem[] = [
   {
     icon: <PencilIcon />,
     name: "Risk Management",
+    permission: "Risk Management",
     subItems: [
-      { name: "Betting Parameters", path: "/risk-management/betting-parameters", pro: false },
+      { name: "Betting Parameters", path: "/risk-management/betting-parameters", pro: false, permission: "Network settings" },
       { name: "Liability", path: "/risk-management/liability", pro: false },
       { name: "Profitability", path: "/risk-management/profitability", pro: false },
       { name: "Manual Odds Adjustment", path: "/risk-management/manual-odds-adjustment", pro: false },
@@ -178,6 +194,7 @@ const navItems: NavItem[] = [
   {
     icon: <FileIcon />,
     name: "Content Management",
+    permission: "Content Management",
     subItems: [
       { name: "Site Menu", path: "/content-management/site-menu", pro: false },
       { name: "Sports Menu", path: "/content-management/sports-menu", pro: false },
@@ -203,10 +220,11 @@ const navItems: NavItem[] = [
   {
     icon: <UserIcon />,
     name: "User Management",
+    permission: "User Management",
     subItems: [
-      { name: "Users", path: "/user-management/users", pro: false },
-      { name: "Roles & Permissions", path: "/user-management/roles-permissions", pro: false },
-      { name: "Activity Logs", path: "/user-management/activity-logs", pro: false },
+      { name: "Users", path: "/user-management/users", pro: false, permission: "User Management" },
+      { name: "Roles & Permissions", path: "/user-management/roles-permissions", pro: false, permission: "Roles and Permissions" },
+      { name: "Activity Logs", path: "/user-management/activity-logs", pro: false, permission: "Activity Logs" },
     ]
   },
 ];
@@ -215,10 +233,11 @@ const othersItems: NavItem[] = [
   {
     icon: <PlugInIcon />,
     name: "Configurations",
+    permission: "Configurations",
     subItems: [
       { name: "General", path: "/configurations/general", pro: false },
-      { name: "Tipster Settings", path: "/configurations/tipster-settings", pro: false },
-      { name: "Exposure Monitor Settings", path: "/configurations/exposure-monitor-settings", pro: false },
+      { name: "Tipster Settings", path: "/configurations/tipster-settings", pro: false, permission: "Tipster Settings" },
+      { name: "Exposure Monitor Settings", path: "/configurations/exposure-monitor-settings", pro: false, permission: "Exposure Monitor Settings" },
     ]
   },
   {
@@ -258,14 +277,40 @@ const othersItems: NavItem[] = [
 
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered, toggleMobileSidebar } = useSidebar();
+  const { session, can } = useAuth();
   const pathname = usePathname();
+
+  const isAllowed = useCallback(
+    (permission?: string) => {
+      if (!permission || !session?.permissions?.length) return true;
+      return can(permission);
+    },
+    [can, session?.permissions?.length]
+  );
+
+  const visibleMenuItems = useCallback(
+    (items: NavItem[]) =>
+      items
+        .filter((nav) => isAllowed(nav.permission))
+        .map((nav) => {
+          if (!nav.subItems) return nav;
+
+          const subItems = nav.subItems.filter((subItem) =>
+            isAllowed(subItem.permission)
+          );
+
+          return { ...nav, subItems };
+        })
+        .filter((nav) => !nav.subItems || nav.subItems.length > 0),
+    [isAllowed]
+  );
 
   const renderMenuItems = (
     navItems: NavItem[],
     menuType: "main" | "others"
   ) => (
     <ul className="flex flex-col gap-4">
-      {navItems.map((nav, index) => (
+      {visibleMenuItems(navItems).map((nav, index) => (
         <li key={nav.name}>
           {nav.subItems ? (
             <button
@@ -393,7 +438,7 @@ const AppSidebar: React.FC = () => {
     // Check if the current path matches any submenu item
     let submenuMatched = false;
     ["main", "others"].forEach((menuType) => {
-      const items = menuType === "main" ? navItems : othersItems;
+      const items = visibleMenuItems(menuType === "main" ? navItems : othersItems);
       items.forEach((nav, index) => {
         if (nav.subItems) {
           nav.subItems.forEach((subItem) => {
@@ -413,7 +458,7 @@ const AppSidebar: React.FC = () => {
     if (!submenuMatched) {
       setOpenSubmenu(null);
     }
-  }, [pathname, isActive]);
+  }, [pathname, isActive, visibleMenuItems]);
 
   useEffect(() => {
     // Set the height of the submenu items when the submenu is opened

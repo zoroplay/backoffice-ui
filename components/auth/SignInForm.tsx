@@ -8,13 +8,17 @@ import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import Button from "@/components/ui/button/Button";
 import { EyeCloseIcon, EyeIcon } from "@/app/icons";
-import { POSTREQUEST } from "@/utils/base_request";
+import { GETREQUEST, POSTREQUEST } from "@/utils/base_request";
+import { storeSession } from "@/utils/session";
 import { toast } from "sonner";
 
 // Define the validation schema using Zod
 const loginSchema = z.object({
   username: z.string().min(1, "Username is required"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  password: z
+    .string()
+    .min(6, "Password must be at least 6 characters")
+    .max(10, "Password must be at most 10 characters"),
 });
 
 // Infer the form data type from the schema
@@ -40,27 +44,65 @@ export default function SignInForm() {
   };
 
   const handleLogin = async (data: LoginFormInputs) => {
-    console.log("Form submitted");
-    console.log("Login Form data:", data);
     setLoading(true);
 
     try {
-      const response = await POSTREQUEST("/auth/login?source=admin", data);
-      console.log("Login data:", response);
+      const clientId = process.env.NEXT_PUBLIC_CLIENT_ID ?? "";
+      const response = await POSTREQUEST<any>("/auth/login?source=admin", {
+        ...data,
+        source: "admin",
+        clientId,
+      });
+      const token = response.data?.data?.token;
 
-      // if (response?.data?.status === 200) {
-        toast.success("Login successful");
-        localStorage.setItem(
-          "token",
-          JSON.stringify(response?.data?.data?.token)
-        );
-        localStorage.setItem("authData", JSON.stringify(response?.data));
-        router.push("/dashboard"); // Navigate to the dashboard
-       if (response?.data?.status === 404) {
-        toast.error(response?.data?.error || "Invalid Email or Password");
-      } else {
-        toast.error(response?.data?.error || "Login failed");
+      if (!response.ok || response.data?.success === false || !token) {
+        toast.error(response.error || response.data?.error || "Invalid username or password");
+        return;
       }
+
+      storeSession(response.data, token);
+
+      const [detailsResponse, permissionsResponse, rolesResponse] = await Promise.all([
+        clientId
+          ? GETREQUEST<any>(`/auth/details/${clientId}`)
+          : Promise.resolve({ ok: false, data: null }),
+        GETREQUEST<any>("/admin/permissions"),
+        GETREQUEST<any>("/admin/roles"),
+      ]);
+
+      const userData = detailsResponse.ok
+        ? detailsResponse.data?.data ?? detailsResponse.data
+        : response.data?.data;
+      const permissions =
+        permissionsResponse.ok && Array.isArray(permissionsResponse.data?.data)
+          ? permissionsResponse.data.data.map((permission: any) => permission.name).filter(Boolean)
+          : [];
+      const roles =
+        rolesResponse.ok && Array.isArray(rolesResponse.data?.data)
+          ? rolesResponse.data.data
+          : [];
+
+      const authData = {
+        ...response.data,
+        data: {
+          ...response.data?.data,
+          ...(userData && typeof userData === "object" ? userData : {}),
+        },
+      };
+
+      storeSession(authData, token, { permissions, roles });
+      toast.success("Login successful");
+
+      const redirect =
+        typeof window !== "undefined"
+          ? new URLSearchParams(window.location.search).get("redirect")
+          : null;
+      const defaultPath =
+        authData.data?.role === "Customer Relations"
+          ? "/player-management/online-players-report"
+          : "/dashboard";
+
+      router.push(redirect?.startsWith("/") ? redirect : defaultPath);
     } catch (err) {
       console.error("Login error:", err);
       toast.error("An error occurred");
