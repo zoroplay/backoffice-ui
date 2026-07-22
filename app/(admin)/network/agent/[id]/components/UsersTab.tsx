@@ -1,232 +1,249 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import { DataTable } from "@/components/tables/DataTable";
-import { ColumnDef } from "@tanstack/react-table";
-import type { SingleValue } from "react-select";
-import Select from "react-select";
-import Button from "@/components/ui/button/Button";
-import Badge from "@/components/ui/badge/Badge";
-import { useTheme } from "@/context/ThemeContext";
-import { reactSelectStyles } from "@/utils/reactSelectStyles";
-import type { Agency } from "@/app/(admin)/network/agency-list/columns";
-import { AddUserModal, type AddUserFormValues } from "@/app/(admin)/user-management/users/components/AddUserModal"; 
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { Edit, Lock, Plus, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
-export type AgentUser = {
+import type { Agency } from "@/app/(admin)/network/agency-list/columns";
+import {
+  asRecord,
+  clientId,
+  money,
+  rowValue,
+  type AnyRecord,
+} from "@/app/(admin)/tickets/components/ticketApiHelpers";
+import { GETREQUEST, POSTREQUEST } from "@/utils/base_request";
+
+type RoleOption = {
+  id: string;
+  name: string;
+};
+
+type AgentUser = {
+  id: string;
   username: string;
   name: string;
   role: string;
-  availability: "Available" | "Unavailable";
+  balance: number;
   email: string;
   phoneNumber: string;
   address: string;
+  raw: AnyRecord;
 };
-
-const mockAgentUsers: AgentUser[] = [
-  {
-    username: "user001",
-    name: "John Doe",
-    role: "Cashier",
-    availability: "Available",
-    email: "john.doe@example.com",
-    phoneNumber: "+234 801 234 5678",
-    address: "123 Main Street, Lagos",
-  },
-  {
-    username: "user002",
-    name: "Jane Smith",
-    role: "Agent",
-    availability: "Available",
-    email: "jane.smith@example.com",
-    phoneNumber: "+234 802 345 6789",
-    address: "456 Broad Avenue, Abuja",
-  },
-  {
-    username: "user003",
-    name: "Mike Johnson",
-    role: "Supervisor",
-    availability: "Unavailable",
-    email: "mike.johnson@example.com",
-    phoneNumber: "+234 803 456 7890",
-    address: "789 Park Road, Port Harcourt",
-  },
-  {
-    username: "user004",
-    name: "Sarah Williams",
-    role: "Cashier",
-    availability: "Available",
-    email: "sarah.williams@example.com",
-    phoneNumber: "+234 804 567 8901",
-    address: "321 Market Street, Kano",
-  },
-  {
-    username: "user005",
-    name: "David Brown",
-    role: "Agent",
-    availability: "Available",
-    email: "david.brown@example.com",
-    phoneNumber: "+234 805 678 9012",
-    address: "654 Ocean Drive, Calabar",
-  },
-  {
-    username: "user006",
-    name: "Emily Davis",
-    role: "Manager",
-    availability: "Unavailable",
-    email: "emily.davis@example.com",
-    phoneNumber: "+234 806 789 0123",
-    address: "987 Hill Street, Ibadan",
-  },
-  {
-    username: "user007",
-    name: "Chris Wilson",
-    role: "Cashier",
-    availability: "Available",
-    email: "chris.wilson@example.com",
-    phoneNumber: "+234 807 890 1234",
-    address: "147 River Road, Enugu",
-  },
-  {
-    username: "user008",
-    name: "Lisa Anderson",
-    role: "Agent",
-    availability: "Available",
-    email: "lisa.anderson@example.com",
-    phoneNumber: "+234 808 901 2345",
-    address: "258 Lake Avenue, Benin City",
-  },
-];
-
-const columns: ColumnDef<AgentUser>[] = [
-  { accessorKey: "username", header: "Username" },
-  { accessorKey: "name", header: "Name" },
-  { accessorKey: "role", header: "Role" },
-  {
-    accessorKey: "availability",
-    header: "Availability",
-    cell: ({ row }) => {
-      const availability = row.getValue<string>("availability");
-      return (
-        <Badge
-          variant="light"
-          color={availability === "Available" ? "success" : "error"}
-        >
-          {availability}
-        </Badge>
-      );
-    },
-  },
-  { accessorKey: "email", header: "Email" },
-  { accessorKey: "phoneNumber", header: "Phone Number" },
-  { accessorKey: "address", header: "Address" },
-];
-
-type FilterOption = { value: string; label: string };
-
-const filterOptions: FilterOption[] = [
-  { value: "all", label: "All" },
-  { value: "available", label: "Available" },
-  { value: "unavailable", label: "Unavailable" },
-];
 
 interface UsersTabProps {
   agentId: string;
   agent: Agency;
 }
 
-function UsersTab({ agentId, agent }: UsersTabProps) {
-  const { theme } = useTheme();
-  const [filter, setFilter] = useState<FilterOption>(filterOptions[0]);
-  const [users, setUsers] = useState<AgentUser[]>(mockAgentUsers);
-  const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
+function mapUser(value: unknown, index: number): AgentUser {
+  const user = asRecord(value);
 
-  // Filter users based on selected filter
-  const filteredData = useMemo(() => {
-    if (filter.value === "all") {
-      return users;
-    } else {
-      return users.filter(
-        (user) =>
-          user.availability.toLowerCase() === filter.value.toLowerCase()
-      );
+  return {
+    id: String(rowValue(user, ["id", "userId"], `agent-user-${index}`)),
+    username: String(rowValue(user, ["username"])),
+    name: String(
+      rowValue(
+        user,
+        ["name"],
+        `${rowValue(user, ["firstName", "first_name"], "")} ${rowValue(user, ["lastName", "last_name"], "")}`.trim()
+      )
+    ),
+    role: String(rowValue(user, ["rolename", "role", "role_name"])),
+    balance: Number(user.balance ?? 0),
+    email: String(rowValue(user, ["email"])),
+    phoneNumber: String(rowValue(user, ["phone_number", "phoneNumber"])),
+    address: String(rowValue(user, ["address"])),
+    raw: user,
+  };
+}
+
+function mapRole(value: unknown, index: number): RoleOption {
+  const role = asRecord(value);
+  return {
+    id: String(rowValue(role, ["id"], `role-${index}`)),
+    name: String(rowValue(role, ["name"])),
+  };
+}
+
+export default function UsersTab({ agentId }: UsersTabProps) {
+  const [users, setUsers] = useState<AgentUser[]>([]);
+  const [roles, setRoles] = useState<RoleOption[]>([]);
+  const [userType, setUserType] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+  async function loadUsers(page = 1, roleId = userType) {
+    setLoading(true);
+    const response = await GETREQUEST<any>(
+      `/admin/retail/${clientId()}/agent-users?agentId=${agentId}&page=${page}&user_type=${roleId}`
+    );
+    setLoading(false);
+
+    const body = asRecord(response.data);
+    if (!response.ok || body.success === false) {
+      toast.error(response.error || body.message || "An error occured");
+      return;
     }
-  }, [users, filter]);
 
-  const handleFilterChange = (option: SingleValue<FilterOption>) => {
-    if (option) {
-      setFilter(option);
+    const data = body.data;
+    const list = Array.isArray(data)
+      ? data
+      : Array.isArray(asRecord(data).data)
+        ? asRecord(data).data
+        : [];
+    setUsers(list.map(mapUser));
+  }
+
+  async function loadRoles() {
+    const response = await GETREQUEST<any>("/api/admin/settings/user-roles");
+    if (!response.ok) return;
+
+    const body = response.data;
+    const list = Array.isArray(body)
+      ? body
+      : Array.isArray(asRecord(body).data)
+        ? asRecord(body).data
+        : [];
+    setRoles(list.map(mapRole));
+  }
+
+  async function removeUser(userId: string) {
+    if (!window.confirm("Are you sure?")) return;
+
+    setUpdatingId(userId);
+    const response = await POSTREQUEST<any>(`/admin/retail/add-remove-user/${clientId()}`, {
+      agentId,
+      userId,
+      type: "remove",
+    });
+    setUpdatingId(null);
+
+    const body = asRecord(response.data);
+    if (!response.ok || body.success === false) {
+      toast.error(response.error || body.message || "An error occured");
+      return;
     }
-  };
 
-  const handleAddUser = () => {
-    setIsAddUserModalOpen(true);
-  };
+    toast.success(body.message || "User has been deleted");
+    setUsers((current) => current.filter((user) => user.id !== userId));
+  }
 
-  const handleCloseAddUserModal = () => {
-    setIsAddUserModalOpen(false);
-  };
-
-  const handleSubmitUser = (formValues: AddUserFormValues) => {
-    // Create a new user from form values
-    const newUser: AgentUser = {
-      username: formValues.username,
-      name: `${formValues.name} ${formValues.surname}`.trim(),
-      role: formValues.userLevel || "Agent",
-      availability: "Available", // Default to available
-      email: formValues.email,
-      phoneNumber: formValues.phoneNumber,
-      address: formValues.address,
-    };
-
-    // Add the new user to the list
-    setUsers((prevUsers) => [...prevUsers, newUser]);
-
-    // Close the modal
-    setIsAddUserModalOpen(false);
-  };
+  useEffect(() => {
+    void loadRoles();
+    void loadUsers(1, "");
+  }, [agentId]);
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
-        <div className="w-full sm:w-[250px]">
-          <Select<FilterOption>
-            styles={reactSelectStyles(theme)}
-            options={filterOptions}
-            placeholder="All"
-            value={filter}
-            onChange={handleFilterChange}
-          />
-        </div>
-        <Button 
-          variant="primary" 
-          size="md" 
-          className="bg-green-500 hover:bg-green-600 shadow-md hover:shadow-lg transition-all duration-200 w-full sm:w-auto"
-          onClick={handleAddUser}
+      <form
+        className="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-950 sm:flex-row sm:items-center sm:justify-between"
+        onSubmit={(event) => {
+          event.preventDefault();
+          void loadUsers(1);
+        }}
+      >
+        <select
+          value={userType}
+          onChange={(event) => setUserType(event.target.value)}
+          className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white sm:max-w-xs"
         >
-          + Add New User
-        </Button>
-      </div>
+          <option value="">All</option>
+          {roles.map((role) => (
+            <option key={role.id} value={role.id}>
+              {role.name}
+            </option>
+          ))}
+        </select>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <button
+            type="submit"
+            disabled={loading}
+            className="h-10 rounded-md bg-brand-500 px-4 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50"
+          >
+            Filter
+          </button>
+          <button
+            type="button"
+            onClick={() => toast.info("Agent user form parity is pending")}
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-green-600 px-4 text-sm font-medium text-white hover:bg-green-700"
+          >
+            <Plus size={16} />
+            Add New User
+          </button>
+        </div>
+      </form>
 
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg overflow-hidden">
-        <div className="bg-gradient-to-r from-brand-500 to-brand-600 text-white px-6 py-4 flex items-center justify-between">
-          <h3 className="font-semibold text-lg flex items-center gap-2">
-            <span>👥</span>
+      <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-950">
+        <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
+          <h3 className="text-base font-semibold text-gray-900 dark:text-white">
             Agent Users List
-          </h3>          
+          </h3>
         </div>
-        <div className="p-6">
-          <DataTable columns={columns} data={filteredData} />
-        </div>
+        <table className="min-w-full divide-y divide-gray-200 text-sm dark:divide-gray-800">
+          <thead className="bg-gray-50 dark:bg-gray-900">
+            <tr>
+              {["Username", "Name", "Role", "Availability", "Email", "Phone Number", "Address", ""].map((head) => (
+                <th key={head || "actions"} className="whitespace-nowrap px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">
+                  {head}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100 dark:divide-gray-900">
+            {users.map((user) => (
+              <tr key={user.id}>
+                <td className="whitespace-nowrap px-4 py-3 font-medium text-brand-600 dark:text-brand-300">
+                  <Link href={`/player-management/player-info/${user.id}`}>{user.username}</Link>
+                </td>
+                <td className="whitespace-nowrap px-4 py-3 text-gray-700 dark:text-gray-300">{user.name}</td>
+                <td className="whitespace-nowrap px-4 py-3 text-gray-700 dark:text-gray-300">{user.role}</td>
+                <td className="whitespace-nowrap px-4 py-3 text-gray-700 dark:text-gray-300">{money(user.balance)}</td>
+                <td className="whitespace-nowrap px-4 py-3 text-gray-700 dark:text-gray-300">{user.email}</td>
+                <td className="whitespace-nowrap px-4 py-3 text-gray-700 dark:text-gray-300">{user.phoneNumber}</td>
+                <td className="whitespace-nowrap px-4 py-3 text-gray-700 dark:text-gray-300">{user.address}</td>
+                <td className="whitespace-nowrap px-4 py-3">
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => toast.info("Edit user form parity is pending")}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-info-500 text-white hover:bg-info-600"
+                      title="Edit user"
+                    >
+                      <Edit size={15} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => toast.info("Password modal parity is pending")}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-amber-500 text-white hover:bg-amber-600"
+                      title="Change password"
+                    >
+                      <Lock size={15} />
+                    </button>
+                    <button
+                      type="button"
+                      disabled={updatingId === user.id}
+                      onClick={() => void removeUser(user.id)}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                      title="Delete user"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+            {!users.length ? (
+              <tr>
+                <td colSpan={8} className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                  {loading ? "Loading users" : "No record found"}
+                </td>
+              </tr>
+            ) : null}
+          </tbody>
+        </table>
       </div>
-
-      <AddUserModal
-        isOpen={isAddUserModalOpen}
-        onClose={handleCloseAddUserModal}
-        onSubmit={handleSubmitUser}
-      />
     </div>
   );
 }
-
-export default UsersTab;
-

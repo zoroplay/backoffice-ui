@@ -1,12 +1,14 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { withAuth } from "@/utils/withAuth";
-import { agencies } from "../../agency-list/data";
 import { Agency } from "../../agency-list/columns";
+import { GETREQUEST } from "@/utils/base_request";
+import { asRecord, clientId, rowValue, toNumber } from "@/app/(admin)/tickets/components/ticketApiHelpers";
+import { toast } from "sonner";
 
 // Import tab components
 import GamingActivityTab from "./components/GamingActivityTab";
@@ -34,20 +36,54 @@ function AgentOverviewPage() {
   const params = useParams();
   const agentId = params?.id as string;
   const [activeTab, setActiveTab] = useState<TabValue>("gaming-activity");
+  const [agent, setAgent] = useState<Agency | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const agent = useMemo(() => {
-    return agencies.find(
-      (a) => a.id === agentId || a.username === agentId
-    ) as Agency | undefined;
+  useEffect(() => {
+    async function loadAgent() {
+      setLoading(true);
+      const response = await GETREQUEST<any>(`/admin/retail/${clientId()}/agent/${agentId}`);
+      setLoading(false);
+
+      const body = asRecord(response.data);
+      if (!response.ok || body.success === false) {
+        toast.error(response.error || body.message || "An error occured");
+        return;
+      }
+
+      const data = asRecord(body.data);
+      setAgent({
+        id: String(rowValue(data, ["id"], agentId)),
+        username: String(rowValue(data, ["username"], agentId)),
+        name: String(
+          rowValue(
+            data,
+            ["name"],
+            `${rowValue(data, ["firstName", "first_name"], "")} ${rowValue(data, ["lastName", "last_name"], "")}`.trim()
+          )
+        ),
+        agentType: String(rowValue(data, ["rolename", "role", "agentType"], "")),
+        status: String(rowValue(data, ["status"], "")),
+        networkBalance: toNumber(data.networkBalance ?? data.network_balance),
+        networkTrust: toNumber(data.networkTrust ?? data.network_trust),
+        availBalance: toNumber(data.availBalance ?? data.available_balance ?? data.avail_balance),
+        balance: toNumber(data.balance),
+        commissionBalance: toNumber(data.commissionBalance ?? data.commission_balance),
+        trustUser: toNumber(data.trustUser ?? data.trust_user),
+        tempBlock: Boolean(data.tempBlock ?? data.temp_block),
+      });
+    }
+
+    if (agentId) void loadAgent();
   }, [agentId]);
 
-  if (!agent) {
+  if (loading || !agent) {
     return (
       <div className="space-y-6 p-4">
         <PageBreadcrumb pageTitle="Agent Overview" />
         <div className="text-center py-12">
           <p className="text-gray-500 dark:text-gray-400">
-            Agent not found
+            {loading ? "Loading agent" : "Agent not found"}
           </p>
         </div>
       </div>
@@ -159,4 +195,3 @@ function AgentOverviewPage() {
 }
 
 export default withAuth(AgentOverviewPage);
-
