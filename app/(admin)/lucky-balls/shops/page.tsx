@@ -1,50 +1,40 @@
-import Link from "next/link";
-
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 
-const shops = [
-  { id: "shop-1001", name: "Lagos Central", manager: "Ada Okafor", users: 18, sales: "NGN 4.6m", status: "Active" },
-  { id: "shop-1002", name: "Ibadan Ring Road", manager: "Musa Bello", users: 11, sales: "NGN 2.1m", status: "Active" },
-  { id: "shop-1003", name: "Enugu Express", manager: "Nkechi Obi", users: 7, sales: "NGN 880k", status: "Paused" },
-];
+import LuckyBallsShopTable from "./../components/LuckyBallsShopTable";
+import { formatMoney, luckyBallsShops } from "../data";
 
 export default function LuckyBallsShopsPage() {
+  const activeShops = luckyBallsShops.filter((shop) => shop.active).length;
+  const totalCredit = luckyBallsShops.reduce((total, shop) => total + shop.currentCredit, 0);
+
   return (
     <div className="space-y-6 p-4">
       <PageBreadcrumb pageTitle="Lucky Balls Shops" />
       <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-950">
-        <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
-          Lucky Balls Shops
-        </h1>
-        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-          Review Lucky Balls retail shops, manager ownership, user counts, sales, and status from the legacy shop list workflow.
-        </p>
-      </section>
-      <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-950">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 text-sm dark:divide-gray-800">
-            <thead className="bg-gray-50 dark:bg-gray-900">
-              <tr>{["Shop", "Manager", "Users", "Sales", "Status", "Action"].map((head) => <th key={head} className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">{head}</th>)}</tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-900">
-              {shops.map((shop) => (
-                <tr key={shop.id}>
-                  <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{shop.name}</td>
-                  <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{shop.manager}</td>
-                  <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{shop.users}</td>
-                  <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{shop.sales}</td>
-                  <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{shop.status}</td>
-                  <td className="px-4 py-3">
-                    <Link href={`/lucky-balls/shop/${shop.id}`} className="text-sm font-medium text-brand-600 dark:text-brand-400">
-                      Manage Users
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Lucky Balls Shops</h1>
+            <p className="mt-2 max-w-4xl text-sm leading-6 text-gray-600 dark:text-gray-400">
+              Review Lucky Balls shop configuration including agency identity, betting limits, worker cash movement, timezone, assignment state, credit, commission, and software charge.
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="rounded-lg border border-gray-200 p-3 dark:border-gray-800">
+              <p className="text-xs font-semibold uppercase text-gray-500">Shops</p>
+              <p className="mt-1 text-xl font-semibold text-gray-900 dark:text-white">{luckyBallsShops.length}</p>
+            </div>
+            <div className="rounded-lg border border-gray-200 p-3 dark:border-gray-800">
+              <p className="text-xs font-semibold uppercase text-gray-500">Active</p>
+              <p className="mt-1 text-xl font-semibold text-gray-900 dark:text-white">{activeShops}</p>
+            </div>
+            <div className="rounded-lg border border-gray-200 p-3 dark:border-gray-800">
+              <p className="text-xs font-semibold uppercase text-gray-500">Credit</p>
+              <p className="mt-1 text-xl font-semibold text-gray-900 dark:text-white">{formatMoney(totalCredit)}</p>
+            </div>
+          </div>
         </div>
       </section>
+      <LuckyBallsShopTable mode="shops" />
     </div>
   );
 }
