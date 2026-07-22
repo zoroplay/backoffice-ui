@@ -264,6 +264,46 @@ const nextConfig: NextConfig = {
         destination: "/banking/cashflow/standings",
         permanent: false,
       },
+      {
+        source: "/Bonuses/List",
+        destination: "/bonus-management/player-bonuses",
+        permanent: false,
+      },
+      {
+        source: "/Bonuses/Campaigns",
+        destination: "/bonus-management/bonus-campaigns",
+        permanent: false,
+      },
+      {
+        source: "/Bonuses/BonusOnTickets",
+        destination: "/bonus-management/multibet-bonus",
+        permanent: false,
+      },
+      {
+        source: "/Bonuses/GrantMassBonus",
+        destination: "/bonus-management/grant-mass-bonuses",
+        permanent: false,
+      },
+      {
+        source: "/Bonuses/CashOut",
+        destination: "/bonus-management/cashout",
+        permanent: false,
+      },
+      {
+        source: "/Bonuses/CutX",
+        destination: "/bonus-management/cut-x",
+        permanent: false,
+      },
+      {
+        source: "/Bonuses/PlayerReports",
+        destination: "/bonus-management/player-bonuses-report",
+        permanent: false,
+      },
+      {
+        source: "/Bonuses/PowerBonusCommission",
+        destination: "/bonus-management/power-bonus-report",
+        permanent: false,
+      },
     ];
   },
   webpack(config) {

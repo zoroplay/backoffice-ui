@@ -144,6 +144,7 @@ const navItems: NavItem[] = [
       { name: "Grant Mass Bonuses", path: "/bonus-management/grant-mass-bonuses", pro: false },
       // { name: "Mass Free Spins", path: "/bonus-management/mass-free-spins", pro: false },
       { name: "Cashout", path: "/bonus-management/cashout", pro: false, permission: "Cashout Settings" },
+      { name: "CUT (X)", path: "/bonus-management/cut-x", pro: false, permission: "Cut X settings" },
       { name: "Player Bonuses Report", path: "/bonus-management/player-bonuses-report", pro: false },
       { name: "Power Bonus Report", path: "/bonus-management/power-bonus-report", pro: false },
     ],
