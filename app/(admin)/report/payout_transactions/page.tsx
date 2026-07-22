@@ -1,58 +1,20 @@
-import {
-  ReportBadge,
-  ReportFilters,
-  ReportMetrics,
-  ReportPageShell,
-  ReportSection,
-  ReportTable,
-} from "../components/ReportPageShell";
+import { ReportMetrics, ReportPageShell } from "../components/ReportPageShell";
 
-const rows = [
-  { id: "PO-8821", username: "john_doe", method: "Bank Transfer", amount: "NGN 250,000", reference: "NIP-77821", status: "Paid" },
-  { id: "PO-8822", username: "samuel.ng", method: "Wallet", amount: "NGN 75,000", reference: "WAL-82910", status: "Pending" },
-  { id: "PO-8823", username: "agent_007", method: "Cashier", amount: "NGN 180,000", reference: "CSH-10082", status: "Failed" },
-];
+import PayoutTransactionsClient from "./PayoutTransactionsClient";
 
 export default function PayoutTransactionsPage() {
   return (
     <ReportPageShell
       title="Payout Transactions"
-      description="Audit payout transaction records by user, method, reference, amount, and settlement status."
+      description="Review payout exposure by network user, bet count, winnings, paid payouts, pending payout, and available balance."
     >
       <ReportMetrics metrics={[
-        { label: "Payouts", value: "NGN 505k", detail: "Visible total" },
-        { label: "Paid", value: "1", detail: "Completed" },
-        { label: "Pending", value: "1", detail: "Awaiting processing" },
-        { label: "Failed", value: "1", detail: "Needs review" },
+        { label: "No of Bets", value: "174", detail: "Visible rows" },
+        { label: "Total Winning", value: "NGN 2.43m", detail: "Aggregate winnings" },
+        { label: "Total Payout", value: "NGN 1.73m", detail: "Settled payouts" },
+        { label: "Pending", value: "NGN 695k", detail: "Winnings less payouts" },
       ]} />
-      <ReportFilters filters={[
-        { label: "Username", placeholder: "Username or reference" },
-        { label: "Method", placeholder: "All methods", options: ["Bank Transfer", "Wallet", "Cashier"] },
-        { label: "From", value: "2026-07-01" },
-        { label: "To", value: "2026-07-22" },
-      ]} />
-      <ReportSection title="Results">
-        <ReportTable
-          columns={[
-            { label: "Transaction ID", key: "id" },
-            { label: "Username", key: "username" },
-            { label: "Method", key: "method" },
-            { label: "Reference", key: "reference" },
-            { label: "Amount", key: "amount", align: "right" },
-            { label: "Status", key: "status" },
-          ]}
-          rows={rows.map((row) => ({
-            ...row,
-            status: (
-              <ReportBadge
-                tone={row.status === "Paid" ? "success" : row.status === "Failed" ? "danger" : "warning"}
-              >
-                {row.status}
-              </ReportBadge>
-            ),
-          }))}
-        />
-      </ReportSection>
+      <PayoutTransactionsClient />
     </ReportPageShell>
   );
 }
