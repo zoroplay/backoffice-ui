@@ -435,6 +435,56 @@ const nextConfig: NextConfig = {
         permanent: false,
       },
       {
+        source: "/Settings",
+        destination: "/configurations/general",
+        permanent: false,
+      },
+      {
+        source: "/Settings/CommissionSettings",
+        destination: "/configurations/commission-settings",
+        permanent: false,
+      },
+      {
+        source: "/Settings/CommissionBonusGroup",
+        destination: "/configurations/commission-bonus-groups",
+        permanent: false,
+      },
+      {
+        source: "/Settings/PaymentMethods",
+        destination: "/configurations/payment-methods",
+        permanent: false,
+      },
+      {
+        source: "/Settings/TrustThreshold",
+        destination: "/configurations/trust-threshold",
+        permanent: false,
+      },
+      {
+        source: "/Settings/SportPriorities",
+        destination: "/configurations/sport-priorities",
+        permanent: false,
+      },
+      {
+        source: "/Settings/MarketSettings",
+        destination: "/configurations/market-settings",
+        permanent: false,
+      },
+      {
+        source: "/Settings/GameKeys",
+        destination: "/configurations/game-keys",
+        permanent: false,
+      },
+      {
+        source: "/Settings/Tipsters",
+        destination: "/configurations/tipster-settings",
+        permanent: false,
+      },
+      {
+        source: "/Settings/ExposureMonitor",
+        destination: "/configurations/exposure-monitor-settings",
+        permanent: false,
+      },
+      {
         source: "/ContentManagement/Pages/List",
         destination: "/content-management/pages",
         permanent: false,
