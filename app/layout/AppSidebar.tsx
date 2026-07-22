@@ -90,6 +90,7 @@ const navItems: NavItem[] = [
       { name: "Open Bet (Sports)", path: "/tickets/open_bet", pro: false },
       { name: "Bets History", path: "/tickets/bets-history", pro: false },
       { name: "Pending Cashout Bets", path: "/tickets/pending-cashout-bets", pro: false },
+      { name: "Exposure Monitor", path: "/tickets/exposure-monitor", pro: false, permission: "Exposure monitor" },
 
     ],
   },

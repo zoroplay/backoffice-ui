@@ -94,6 +94,61 @@ const nextConfig: NextConfig = {
         destination: "/report/system_transactions",
         permanent: false,
       },
+      {
+        source: "/Tickets/BetSearch",
+        destination: "/tickets/quick_bet",
+        permanent: false,
+      },
+      {
+        source: "/Tickets/TicketsOnHold",
+        destination: "/tickets/ticket-on-hold",
+        permanent: false,
+      },
+      {
+        source: "/Tickets/OpenBets",
+        destination: "/tickets/open_bet",
+        permanent: false,
+      },
+      {
+        source: "/Tickets/BetsHistory",
+        destination: "/tickets/bets-history",
+        permanent: false,
+      },
+      {
+        source: "/Tickets/PendingCashout",
+        destination: "/tickets/pending-cashout-bets",
+        permanent: false,
+      },
+      {
+        source: "/Tickets/ExposureMonitor",
+        destination: "/tickets/exposure-monitor",
+        permanent: false,
+      },
+      {
+        source: "/Tickets/DeclinedBetsHistory",
+        destination: "/tickets/declined-bets-history",
+        permanent: false,
+      },
+      {
+        source: "/Tickets/HotMatches",
+        destination: "/tickets/hot-matches",
+        permanent: false,
+      },
+      {
+        source: "/Tickets/SportsPerformance",
+        destination: "/tickets/sports-performance",
+        permanent: false,
+      },
+      {
+        source: "/Tickets/UnsettledBets",
+        destination: "/tickets/unsettled-bets",
+        permanent: false,
+      },
+      {
+        source: "/Tickets/WinningsOnHold",
+        destination: "/tickets/winnings-on-hold",
+        permanent: false,
+      },
     ];
   },
   webpack(config) {
