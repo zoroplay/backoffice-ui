@@ -149,6 +149,56 @@ const nextConfig: NextConfig = {
         destination: "/tickets/winnings-on-hold",
         permanent: false,
       },
+      {
+        source: "/PlayerManagement/PlayerSearch",
+        destination: "/player-management/player-search",
+        permanent: false,
+      },
+      {
+        source: "/PlayerManagement/OnlinePlayersReport",
+        destination: "/player-management/online-players-report",
+        permanent: false,
+      },
+      {
+        source: "/PlayerManagement/RegistrationReport",
+        destination: "/player-management/registration-report",
+        permanent: false,
+      },
+      {
+        source: "/PlayerManagement/PlayerSegmentation",
+        destination: "/player-management/player-segmentation",
+        permanent: false,
+      },
+      {
+        source: "/PlayerManagement/CampaignTriggers",
+        destination: "/player-management/campaign-triggers",
+        permanent: false,
+      },
+      {
+        source: "/PlayerManagement/InactivePlayersReport",
+        destination: "/player-management/inactive-players-report",
+        permanent: false,
+      },
+      {
+        source: "/PlayerManagement/FrozenAccountsReport",
+        destination: "/player-management/frozen-account-report",
+        permanent: false,
+      },
+      {
+        source: "/PlayerManagement/PlayerActivityReport",
+        destination: "/player-management/player-activity-report",
+        permanent: false,
+      },
+      {
+        source: "/PlayerManagement/PlayerLiabilityReport",
+        destination: "/player-management/player-liability-report",
+        permanent: false,
+      },
+      {
+        source: "/PlayerManagement/PlayerInfo/:PlayerId",
+        destination: "/player-management/player-info/:PlayerId",
+        permanent: false,
+      },
     ];
   },
   webpack(config) {

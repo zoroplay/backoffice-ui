@@ -104,6 +104,7 @@ const navItems: NavItem[] = [
       { name: "Online Players Report", path: "/player-management/online-players-report", pro: false },
       { name: "Registration Report", path: "/player-management/registration-report", pro: false },
       { name: "Player Segmentation", path: "/player-management/player-segmentation", pro: false, permission: "Player Segmentation" },
+      { name: "Campaign Triggers", path: "/player-management/campaign-triggers", pro: false, permission: "Player Segmentation" },
       { name: "Inactive Players Report", path: "/player-management/inactive-players-report", pro: false },
       { name: "Frozen Account Report", path: "/player-management/frozen-account-report", pro: false },
     ],
