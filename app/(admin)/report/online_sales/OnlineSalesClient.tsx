@@ -1,8 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useState } from "react";
+import { toast } from "sonner";
 import { Calendar, Search, X } from "lucide-react";
+
+import { POSTREQUEST } from "@/utils/base_request";
 
 type Period =
   | "today"
@@ -27,20 +30,19 @@ type OnlineSaleRow = {
   id: string;
   userId: string;
   username: string;
-  product: Product;
   noOfBets: number;
   turnover: number;
   winnings: number;
   ggr: number;
+  margin: number;
 };
 
-const salesRows: OnlineSaleRow[] = [
-  { id: "online-1", userId: "1", username: "SPA-NG-1001", product: "sports", noOfBets: 184, turnover: 1850000, winnings: 1515000, ggr: 335000 },
-  { id: "online-2", userId: "8", username: "agent-lagos-01", product: "sports", noOfBets: 96, turnover: 970000, winnings: 1025000, ggr: -55000 },
-  { id: "online-3", userId: "12", username: "webaffiliate-001", product: "casino", noOfBets: 74, turnover: 680000, winnings: 512000, ggr: 168000 },
-  { id: "online-4", userId: "19", username: "virtual-channel", product: "virtual", noOfBets: 42, turnover: 245000, winnings: 198000, ggr: 47000 },
-  { id: "online-5", userId: "24", username: "games-desk", product: "games", noOfBets: 31, turnover: 175000, winnings: 186000, ggr: -11000 },
-];
+type Totals = {
+  bets: number;
+  turnover: number;
+  winnings: number;
+  ggr: number;
+};
 
 const periodOptions: { value: Period; label: string }[] = [
   { value: "today", label: "Today" },
@@ -93,29 +95,45 @@ function money(value: number) {
   return `NGN ${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 }
 
-function margin(row: Pick<OnlineSaleRow, "turnover" | "ggr">) {
-  return row.turnover > 0 ? (row.ggr / row.turnover) * 100 : 0;
+function asRecord(value: unknown): Record<string, any> {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, any> : {};
+}
+
+function toNumber(value: unknown, fallback = 0) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function mapRow(itemValue: unknown, index: number): OnlineSaleRow {
+  const item = asRecord(itemValue);
+  const turnover = toNumber(item.turnover ?? item.totalStake);
+  const winnings = toNumber(item.winnings ?? item.totalWinnings);
+  const ggr = toNumber(item.ggr, turnover - winnings);
+  const marginValue =
+    item.margin !== undefined && item.margin !== null && item.margin !== ""
+      ? toNumber(item.margin)
+      : turnover > 0
+        ? (ggr / turnover) * 100
+        : 0;
+
+  return {
+    id: String(item.id ?? item.userId ?? item.playerId ?? item.username ?? `online-sale-${index}`),
+    userId: String(item.userId ?? item.playerId ?? item.id ?? ""),
+    username: String(item.username ?? item.userName ?? "-"),
+    noOfBets: toNumber(item.noOfBets ?? item.totalBets ?? item.betCount),
+    turnover,
+    winnings,
+    ggr,
+    margin: marginValue,
+  };
 }
 
 export default function OnlineSalesClient() {
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
-  const [submittedFilters, setSubmittedFilters] = useState<FilterState | null>(null);
   const [paging, setPaging] = useState(true);
-
-  const rows = useMemo(() => {
-    if (!submittedFilters) return [];
-    return salesRows.filter((row) => row.product === submittedFilters.product);
-  }, [submittedFilters]);
-
-  const totals = rows.reduce(
-    (sum, row) => ({
-      bets: sum.bets + row.noOfBets,
-      turnover: sum.turnover + row.turnover,
-      winnings: sum.winnings + row.winnings,
-      ggr: sum.ggr + row.ggr,
-    }),
-    { bets: 0, turnover: 0, winnings: 0, ggr: 0 },
-  );
+  const [rows, setRows] = useState<OnlineSaleRow[]>([]);
+  const [totals, setTotals] = useState<Totals>({ bets: 0, turnover: 0, winnings: 0, ggr: 0 });
+  const [loading, setLoading] = useState(false);
 
   const totalMargin = totals.turnover > 0 ? (totals.ggr / totals.turnover) * 100 : 0;
 
@@ -123,20 +141,48 @@ export default function OnlineSalesClient() {
     setFilters((current) => ({ ...current, period, ...rangeForPeriod(period) }));
   }
 
-  function search() {
-    setSubmittedFilters(filters);
+  async function search() {
+    setLoading(true);
+    const payload = {
+      from: toApiDate(filters.from),
+      to: toApiDate(filters.to),
+      product: filters.product || "sports",
+    };
+    const response = await POSTREQUEST<any>("/admin/players/online-sales-report", payload);
+    setLoading(false);
+
+    const body = asRecord(response.data);
+    const responseData = body.data && typeof body.data === "object" && !Array.isArray(body.data) ? body.data : body;
+
+    if (!response.ok || body.success === false) {
+      toast.error(response.error || body.message || "An error occured");
+      return;
+    }
+
+    const resultRows = Array.isArray(responseData.data) ? responseData.data : Array.isArray(body.data) ? body.data : [];
+    const total = asRecord(responseData.total);
+    const mapped = resultRows.map(mapRow);
+
+    setRows(mapped);
+    setTotals({
+      bets: toNumber(total.noOfBets, mapped.reduce((sum, row) => sum + row.noOfBets, 0)),
+      turnover: toNumber(total.totalStake, mapped.reduce((sum, row) => sum + row.turnover, 0)),
+      winnings: toNumber(total.totalWinnings, mapped.reduce((sum, row) => sum + row.winnings, 0)),
+      ggr: toNumber(total.ggr, mapped.reduce((sum, row) => sum + row.ggr, 0)),
+    });
   }
 
   function resetFilter() {
     setFilters(defaultFilters());
-    setSubmittedFilters(null);
     setPaging(true);
+    setRows([]);
+    setTotals({ bets: 0, turnover: 0, winnings: 0, ggr: 0 });
   }
 
   return (
     <div className="space-y-6">
       <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-950">
-        <form className="space-y-4" onSubmit={(event) => { event.preventDefault(); search(); }}>
+        <form className="space-y-4" onSubmit={(event) => { event.preventDefault(); void search(); }}>
           <div className="grid gap-3 md:grid-cols-4">
             <select
               value={filters.period}
@@ -168,16 +214,16 @@ export default function OnlineSalesClient() {
               <input type="checkbox" checked={paging} onChange={(event) => setPaging(event.target.checked)} className="h-4 w-4 rounded border-gray-300 text-brand-500" />
               Enable Paging
             </label>
-            <button type="submit" className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-info-500 px-4 text-sm font-medium text-white hover:bg-info-600">
+            <button type="submit" disabled={loading} className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-info-500 px-4 text-sm font-medium text-white hover:bg-info-600 disabled:opacity-60">
               <Search size={16} />
-              Search
+              {loading ? "Searching" : "Search"}
             </button>
             <button type="button" onClick={resetFilter} className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-gray-300 px-4 text-sm font-medium dark:border-gray-700">
               <X size={16} />
               Clear all filters
             </button>
             <div className="rounded-md bg-gray-50 px-3 py-2 text-xs text-gray-600 dark:bg-white/[0.03] dark:text-gray-400">
-              Reports.getOnlineSales({`{ from: "${toApiDate(filters.from)}", to: "${toApiDate(filters.to)}", product: "${filters.product}" }`})
+              POST /admin/players/online-sales-report {`{ from: "${toApiDate(filters.from)}", to: "${toApiDate(filters.to)}", product: "${filters.product}" }`}
             </div>
           </div>
 
@@ -224,14 +270,14 @@ export default function OnlineSalesClient() {
                     {money(row.ggr)}
                   </td>
                   <td className={`whitespace-nowrap px-4 py-3 ${row.ggr < 0 ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-gray-300"}`}>
-                    {margin(row).toFixed(2)}%
+                    {row.margin.toFixed(2)}%
                   </td>
                 </tr>
               ))}
               {!rows.length ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-8 text-center text-sm text-gray-500">
-                    No record found
+                    {loading ? "Loading report" : "No record found"}
                   </td>
                 </tr>
               ) : null}
