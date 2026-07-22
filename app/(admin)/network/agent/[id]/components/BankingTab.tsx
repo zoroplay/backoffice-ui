@@ -1,196 +1,287 @@
 "use client";
 
-import React, { useState } from "react";
-import { DataTable } from "@/components/tables/DataTable";
-import { ColumnDef } from "@tanstack/react-table";
+import React, { useMemo, useState } from "react";
 import type { Agency } from "@/app/(admin)/network/agency-list/columns";
+import { clientId, money } from "@/app/(admin)/tickets/components/ticketApiHelpers";
+import { POSTREQUEST } from "@/utils/base_request";
+import { toast } from "sonner";
 
-export type BankingTransaction = {
-  date: string;
-  transactionId: string;
-  operationType: string;
+type WalletType = "main" | "trust" | "commission";
+type TransferAction = "deposit" | "withdraw";
+
+type TransferForm = {
+  amount: string;
   description: string;
-  amount: number;
-  balance: number;
+  wallet: WalletType;
+  action: TransferAction;
 };
 
-const mockBankingData: BankingTransaction[] = [
-  {
-    date: "2025-11-14 10:00:00",
-    transactionId: "TXN-2025-001234",
-    operationType: "Deposit",
-    description: "Bank deposit from user001",
-    amount: 50000,
-    balance: 55000,
-  },
-  {
-    date: "2025-11-14 11:30:00",
-    transactionId: "TXN-2025-001235",
-    operationType: "Withdrawal",
-    description: "Withdrawal request by user002",
-    amount: -20000,
-    balance: 35000,
-  },
-  {
-    date: "2025-11-14 12:15:00",
-    transactionId: "TXN-2025-001236",
-    operationType: "Bet Deposit",
-    description: "Bet stake from player003",
-    amount: 15000,
-    balance: 50000,
-  },
-  {
-    date: "2025-11-14 13:45:00",
-    transactionId: "TXN-2025-001237",
-    operationType: "Bet Winnings",
-    description: "Winning payout to player004",
-    amount: -45000,
-    balance: 5000,
-  },
-  {
-    date: "2025-11-14 14:20:00",
-    transactionId: "TXN-2025-001238",
-    operationType: "Deposit",
-    description: "Bank deposit from user005",
-    amount: 30000,
-    balance: 35000,
-  },
-  {
-    date: "2025-11-14 15:00:00",
-    transactionId: "TXN-2025-001239",
-    operationType: "Bonus",
-    description: "Bonus credit to user006",
-    amount: 5000,
-    balance: 40000,
-  },
-  {
-    date: "2025-11-14 16:30:00",
-    transactionId: "TXN-2025-001240",
-    operationType: "Interaccount Transfers",
-    description: "Transfer to sub-agent007",
-    amount: -10000,
-    balance: 30000,
-  },
-  {
-    date: "2025-11-14 17:00:00",
-    transactionId: "TXN-2025-001241",
-    operationType: "Deposit",
-    description: "Bank deposit from user008",
-    amount: 25000,
-    balance: 55000,
-  },
-];
-
-const columns: ColumnDef<BankingTransaction>[] = [
-  { accessorKey: "date", header: "Date" },
-  { accessorKey: "transactionId", header: "Transaction ID" },
-  { accessorKey: "operationType", header: "Operation Type" },
-  { accessorKey: "description", header: "Description" },
-  {
-    accessorKey: "amount",
-    header: "Amount",
-    cell: ({ row }) => {
-      const amount = row.getValue<number>("amount");
-      return (
-        <span className={amount >= 0 ? "text-green-600" : "text-red-600"}>
-          {amount >= 0 ? "+" : ""}₦{amount.toLocaleString()}
-        </span>
-      );
-    },
-  },
-  {
-    accessorKey: "balance",
-    header: "Balance",
-    cell: ({ row }) => `₦${row.getValue<number>("balance").toLocaleString()}`,
-  },
-];
-
-interface BankingTabProps {
+type BankingTabProps = {
   agentId: string;
   agent: Agency;
+  onTransferComplete?: () => void | Promise<void>;
+};
+
+const initialForm: TransferForm = {
+  amount: "",
+  description: "",
+  wallet: "main",
+  action: "withdraw",
+};
+
+function isSuccessResponse(data: unknown) {
+  if (!data || typeof data !== "object") return false;
+  const record = data as Record<string, unknown>;
+  return record.success !== false;
 }
 
-function BankingTab({ agentId, agent }: BankingTabProps) {
-  const [filteredData] = useState<BankingTransaction[]>(mockBankingData);
+function messageFrom(data: unknown, fallback: string) {
+  if (!data || typeof data !== "object") return fallback;
+  const record = data as Record<string, unknown>;
+  return String(record.message || record.error || fallback);
+}
 
-  // Calculate totals from transactions
+function BankingTab({ agentId, agent, onTransferComplete }: BankingTabProps) {
+  const [form, setForm] = useState<TransferForm>({
+    ...initialForm,
+    description: agent.username,
+  });
+  const [submitting, setSubmitting] = useState(false);
 
-  // const totalDeposits = filteredData
-  //   .filter((tx) => tx.amount > 0)
-  //   .reduce((sum, tx) => sum + tx.amount, 0);
-  // const totalWithdrawals = Math.abs(
-  //   filteredData
-  //     .filter((tx) => tx.amount < 0)
-  //     .reduce((sum, tx) => sum + tx.amount, 0)
-  // );
+  const isCommissionTransfer = form.wallet === "commission";
+
+  const transferDirection = useMemo(() => {
+    if (isCommissionTransfer) {
+      return {
+        fromUser: agent.username,
+        toUser: "System",
+        note: "Commission Withdrawal",
+      };
+    }
+
+    if (form.action === "withdraw") {
+      return {
+        fromUser: agent.username,
+        toUser: "System",
+        note: form.description || `withdraw to System`,
+      };
+    }
+
+    return {
+      fromUser: "System",
+      toUser: agent.username,
+      note: form.description || agent.username,
+    };
+  }, [agent.username, form.action, form.description, isCommissionTransfer]);
+
+  function updateForm<Key extends keyof TransferForm>(key: Key, value: TransferForm[Key]) {
+    setForm((current) => ({ ...current, [key]: value }));
+  }
+
+  function switchWallet(wallet: WalletType) {
+    setForm((current) => ({
+      ...current,
+      wallet,
+      action: wallet === "commission" ? "withdraw" : current.action,
+      description: wallet === "commission" ? "Commission Withdrawal" : agent.username,
+    }));
+  }
+
+  async function submitTransfer(action: TransferAction) {
+    const amount = Number(form.amount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      toast.error("Please enter an amount");
+      return;
+    }
+
+    setSubmitting(true);
+    const response = isCommissionTransfer
+      ? await POSTREQUEST<any>(`/admin/wallet/withdraw-commission/${clientId()}`, {
+          userId: agentId,
+          amount: form.amount,
+        })
+      : await POSTREQUEST<any>("/admin/wallet/funds-transfer", {
+          amount: form.amount,
+          description: transferDirection.note,
+          action,
+          userId: agentId,
+          clientId: clientId(),
+          username: agent.username,
+          source: "admin",
+          wallet: form.wallet,
+          subject: "Funds transfer",
+          channel: "admin",
+          from_user: action === "withdraw" ? agent.username : "System",
+          to_user: action === "withdraw" ? "System" : agent.username,
+        });
+    setSubmitting(false);
+
+    if (!response.ok || !isSuccessResponse(response.data)) {
+      toast.error(response.error || messageFrom(response.data, "Transaction failed"));
+      return;
+    }
+
+    toast.success(messageFrom(response.data, "Transaction was successful"));
+    setForm({
+      ...initialForm,
+      description: agent.username,
+    });
+    await onTransferComplete?.();
+  }
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-900/20 dark:to-indigo-800/20 border border-indigo-200 dark:border-indigo-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-200">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wide">
-              Network Balance
-            </h3>
-            <div className="w-10 h-10 bg-indigo-200 dark:bg-indigo-800 rounded-full flex items-center justify-center">
-              <span className="text-indigo-600 dark:text-indigo-300 text-lg">₦</span>
-            </div>
-          </div>
-          <p className="text-3xl font-bold text-indigo-700 dark:text-indigo-300">
-            ₦{agent.networkBalance.toLocaleString()}
-          </p>
-        </div>
-        <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 border border-emerald-200 dark:border-emerald-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-200">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">
-              Available Balance
-            </h3>
-            <div className="w-10 h-10 bg-emerald-200 dark:bg-emerald-800 rounded-full flex items-center justify-center">
-              <span className="text-emerald-600 dark:text-emerald-300 text-lg">₦</span>
-            </div>
-          </div>
-          <p className="text-3xl font-bold text-emerald-700 dark:text-emerald-300">
-            ₦{agent.availBalance.toLocaleString()}
-          </p>
-        </div>
-        <div className="bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20 border border-amber-200 dark:border-amber-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-200">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wide">
-              Balance
-            </h3>
-            <div className="w-10 h-10 bg-amber-200 dark:bg-amber-800 rounded-full flex items-center justify-center">
-              <span className="text-amber-600 dark:text-amber-300 text-lg">₦</span>
-            </div>
-          </div>
-          <p className="text-3xl font-bold text-amber-700 dark:text-amber-300">
-            ₦{agent.balance.toLocaleString()}
-          </p>
-        </div>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+        <BalanceTile label="Network Balance" value={agent.networkBalance} />
+        <BalanceTile label="Available Balance" value={agent.availBalance} />
+        <BalanceTile label="Balance" value={agent.balance} />
+        <BalanceTile label="Commission Balance" value={agent.commissionBalance} />
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900/50 dark:to-gray-800/50">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-              <span>💳</span>
-              Transaction History
-            </h3>
-           
-          </div>
-        </div>
-        <div className="p-6">
-          {filteredData.length > 0 ? (
-            <DataTable columns={columns} data={filteredData} />
-          ) : (
-            <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-              No transactions found
+      <div className="grid gap-6 lg:grid-cols-2">
+        <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <h3 className="mb-4 text-base font-semibold text-gray-900 dark:text-white">
+            Transfer Form
+          </h3>
+
+          <div className="space-y-4">
+            <ReadonlyField label="From" value={transferDirection.fromUser} />
+            <ReadonlyField label="To" value={transferDirection.toUser} />
+
+            <label className="block">
+              <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Amount
+              </span>
+              <input
+                value={form.amount}
+                onChange={(event) => updateForm("amount", event.target.value)}
+                inputMode="decimal"
+                className="h-11 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-gray-950 dark:text-white"
+              />
+            </label>
+
+            <label className="block">
+              <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                {isCommissionTransfer ? "Commission Balance" : "Note"}
+              </span>
+              <input
+                value={isCommissionTransfer ? String(agent.commissionBalance) : form.description}
+                onChange={(event) => updateForm("description", event.target.value)}
+                readOnly={isCommissionTransfer}
+                className="h-11 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none focus:border-brand-500 disabled:bg-gray-100 dark:border-gray-700 dark:bg-gray-950 dark:text-white"
+              />
+            </label>
+
+            <fieldset className="space-y-2">
+              <legend className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Transfer Type
+              </legend>
+              <div className="flex flex-wrap gap-4 text-sm text-gray-700 dark:text-gray-300">
+                <WalletRadio label="Top Up" value="main" wallet={form.wallet} onChange={switchWallet} />
+                <WalletRadio label="Trust (Bailout)" value="trust" wallet={form.wallet} onChange={switchWallet} />
+                <WalletRadio label="Commission" value="commission" wallet={form.wallet} onChange={switchWallet} />
+              </div>
+            </fieldset>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              {!isCommissionTransfer && (
+                <button
+                  type="button"
+                  disabled={submitting}
+                  onClick={() => submitTransfer("deposit")}
+                  className="h-11 rounded-md bg-success-600 px-4 text-sm font-semibold text-white hover:bg-success-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {submitting ? "Processing..." : "Deposit"}
+                </button>
+              )}
+              <button
+                type="button"
+                disabled={submitting}
+                onClick={() => submitTransfer("withdraw")}
+                className="h-11 rounded-md bg-error-600 px-4 text-sm font-semibold text-white hover:bg-error-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {submitting ? "Processing..." : "Withdraw"}
+              </button>
             </div>
-          )}
-        </div>
+          </div>
+        </section>
+
+        <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <h3 className="mb-4 text-base font-semibold text-gray-900 dark:text-white">
+            Transfer Details
+          </h3>
+          <dl className="space-y-4 text-sm">
+            <DetailRow label="Withdraw From" value={transferDirection.fromUser} />
+            <DetailRow label="Send To" value={transferDirection.toUser} />
+            <DetailRow label="Amount" value={form.amount ? money(form.amount) : "-"} />
+            <DetailRow label="Note" value={transferDirection.note || "-"} />
+            <DetailRow label="Wallet" value={form.wallet === "main" ? "Top Up" : form.wallet === "trust" ? "Trust (Bailout)" : "Commission"} />
+          </dl>
+        </section>
       </div>
     </div>
   );
 }
 
-export default BankingTab;
+function BalanceTile({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+        {label}
+      </p>
+      <p className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">
+        {money(value)}
+      </p>
+    </div>
+  );
+}
 
+function ReadonlyField({ label, value }: { label: string; value: string }) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+        {label}
+      </span>
+      <input
+        value={value}
+        readOnly
+        className="h-11 w-full rounded-md border border-gray-300 bg-gray-50 px-3 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white"
+      />
+    </label>
+  );
+}
+
+function WalletRadio({
+  label,
+  value,
+  wallet,
+  onChange,
+}: {
+  label: string;
+  value: WalletType;
+  wallet: WalletType;
+  onChange: (wallet: WalletType) => void;
+}) {
+  return (
+    <label className="inline-flex items-center gap-2">
+      <input
+        type="radio"
+        checked={wallet === value}
+        onChange={() => onChange(value)}
+        className="h-4 w-4 border-gray-300 text-brand-600 focus:ring-brand-500"
+      />
+      {label}
+    </label>
+  );
+}
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="grid grid-cols-[140px_1fr] gap-3">
+      <dt className="font-medium text-gray-500 dark:text-gray-400">{label}</dt>
+      <dd className="text-gray-900 dark:text-white">{value}</dd>
+    </div>
+  );
+}
+
+export default BankingTab;

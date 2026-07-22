@@ -39,42 +39,43 @@ function AgentOverviewPage() {
   const [agent, setAgent] = useState<Agency | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function loadAgent() {
-      setLoading(true);
-      const response = await GETREQUEST<any>(`/admin/retail/${clientId()}/agent/${agentId}`);
-      setLoading(false);
+  async function loadAgent({ showLoader = false }: { showLoader?: boolean } = {}) {
+    if (!agentId) return;
+    if (showLoader) setLoading(true);
+    const response = await GETREQUEST<any>(`/admin/retail/${clientId()}/agent/${agentId}`);
+    if (showLoader) setLoading(false);
 
-      const body = asRecord(response.data);
-      if (!response.ok || body.success === false) {
-        toast.error(response.error || body.message || "An error occured");
-        return;
-      }
-
-      const data = asRecord(body.data);
-      setAgent({
-        id: String(rowValue(data, ["id"], agentId)),
-        username: String(rowValue(data, ["username"], agentId)),
-        name: String(
-          rowValue(
-            data,
-            ["name"],
-            `${rowValue(data, ["firstName", "first_name"], "")} ${rowValue(data, ["lastName", "last_name"], "")}`.trim()
-          )
-        ),
-        agentType: String(rowValue(data, ["rolename", "role", "agentType"], "")),
-        status: String(rowValue(data, ["status"], "")),
-        networkBalance: toNumber(data.networkBalance ?? data.network_balance),
-        networkTrust: toNumber(data.networkTrust ?? data.network_trust),
-        availBalance: toNumber(data.availBalance ?? data.available_balance ?? data.avail_balance),
-        balance: toNumber(data.balance),
-        commissionBalance: toNumber(data.commissionBalance ?? data.commission_balance),
-        trustUser: toNumber(data.trustUser ?? data.trust_user),
-        tempBlock: Boolean(data.tempBlock ?? data.temp_block),
-      });
+    const body = asRecord(response.data);
+    if (!response.ok || body.success === false) {
+      toast.error(response.error || body.message || "An error occured");
+      return;
     }
 
-    if (agentId) void loadAgent();
+    const data = asRecord(body.data);
+    setAgent({
+      id: String(rowValue(data, ["id"], agentId)),
+      username: String(rowValue(data, ["username"], agentId)),
+      name: String(
+        rowValue(
+          data,
+          ["name"],
+          `${rowValue(data, ["firstName", "first_name"], "")} ${rowValue(data, ["lastName", "last_name"], "")}`.trim()
+        )
+      ),
+      agentType: String(rowValue(data, ["rolename", "role", "agentType"], "")),
+      status: String(rowValue(data, ["status"], "")),
+      networkBalance: toNumber(data.networkBalance ?? data.network_balance),
+      networkTrust: toNumber(data.networkTrust ?? data.network_trust),
+      availBalance: toNumber(data.availBalance ?? data.available_balance ?? data.avail_balance),
+      balance: toNumber(data.balance),
+      commissionBalance: toNumber(data.commissionBalance ?? data.commission_balance),
+      trustUser: toNumber(data.trustUser ?? data.trust_user),
+      tempBlock: Boolean(data.tempBlock ?? data.temp_block),
+    });
+  }
+
+  useEffect(() => {
+    void loadAgent({ showLoader: true });
   }, [agentId]);
 
   if (loading || !agent) {
@@ -179,7 +180,7 @@ function AgentOverviewPage() {
         </TabsContent>
 
         <TabsContent value="banking" className="mt-4">
-          <BankingTab agentId={agentId} agent={agent} />
+          <BankingTab agentId={agentId} agent={agent} onTransferComplete={() => loadAgent()} />
         </TabsContent>
 
         <TabsContent value="commission-profile" className="mt-4">
