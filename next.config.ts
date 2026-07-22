@@ -635,11 +635,6 @@ const nextConfig: NextConfig = {
         permanent: false,
       },
       {
-        source: "/ContentManagement/Jackpots/:Edit",
-        destination: "/jackpots/:Edit",
-        permanent: false,
-      },
-      {
         source: "/ContentManagement/Jackpots/WeeklyJackpots",
         destination: "/jackpots/weekly-jackpots",
         permanent: false,
@@ -652,6 +647,11 @@ const nextConfig: NextConfig = {
       {
         source: "/ContentManagement/Jackpots/Tickets",
         destination: "/jackpots/jackpot-tickets",
+        permanent: false,
+      },
+      {
+        source: "/ContentManagement/Jackpots/:Edit",
+        destination: "/jackpots/:Edit",
         permanent: false,
       },
       {
