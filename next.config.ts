@@ -199,6 +199,71 @@ const nextConfig: NextConfig = {
         destination: "/player-management/player-info/:PlayerId",
         permanent: false,
       },
+      {
+        source: "/Banking/DepositsWithdrawalsManager",
+        destination: "/banking/deposits-withdrawals",
+        permanent: false,
+      },
+      {
+        source: "/Banking/RetailCashTransactions",
+        destination: "/banking/retail-cash-sales",
+        permanent: false,
+      },
+      {
+        source: "/Banking/OperationBalanceTransfer",
+        destination: "/banking/operation-balance-transfer",
+        permanent: false,
+      },
+      {
+        source: "/Banking/Cashflows",
+        destination: "/banking/cashflow",
+        permanent: false,
+      },
+      {
+        source: "/Banking/Cashflows/CashBooks",
+        destination: "/banking/cashflow/cash-books",
+        permanent: false,
+      },
+      {
+        source: "/Banking/Cashflows/Cashbooks",
+        destination: "/banking/cashflow/cash-books",
+        permanent: false,
+      },
+      {
+        source: "/Banking/Cashflows/CashIn",
+        destination: "/banking/cashflow/cash-in",
+        permanent: false,
+      },
+      {
+        source: "/Banking/Cashflows/CashOut",
+        destination: "/banking/cashflow/cash-out",
+        permanent: false,
+      },
+      {
+        source: "/Banking/Cashflows/Deductions",
+        destination: "/banking/cashflow/deductions",
+        permanent: false,
+      },
+      {
+        source: "/Banking/Cashflows/Defcon",
+        destination: "/banking/cashflow/defcon",
+        permanent: false,
+      },
+      {
+        source: "/Banking/Cashflows/Expenses",
+        destination: "/banking/cashflow/expenses",
+        permanent: false,
+      },
+      {
+        source: "/Banking/Cashflows/Settings",
+        destination: "/banking/cashflow/settings",
+        permanent: false,
+      },
+      {
+        source: "/Banking/Cashflows/Standings",
+        destination: "/banking/cashflow/standings",
+        permanent: false,
+      },
     ];
   },
   webpack(config) {
