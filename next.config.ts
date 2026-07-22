@@ -334,6 +334,46 @@ const nextConfig: NextConfig = {
         destination: "/change-password",
         permanent: false,
       },
+      {
+        source: "/Network/AgencyList",
+        destination: "/network/agency-list",
+        permanent: false,
+      },
+      {
+        source: "/Network/PendingReq",
+        destination: "/network/pending-requests",
+        permanent: false,
+      },
+      {
+        source: "/Network/NewAgent",
+        destination: "/network/add-new-agent",
+        permanent: false,
+      },
+      {
+        source: "/Network/Commissions",
+        destination: "/network/commissions",
+        permanent: false,
+      },
+      {
+        source: "/Network/CommissionReporting",
+        destination: "/network/commission-reporting",
+        permanent: false,
+      },
+      {
+        source: "/Network/Transfer",
+        destination: "/network/transfer",
+        permanent: false,
+      },
+      {
+        source: "/Network/Agent/:Index",
+        destination: "/network/agent/:Index",
+        permanent: false,
+      },
+      {
+        source: "/Network/Agent/User/:Index",
+        destination: "/network/agent/user/:Index",
+        permanent: false,
+      },
     ];
   },
   webpack(config) {
