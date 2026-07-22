@@ -1,8 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useState } from "react";
+import { toast } from "sonner";
 import { Calendar, Search, X } from "lucide-react";
+
+import { POSTREQUEST } from "@/utils/base_request";
 
 type Period =
   | "today"
@@ -35,19 +38,30 @@ type RegistrationRow = {
   date: string;
   month: string;
   state: string;
-  productType: "sports" | "casino" | "games" | "Virtual";
-  clientType: "website" | "mobile" | "cashier";
-  deposited: "yes" | "no";
-  verified: "email_verified" | "email_not_verified" | "mobile_verified" | "mobile_not_verified";
+  productType: string;
+  clientType: string;
+  deposited: string;
+  verified: string;
   count: number;
+  registeredDeposited: number;
+  firstDepositors: number;
+  totalDeposit: number;
+  turnover: number;
+  winnings: number;
+  awufBonus: number;
+  bonus: number;
+  total: number;
+  average: number;
 };
 
-const registrations: RegistrationRow[] = [
-  { id: "reg-1", playerId: "USR-2024001", username: "john_doe", date: "22/07/2026", month: "July 2026", state: "Lagos", productType: "sports", clientType: "website", deposited: "yes", verified: "email_verified", count: 1 },
-  { id: "reg-2", playerId: "USR-2024002", username: "mary_j", date: "22/07/2026", month: "July 2026", state: "Abuja", productType: "casino", clientType: "mobile", deposited: "no", verified: "mobile_not_verified", count: 1 },
-  { id: "reg-3", playerId: "USR-2024003", username: "retail_user_09", date: "21/07/2026", month: "July 2026", state: "Rivers", productType: "games", clientType: "cashier", deposited: "yes", verified: "mobile_verified", count: 1 },
-  { id: "reg-4", playerId: "USR-2024004", username: "virtualfan", date: "20/07/2026", month: "July 2026", state: "Lagos", productType: "Virtual", clientType: "website", deposited: "no", verified: "email_not_verified", count: 1 },
-];
+type Pagination = {
+  total: number;
+  per_page: number;
+  from: number;
+  to: number;
+  current_page: number;
+  last_page?: number;
+};
 
 const periodOptions: { value: Period; label: string }[] = [
   { value: "today", label: "Today" },
@@ -120,39 +134,125 @@ function groupLabel(row: RegistrationRow, groupBy: GroupBy) {
   }
 }
 
+function asRecord(value: unknown): Record<string, any> {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, any> : {};
+}
+
+function toNumber(value: unknown, fallback = 0) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function money(value: number) {
+  return `NGN ${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+}
+
+function monthLabel(value: string) {
+  if (!value) return "-";
+  const monthNumber = Number(value);
+  if (Number.isInteger(monthNumber) && monthNumber >= 1 && monthNumber <= 12) {
+    return new Date(2026, monthNumber - 1, 1).toLocaleString("en", { month: "short" });
+  }
+  return value;
+}
+
+function calcGgr(row: RegistrationRow) {
+  return row.turnover - row.winnings;
+}
+
+function calcNgr(row: RegistrationRow) {
+  return row.turnover - row.winnings - row.awufBonus - row.bonus;
+}
+
+function margin(row: RegistrationRow) {
+  return row.turnover > 0 ? (calcGgr(row) / row.turnover) * 100 : 0;
+}
+
+function mapRegistrationRow(itemValue: unknown, index: number): RegistrationRow {
+  const item = asRecord(itemValue);
+  const turnover = toNumber(item.turnover);
+  const winnings = toNumber(item.winnings);
+  const total = toNumber(item.total ?? item.noOfBets ?? item.total_bets);
+  return {
+    id: String(item.id ?? item.user_id ?? item.userId ?? item.playerId ?? item.username ?? `registration-${index}`),
+    playerId: String(item.user_id ?? item.userId ?? item.playerId ?? item.id ?? ""),
+    username: String(item.username ?? item.userName ?? "-"),
+    date: String(item.date ?? item.day ?? "-"),
+    month: String(item.month ?? "-"),
+    state: String(item.state ?? "-"),
+    productType: String(item.product_type ?? item.productType ?? "-"),
+    clientType: String(item.channel ?? item.client_type ?? item.clientType ?? "-"),
+    deposited: String(item.deposited ?? "-"),
+    verified: String(item.verified ?? "-"),
+    count: toNumber(item.total_registered ?? item.totalRegistered ?? item.registrations ?? item.count ?? item.total, 0),
+    registeredDeposited: toNumber(item.registered_deposited ?? item.registeredDeposited),
+    firstDepositors: toNumber(item.first_depositors ?? item.firstDepositors),
+    totalDeposit: toNumber(item.total_deposit ?? item.totalDeposit),
+    turnover,
+    winnings,
+    awufBonus: toNumber(item.awuf_bonus ?? item.awufBonus),
+    bonus: toNumber(item.bonus),
+    total,
+    average: toNumber(item.average, total > 0 ? turnover / total : 0),
+  };
+}
+
+function paginationFrom(data: unknown, page: number, count: number): Pagination {
+  const payload = asRecord(data);
+  const bets = asRecord(payload.bets);
+  const pagination = Object.keys(bets).length ? bets : asRecord(payload.pagination);
+  const perPage = toNumber(pagination.per_page ?? pagination.perPage, count || 10);
+  const total = toNumber(pagination.total ?? payload.total ?? payload.count, count);
+  const currentPage = toNumber(pagination.current_page ?? pagination.currentPage, page);
+
+  return {
+    total,
+    per_page: perPage,
+    from: toNumber(pagination.from, total ? (currentPage - 1) * perPage + 1 : 0),
+    to: toNumber(pagination.to, Math.min(currentPage * perPage, total)),
+    current_page: currentPage,
+    last_page: toNumber(pagination.last_page ?? pagination.lastPage, perPage ? Math.max(1, Math.ceil(total / perPage)) : 1),
+  };
+}
+
 export default function RegistrationsHistoryClient() {
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
   const [paging, setPaging] = useState(true);
   const [activeGroupBy, setActiveGroupBy] = useState<GroupBy>("day");
-
-  const filteredRows = useMemo(
-    () =>
-      registrations.filter((row) => {
-        const matchesState = !filters.state || row.state === filters.state;
-        const matchesProduct = !filters.productType || row.productType === filters.productType;
-        const matchesClient = !filters.clientType || row.clientType === filters.clientType;
-        const matchesDeposit = !filters.deposited || row.deposited === filters.deposited;
-        const matchesVerification = !filters.verified || row.verified === filters.verified;
-        return matchesState && matchesProduct && matchesClient && matchesDeposit && matchesVerification;
-      }),
-    [filters.clientType, filters.deposited, filters.productType, filters.state, filters.verified],
-  );
-
-  const groupedRows = useMemo(() => {
-    if (activeGroupBy === "player") return [];
-    const groups = new Map<string, number>();
-    filteredRows.forEach((row) => {
-      const key = groupLabel(row, activeGroupBy);
-      groups.set(key, (groups.get(key) ?? 0) + row.count);
-    });
-    return [...groups.entries()].map(([label, count]) => ({ label, count }));
-  }, [activeGroupBy, filteredRows]);
+  const [rows, setRows] = useState<RegistrationRow[]>([]);
+  const [pagination, setPagination] = useState<Pagination>({ total: 0, per_page: 10, from: 0, to: 0, current_page: 1 });
+  const [loading, setLoading] = useState(false);
 
   function updatePeriod(period: Period) {
     setFilters((current) => ({ ...current, period, ...rangeForPeriod(period) }));
   }
 
-  function search() {
+  async function search(page = 1) {
+    setLoading(true);
+    const payload = {
+      period: filters.period,
+      state: filters.state,
+      product_type: filters.productType,
+      from: filters.from,
+      to: filters.to,
+      client_type: filters.clientType,
+      deposited: filters.deposited,
+      verified: filters.verified,
+      group_by: filters.groupBy,
+      paging,
+    };
+    const response = await POSTREQUEST<any>(`/api/admin/reporting/login-history?page=${page}`, payload);
+    setLoading(false);
+
+    const body = asRecord(response.data);
+    if (!response.ok || body.success === false) {
+      toast.error(response.error || body.message || "An error occured");
+      return;
+    }
+
+    const rawRows = Array.isArray(body.data) ? body.data : Array.isArray(body.histories) ? body.histories : [];
+    setRows(rawRows.map(mapRegistrationRow));
+    setPagination(paginationFrom(body, page, rawRows.length));
     setActiveGroupBy(filters.groupBy);
   }
 
@@ -160,12 +260,14 @@ export default function RegistrationsHistoryClient() {
     setFilters(defaultFilters());
     setPaging(true);
     setActiveGroupBy("day");
+    setRows([]);
+    setPagination({ total: 0, per_page: 10, from: 0, to: 0, current_page: 1 });
   }
 
   return (
     <div className="space-y-6">
       <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-950">
-        <form className="space-y-4">
+        <form className="space-y-4" onSubmit={(event) => { event.preventDefault(); void search(1); }}>
           <div className="grid gap-3 md:grid-cols-4">
             <select value={filters.period} onChange={(event) => updatePeriod(event.target.value as Period)} className="h-10 rounded-md border border-gray-300 px-3 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white">
               {periodOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
@@ -230,31 +332,58 @@ export default function RegistrationsHistoryClient() {
               <input type="checkbox" checked={paging} onChange={(event) => setPaging(event.target.checked)} className="h-4 w-4 rounded border-gray-300 text-brand-500" />
               Enable Paging
             </label>
-            <button type="button" onClick={search} className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-info-500 px-4 text-sm font-medium text-white hover:bg-info-600">
+            <button type="submit" disabled={loading} className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-info-500 px-4 text-sm font-medium text-white hover:bg-info-600 disabled:opacity-60">
               <Search size={16} />
-              Search
+              {loading ? "Searching" : "Search"}
             </button>
             <button type="button" onClick={resetFilter} className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-gray-300 px-4 text-sm font-medium dark:border-gray-700">
               <X size={16} />
               Clear all filters
             </button>
             <div className="rounded-md bg-gray-50 px-3 py-2 text-xs text-gray-600 dark:bg-white/[0.03] dark:text-gray-400">
-              Users.getRegistrationHistory(filterData, page)
+              POST /api/admin/reporting/login-history?page={pagination.current_page}
             </div>
           </div>
         </form>
       </section>
 
       {activeGroupBy === "player" ? (
-        <PlayerResults rows={filteredRows} paging={paging} />
+        <PlayerResults rows={rows} paging={paging} pagination={pagination} loading={loading} onPage={search} />
       ) : (
-        <GroupedResults groupBy={activeGroupBy} rows={groupedRows} total={filteredRows.length} paging={paging} />
+        <GroupedResults groupBy={activeGroupBy} rows={rows} paging={paging} pagination={pagination} loading={loading} onPage={search} />
       )}
     </div>
   );
 }
 
-function GroupedResults({ groupBy, rows, total, paging }: { groupBy: GroupBy; rows: { label: string; count: number }[]; total: number; paging: boolean }) {
+function GroupedResults({
+  groupBy,
+  rows,
+  paging,
+  pagination,
+  loading,
+  onPage,
+}: {
+  groupBy: GroupBy;
+  rows: RegistrationRow[];
+  paging: boolean;
+  pagination: Pagination;
+  loading: boolean;
+  onPage: (page: number) => Promise<void>;
+}) {
+  const totals = rows.reduce(
+    (sum, row) => ({
+      registrations: sum.registrations + row.count,
+      registeredDeposited: sum.registeredDeposited + row.registeredDeposited,
+      firstDepositors: sum.firstDepositors + row.firstDepositors,
+      totalDeposit: sum.totalDeposit + row.totalDeposit,
+      turnover: sum.turnover + row.turnover,
+      ngr: sum.ngr + calcNgr(row),
+      bonus: sum.bonus + row.bonus,
+    }),
+    { registrations: 0, registeredDeposited: 0, firstDepositors: 0, totalDeposit: 0, turnover: 0, ngr: 0, bonus: 0 },
+  );
+
   return (
     <section className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-950">
       <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4 dark:border-gray-800">
@@ -265,33 +394,60 @@ function GroupedResults({ groupBy, rows, total, paging }: { groupBy: GroupBy; ro
         <table className="min-w-full divide-y divide-gray-200 text-sm dark:divide-gray-800">
           <thead className="bg-gray-50 dark:bg-gray-900">
             <tr>
-              <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Group</th>
-              <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Registrations</th>
+              {["Group", "Registrations", "Registered and Deposited", "First Depositors", "Conversion Ratio", "Total Deposit Amount", "Turnover", "NGR", "Bonus Spent"].map((head) => (
+                <th key={head} className="whitespace-nowrap px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">{head}</th>
+              ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-gray-900">
             {rows.map((row) => (
-              <tr key={row.label}>
-                <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{row.label}</td>
+              <tr key={row.id}>
+                <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{groupBy === "month" ? monthLabel(row.month) : groupLabel(row, groupBy)}</td>
                 <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{row.count.toLocaleString()}</td>
+                <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{row.registeredDeposited.toLocaleString()}</td>
+                <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{row.firstDepositors.toLocaleString()}</td>
+                <td className="px-4 py-3 text-gray-700 dark:text-gray-300">0%</td>
+                <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{money(row.totalDeposit)}</td>
+                <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{money(row.turnover)}</td>
+                <td className={`px-4 py-3 ${calcNgr(row) < 0 ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-gray-300"}`}>{money(calcNgr(row))}</td>
+                <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{money(row.bonus)}</td>
               </tr>
             ))}
-            {!rows.length ? <tr><td colSpan={2} className="px-4 py-8 text-center text-sm text-gray-500">No record found</td></tr> : null}
+            {!rows.length ? <tr><td colSpan={9} className="px-4 py-8 text-center text-sm text-gray-500">{loading ? "Loading report" : "No record found"}</td></tr> : null}
           </tbody>
           <tfoot className="bg-gray-50 font-semibold dark:bg-gray-900">
             <tr>
               <td className="px-4 py-3 text-gray-700 dark:text-gray-300">Total</td>
-              <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{total.toLocaleString()}</td>
+              <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{totals.registrations.toLocaleString()}</td>
+              <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{totals.registeredDeposited.toLocaleString()}</td>
+              <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{totals.firstDepositors.toLocaleString()}</td>
+              <td className="px-4 py-3 text-gray-700 dark:text-gray-300">0%</td>
+              <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{money(totals.totalDeposit)}</td>
+              <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{money(totals.turnover)}</td>
+              <td className={`px-4 py-3 ${totals.ngr < 0 ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-gray-300"}`}>{money(totals.ngr)}</td>
+              <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{money(totals.bonus)}</td>
             </tr>
           </tfoot>
         </table>
       </div>
-      {paging ? <div className="border-t border-gray-200 px-5 py-4 text-sm text-gray-500 dark:border-gray-800 dark:text-gray-400">Showing {rows.length} grouped rows</div> : null}
+      {paging ? <PaginationSummary pagination={pagination} loading={loading} onPage={onPage} /> : null}
     </section>
   );
 }
 
-function PlayerResults({ rows, paging }: { rows: RegistrationRow[]; paging: boolean }) {
+function PlayerResults({
+  rows,
+  paging,
+  pagination,
+  loading,
+  onPage,
+}: {
+  rows: RegistrationRow[];
+  paging: boolean;
+  pagination: Pagination;
+  loading: boolean;
+  onPage: (page: number) => Promise<void>;
+}) {
   return (
     <section className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-950">
       <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4 dark:border-gray-800">
@@ -302,7 +458,7 @@ function PlayerResults({ rows, paging }: { rows: RegistrationRow[]; paging: bool
         <table className="min-w-full divide-y divide-gray-200 text-sm dark:divide-gray-800">
           <thead className="bg-gray-50 dark:bg-gray-900">
             <tr>
-              {["Registered At", "Player", "State", "Product", "Client Type", "Deposited", "Verification"].map((head) => (
+              {["Username", "Total Deposit", "# of Bets", "Turnover", "Avg. Bet Amount", "GGR", "Margin (%)", "NGR", "Bonus Spent"].map((head) => (
                 <th key={head} className="whitespace-nowrap px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">{head}</th>
               ))}
             </tr>
@@ -310,21 +466,36 @@ function PlayerResults({ rows, paging }: { rows: RegistrationRow[]; paging: bool
           <tbody className="divide-y divide-gray-100 dark:divide-gray-900">
             {rows.map((row) => (
               <tr key={row.id}>
-                <td className="whitespace-nowrap px-4 py-3 text-gray-700 dark:text-gray-300">{row.date}</td>
                 <td className="whitespace-nowrap px-4 py-3"><Link href={`/player-management/player-info/${row.playerId}`} className="font-medium text-brand-600 dark:text-brand-300">{row.username}</Link></td>
-                <td className="whitespace-nowrap px-4 py-3 text-gray-700 dark:text-gray-300">{row.state}</td>
-                <td className="whitespace-nowrap px-4 py-3 text-gray-700 dark:text-gray-300">{row.productType}</td>
-                <td className="whitespace-nowrap px-4 py-3 text-gray-700 dark:text-gray-300">{row.clientType}</td>
-                <td className="whitespace-nowrap px-4 py-3 text-gray-700 dark:text-gray-300">{row.deposited === "yes" ? "Deposited" : "Didn't Deposit"}</td>
-                <td className="whitespace-nowrap px-4 py-3 text-gray-700 dark:text-gray-300">{row.verified.replaceAll("_", " ")}</td>
+                <td className="whitespace-nowrap px-4 py-3 text-gray-700 dark:text-gray-300">{row.totalDeposit ? money(row.totalDeposit) : "-"}</td>
+                <td className="whitespace-nowrap px-4 py-3 text-gray-700 dark:text-gray-300">{row.total.toLocaleString()}</td>
+                <td className="whitespace-nowrap px-4 py-3 text-gray-700 dark:text-gray-300">{money(row.turnover)}</td>
+                <td className="whitespace-nowrap px-4 py-3 text-gray-700 dark:text-gray-300">{money(row.average)}</td>
+                <td className={`whitespace-nowrap px-4 py-3 ${calcGgr(row) < 0 ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-gray-300"}`}>{money(calcGgr(row))}</td>
+                <td className={`whitespace-nowrap px-4 py-3 ${calcGgr(row) < 0 ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-gray-300"}`}>{margin(row).toFixed(2)}%</td>
+                <td className={`whitespace-nowrap px-4 py-3 ${calcNgr(row) < 0 ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-gray-300"}`}>{money(calcNgr(row))}</td>
+                <td className="whitespace-nowrap px-4 py-3 text-gray-700 dark:text-gray-300">{money(row.bonus + row.awufBonus)}</td>
               </tr>
             ))}
-            {!rows.length ? <tr><td colSpan={7} className="px-4 py-8 text-center text-sm text-gray-500">No record found</td></tr> : null}
+            {!rows.length ? <tr><td colSpan={9} className="px-4 py-8 text-center text-sm text-gray-500">{loading ? "Loading report" : "No record found"}</td></tr> : null}
           </tbody>
         </table>
       </div>
-      {paging ? <div className="border-t border-gray-200 px-5 py-4 text-sm text-gray-500 dark:border-gray-800 dark:text-gray-400">Showing 1 to {rows.length} of {rows.length} entries</div> : null}
+      {paging ? <PaginationSummary pagination={pagination} loading={loading} onPage={onPage} /> : null}
     </section>
+  );
+}
+
+function PaginationSummary({ pagination, loading, onPage }: { pagination: Pagination; loading: boolean; onPage: (page: number) => Promise<void> }) {
+  const lastPage = pagination.last_page ?? Math.max(1, Math.ceil((pagination.total || 0) / (pagination.per_page || 1)));
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 px-5 py-4 text-sm text-gray-500 dark:border-gray-800 dark:text-gray-400">
+      <span>Showing {pagination.total ? `${pagination.from} to ${pagination.to} of ${pagination.total}` : "0"} entries</span>
+      <div className="flex gap-2">
+        <button type="button" disabled={pagination.current_page <= 1 || loading} onClick={() => void onPage(pagination.current_page - 1)} className="h-8 rounded-md border border-gray-300 px-3 disabled:opacity-40 dark:border-gray-700">Prev</button>
+        <button type="button" disabled={pagination.current_page >= lastPage || loading} onClick={() => void onPage(pagination.current_page + 1)} className="h-8 rounded-md border border-gray-300 px-3 disabled:opacity-40 dark:border-gray-700">Next</button>
+      </div>
+    </div>
   );
 }
 
