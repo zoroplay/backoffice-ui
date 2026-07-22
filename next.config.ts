@@ -404,6 +404,41 @@ const nextConfig: NextConfig = {
         destination: "/content-management/banners/:EditBanner",
         permanent: false,
       },
+      {
+        source: "/ContentManagement/JackpotManagement",
+        destination: "/content-management/jackpot-management",
+        permanent: false,
+      },
+      {
+        source: "/ContentManagement/Jackpots/List",
+        destination: "/jackpots",
+        permanent: false,
+      },
+      {
+        source: "/ContentManagement/Jackpots/AddNew",
+        destination: "/jackpots/add-new",
+        permanent: false,
+      },
+      {
+        source: "/ContentManagement/Jackpots/:Edit",
+        destination: "/jackpots/:Edit",
+        permanent: false,
+      },
+      {
+        source: "/ContentManagement/Jackpots/WeeklyJackpots",
+        destination: "/jackpots/weekly-jackpots",
+        permanent: false,
+      },
+      {
+        source: "/ContentManagement/Jackpots/TicketJackpots",
+        destination: "/jackpots/ticket-jackpots",
+        permanent: false,
+      },
+      {
+        source: "/ContentManagement/Jackpots/Tickets",
+        destination: "/jackpots/jackpot-tickets",
+        permanent: false,
+      },
     ];
   },
   webpack(config) {
