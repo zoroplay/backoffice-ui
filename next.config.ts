@@ -485,6 +485,111 @@ const nextConfig: NextConfig = {
         permanent: false,
       },
       {
+        source: "/Pools/Fixtures",
+        destination: "/pools-management/fixtures",
+        permanent: false,
+      },
+      {
+        source: "/Pools/SalesOverview",
+        destination: "/pools-management/sales-overview",
+        permanent: false,
+      },
+      {
+        source: "/Pools/CouponTickets",
+        destination: "/pools-management/coupon-tickets",
+        permanent: false,
+      },
+      {
+        source: "/Pools/CouponSales",
+        destination: "/pools-management/coupon-sales",
+        permanent: false,
+      },
+      {
+        source: "/Pools/Tickets",
+        destination: "/pools-management/tickets",
+        permanent: false,
+      },
+      {
+        source: "/Promotions",
+        destination: "/promotions",
+        permanent: false,
+      },
+      {
+        source: "/Promotions/AddNew",
+        destination: "/promotions/add-new",
+        permanent: false,
+      },
+      {
+        source: "/Promotions/:EditPage",
+        destination: "/promotions/:EditPage",
+        permanent: false,
+      },
+      {
+        source: "/LuckyBalls/Commission",
+        destination: "/lucky-balls/commission",
+        permanent: false,
+      },
+      {
+        source: "/LuckyBalls/Shops",
+        destination: "/lucky-balls/shops",
+        permanent: false,
+      },
+      {
+        source: "/LuckyBalls/Shop",
+        destination: "/lucky-balls/shop",
+        permanent: false,
+      },
+      {
+        source: "/LuckyBalls/Shop/:UserId",
+        destination: "/lucky-balls/shop/:UserId",
+        permanent: false,
+      },
+      {
+        source: "/VirtualSport",
+        destination: "/virtual-sport",
+        permanent: false,
+      },
+      {
+        source: "/OnlineHelp",
+        destination: "/support",
+        permanent: false,
+      },
+      {
+        source: "/Communications/PlayerMessages",
+        destination: "/communications/player-messages",
+        permanent: false,
+      },
+      {
+        source: "/Communications/NetworkMessages",
+        destination: "/communications/network-messages",
+        permanent: false,
+      },
+      {
+        source: "/Communications/MassInboxMessages",
+        destination: "/communications/mass-inbox-messages",
+        permanent: false,
+      },
+      {
+        source: "/Communications/SMSConfig",
+        destination: "/communications/sms-settings",
+        permanent: false,
+      },
+      {
+        source: "/RiskManagement/BettingParameters",
+        destination: "/risk-management/betting-parameters",
+        permanent: false,
+      },
+      {
+        source: "/RiskManagement/Liability",
+        destination: "/risk-management/liability",
+        permanent: false,
+      },
+      {
+        source: "/RiskManagement/Profitability",
+        destination: "/risk-management/profitability",
+        permanent: false,
+      },
+      {
         source: "/ContentManagement/Pages/List",
         destination: "/content-management/pages",
         permanent: false,
