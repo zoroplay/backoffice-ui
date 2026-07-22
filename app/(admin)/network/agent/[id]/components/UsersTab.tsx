@@ -14,7 +14,7 @@ import {
   rowValue,
   type AnyRecord,
 } from "@/app/(admin)/tickets/components/ticketApiHelpers";
-import { GETREQUEST, POSTREQUEST } from "@/utils/base_request";
+import { GETREQUEST, POSTREQUEST, PUTREQUEST } from "@/utils/base_request";
 
 type RoleOption = {
   id: string;
@@ -66,6 +66,11 @@ type AddUserFormState = {
   parentId: string;
   existingUserId: string;
   existingUserQuery: string;
+};
+
+type PasswordFormState = {
+  password: string;
+  conf_password: string;
 };
 
 interface UsersTabProps {
@@ -166,6 +171,12 @@ export default function UsersTab({ agentId }: UsersTabProps) {
   const [submittingUser, setSubmittingUser] = useState(false);
   const [searchingExistingUser, setSearchingExistingUser] = useState(false);
   const [existingUserResults, setExistingUserResults] = useState<ExistingUserOption[]>([]);
+  const [passwordUser, setPasswordUser] = useState<AgentUser | null>(null);
+  const [passwordForm, setPasswordForm] = useState<PasswordFormState>({
+    password: "",
+    conf_password: "",
+  });
+  const [changingPassword, setChangingPassword] = useState(false);
 
   async function loadUsers(page = 1, roleId = userType) {
     setLoading(true);
@@ -332,6 +343,43 @@ export default function UsersTab({ agentId }: UsersTabProps) {
 
     toast.success(body.message || "User has been deleted");
     setUsers((current) => current.filter((user) => user.id !== userId));
+  }
+
+  function closePasswordForm() {
+    setPasswordUser(null);
+    setPasswordForm({ password: "", conf_password: "" });
+  }
+
+  async function changePassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!passwordUser) return;
+    if (passwordForm.password.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+    if (passwordForm.password !== passwordForm.conf_password) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    setChangingPassword(true);
+    const response = await PUTREQUEST<any>("/admin/users/change-password", {
+      password: passwordForm.password,
+      conf_password: passwordForm.conf_password,
+      username: passwordUser.username,
+      userId: passwordUser.id,
+      clientId: clientId(),
+    });
+    setChangingPassword(false);
+
+    const body = asRecord(response.data);
+    if (!response.ok || body.success === false) {
+      toast.error(response.error || body.message || "Something went wrong. Unable to change password");
+      return;
+    }
+
+    toast.success(body.message || "Password has been changed");
+    closePasswordForm();
   }
 
   useEffect(() => {
@@ -557,7 +605,7 @@ export default function UsersTab({ agentId }: UsersTabProps) {
                     </Link>
                     <button
                       type="button"
-                      onClick={() => toast.info("Password modal parity is pending")}
+                      onClick={() => setPasswordUser(user)}
                       className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-amber-500 text-white hover:bg-amber-600"
                       title="Change password"
                     >
@@ -586,6 +634,53 @@ export default function UsersTab({ agentId }: UsersTabProps) {
           </tbody>
         </table>
       </div>
+      {passwordUser ? (
+        <div className="fixed inset-0 z-99999 flex items-center justify-center bg-black/40 p-4" onClick={closePasswordForm}>
+          <div
+            className="w-full max-w-md rounded-lg bg-white shadow-xl dark:bg-gray-950"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white">Change Password</h3>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Set a new password for {passwordUser.username}.
+              </p>
+            </div>
+            <form onSubmit={changePassword} className="space-y-4 p-5">
+              <TextField
+                label="New Password"
+                type="password"
+                value={passwordForm.password}
+                onChange={(value) => setPasswordForm((current) => ({ ...current, password: value }))}
+                required
+              />
+              <TextField
+                label="Confirm Password"
+                type="password"
+                value={passwordForm.conf_password}
+                onChange={(value) => setPasswordForm((current) => ({ ...current, conf_password: value }))}
+                required
+              />
+              <div className="flex justify-end gap-3 border-t border-gray-200 pt-4 dark:border-gray-800">
+                <button
+                  type="button"
+                  onClick={closePasswordForm}
+                  className="h-10 rounded-md border border-gray-300 px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-900"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={changingPassword}
+                  className="h-10 rounded-md bg-brand-500 px-4 text-sm font-medium text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {changingPassword ? "Changing..." : "Change Password"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
