@@ -375,6 +375,66 @@ const nextConfig: NextConfig = {
         permanent: false,
       },
       {
+        source: "/Casino2",
+        destination: "/casino",
+        permanent: false,
+      },
+      {
+        source: "/Casino/BetsHistory",
+        destination: "/casino/bets-history",
+        permanent: false,
+      },
+      {
+        source: "/Casino/CasinoMenu",
+        destination: "/casino/menu",
+        permanent: false,
+      },
+      {
+        source: "/Casino/CasinoReporting",
+        destination: "/casino/reporting",
+        permanent: false,
+      },
+      {
+        source: "/Casino/Categories",
+        destination: "/casino/categories",
+        permanent: false,
+      },
+      {
+        source: "/Casino/Game",
+        destination: "/casino/game",
+        permanent: false,
+      },
+      {
+        source: "/Casino/Games",
+        destination: "/casino/games",
+        permanent: false,
+      },
+      {
+        source: "/Casino/Games/AddNew",
+        destination: "/casino/games/add-new",
+        permanent: false,
+      },
+      {
+        source: "/Casino/Games/:Game",
+        destination: "/casino/games/:Game",
+        permanent: false,
+      },
+      {
+        source: "/Casino/Providers",
+        destination: "/casino/providers",
+        permanent: false,
+      },
+      {
+        source: "/Casino/Settings",
+        destination: "/casino/settings",
+        permanent: false,
+      },
+      {
+        source: "/Casino/TopGames",
+        destination: "/casino/top-games",
+        permanent: false,
+      },
+      {
         source: "/ContentManagement/Pages/List",
         destination: "/content-management/pages",
         permanent: false,
