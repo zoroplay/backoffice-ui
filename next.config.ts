@@ -374,6 +374,36 @@ const nextConfig: NextConfig = {
         destination: "/network/agent/user/:Index",
         permanent: false,
       },
+      {
+        source: "/ContentManagement/Pages/List",
+        destination: "/content-management/pages",
+        permanent: false,
+      },
+      {
+        source: "/ContentManagement/Pages/AddNew",
+        destination: "/content-management/pages/add-new",
+        permanent: false,
+      },
+      {
+        source: "/ContentManagement/Pages/:EditPage",
+        destination: "/content-management/pages/:EditPage",
+        permanent: false,
+      },
+      {
+        source: "/ContentManagement/Banners/List",
+        destination: "/content-management/banners",
+        permanent: false,
+      },
+      {
+        source: "/ContentManagement/Banners/AddNew",
+        destination: "/content-management/banners/add-new",
+        permanent: false,
+      },
+      {
+        source: "/ContentManagement/Banners/:EditBanner",
+        destination: "/content-management/banners/:EditBanner",
+        permanent: false,
+      },
     ];
   },
   webpack(config) {
