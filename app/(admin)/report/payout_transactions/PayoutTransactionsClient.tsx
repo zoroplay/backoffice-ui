@@ -1,8 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useState } from "react";
+import { toast } from "sonner";
 import { Calendar, Search, X } from "lucide-react";
+
+import { POSTREQUEST } from "@/utils/base_request";
 
 type Period =
   | "today"
@@ -27,7 +30,7 @@ type PayoutReportRow = {
   id: string;
   agentId: string;
   username: string;
-  clientType: Exclude<ClientType, "">;
+  clientType: string;
   noOfBets: number;
   winnings: number;
   payouts: number;
@@ -35,52 +38,21 @@ type PayoutReportRow = {
   previousBalance: number;
 };
 
-const payoutRows: PayoutReportRow[] = [
-  {
-    id: "payout-1001",
-    agentId: "1",
-    username: "SPA-NG-1001",
-    clientType: "website",
-    noOfBets: 84,
-    winnings: 1250000,
-    payouts: 920000,
-    balance: 330000,
-    previousBalance: 280000,
-  },
-  {
-    id: "payout-1002",
-    agentId: "8",
-    username: "agent-lagos-01",
-    clientType: "cashier",
-    noOfBets: 43,
-    winnings: 640000,
-    payouts: 415000,
-    balance: 225000,
-    previousBalance: 225000,
-  },
-  {
-    id: "payout-1003",
-    agentId: "11",
-    username: "shop-lagos-12",
-    clientType: "cashier",
-    noOfBets: 28,
-    winnings: 360000,
-    payouts: 220000,
-    balance: 140000,
-    previousBalance: 102000,
-  },
-  {
-    id: "payout-1004",
-    agentId: "12",
-    username: "webaffiliate-001",
-    clientType: "mobile",
-    noOfBets: 19,
-    winnings: 175000,
-    payouts: 175000,
-    balance: 0,
-    previousBalance: 0,
-  },
-];
+type Totals = {
+  tickets: number;
+  winnings: number;
+  payouts: number;
+  balance: number;
+};
+
+type Pagination = {
+  total: number;
+  per_page: number;
+  from: number;
+  to: number;
+  current_page: number;
+  last_page?: number;
+};
 
 const periodOptions: { value: Period; label: string }[] = [
   { value: "today", label: "Today" },
@@ -127,45 +99,107 @@ function money(value: number) {
   return `NGN ${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 }
 
+function asRecord(value: unknown): Record<string, any> {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, any> : {};
+}
+
+function toNumber(value: unknown, fallback = 0) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function mapRow(itemValue: unknown, index: number): PayoutReportRow {
+  const item = asRecord(itemValue);
+  return {
+    id: String(item.id ?? item.agent_id ?? item.agentId ?? item.username ?? `payout-${index}`),
+    agentId: String(item.agent_id ?? item.agentId ?? item.user_id ?? item.userId ?? item.id ?? ""),
+    username: String(item.username ?? item.agentUserName ?? item.agentName ?? "-"),
+    clientType: String(item.client_type ?? item.clientType ?? item.channel ?? "-"),
+    noOfBets: toNumber(item.no_of_bets ?? item.noOfBets ?? item.totalBets),
+    winnings: toNumber(item.winnings ?? item.totalWinnings),
+    payouts: toNumber(item.payouts ?? item.totalPayouts),
+    balance: toNumber(item.balance),
+    previousBalance: toNumber(item.previous_balance ?? item.previousBalance ?? item.balance),
+  };
+}
+
+function paginationFrom(data: unknown, page: number, count: number): Pagination {
+  const payload = asRecord(data);
+  const bets = asRecord(payload.bets);
+  const perPage = toNumber(bets.per_page ?? bets.perPage ?? payload.per_page ?? payload.perPage, count || 10);
+  const total = toNumber(bets.total ?? payload.total ?? payload.count, count);
+  const currentPage = toNumber(bets.current_page ?? bets.currentPage ?? payload.current_page ?? payload.currentPage, page);
+
+  return {
+    total,
+    per_page: perPage,
+    from: toNumber(bets.from ?? payload.from, total ? (currentPage - 1) * perPage + 1 : 0),
+    to: toNumber(bets.to ?? payload.to, Math.min(currentPage * perPage, total)),
+    current_page: currentPage,
+    last_page: toNumber(bets.last_page ?? bets.lastPage ?? payload.last_page ?? payload.lastPage, perPage ? Math.max(1, Math.ceil(total / perPage)) : 1),
+  };
+}
+
 export default function PayoutTransactionsClient() {
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
   const [changedOnly, setChangedOnly] = useState(false);
   const [paging, setPaging] = useState(true);
-
-  const rows = useMemo(
-    () =>
-      payoutRows.filter((row) => {
-        const matchesClient = !filters.clientType || row.clientType === filters.clientType;
-        const matchesChanged = !changedOnly || row.balance !== row.previousBalance;
-        return matchesClient && matchesChanged;
-      }),
-    [changedOnly, filters.clientType],
-  );
-
-  const totals = rows.reduce(
-    (sum, row) => ({
-      tickets: sum.tickets + row.noOfBets,
-      winnings: sum.winnings + row.winnings,
-      payouts: sum.payouts + row.payouts,
-      balance: sum.balance + row.balance,
-    }),
-    { tickets: 0, winnings: 0, payouts: 0, balance: 0 },
-  );
+  const [rows, setRows] = useState<PayoutReportRow[]>([]);
+  const [totals, setTotals] = useState<Totals>({ tickets: 0, winnings: 0, payouts: 0, balance: 0 });
+  const [pagination, setPagination] = useState<Pagination>({ total: 0, per_page: 10, from: 0, to: 0, current_page: 1 });
+  const [loading, setLoading] = useState(false);
 
   function updatePeriod(period: Period) {
     setFilters((current) => ({ ...current, period, ...rangeForPeriod(period) }));
+  }
+
+  async function search(page = 1) {
+    setLoading(true);
+    const payload = {
+      period: filters.period,
+      from: filters.from,
+      to: filters.to,
+      client_type: filters.clientType,
+      changed_balances: changedOnly,
+      paging,
+    };
+    const response = await POSTREQUEST<any>(`api/admin/reporting/payout-report?page=${page}`, payload);
+    setLoading(false);
+
+    const body = asRecord(response.data);
+    if (!response.ok || body.success === false) {
+      toast.error(response.error || body.message || "An error occured");
+      return;
+    }
+
+    const results = asRecord(body.results);
+    const rawRows = Array.isArray(results.data) ? results.data : Array.isArray(body.data) ? body.data : [];
+    const mapped = rawRows.map(mapRow);
+    const visibleRows = changedOnly ? mapped.filter((row) => row.balance !== row.previousBalance) : mapped;
+
+    setRows(visibleRows);
+    setTotals({
+      tickets: toNumber(body.totalTicket, visibleRows.reduce((sum, row) => sum + row.noOfBets, 0)),
+      winnings: toNumber(body.totalWinnings, visibleRows.reduce((sum, row) => sum + row.winnings, 0)),
+      payouts: toNumber(body.totalPayouts, visibleRows.reduce((sum, row) => sum + row.payouts, 0)),
+      balance: toNumber(body.totalBalance, visibleRows.reduce((sum, row) => sum + row.balance, 0)),
+    });
+    setPagination(paginationFrom(body, page, visibleRows.length));
   }
 
   function resetFilter() {
     setFilters(defaultFilters());
     setChangedOnly(false);
     setPaging(true);
+    setRows([]);
+    setTotals({ tickets: 0, winnings: 0, payouts: 0, balance: 0 });
+    setPagination({ total: 0, per_page: 10, from: 0, to: 0, current_page: 1 });
   }
 
   return (
     <div className="space-y-6">
       <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-950">
-        <form className="space-y-4">
+        <form className="space-y-4" onSubmit={(event) => { event.preventDefault(); void search(1); }}>
           <div className="grid gap-3 md:grid-cols-4">
             <select
               value={filters.period}
@@ -202,9 +236,9 @@ export default function PayoutTransactionsClient() {
               Enable Paging
             </label>
             <div />
-            <button type="button" className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-info-500 px-4 text-sm font-medium text-white hover:bg-info-600">
+            <button type="submit" disabled={loading} className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-info-500 px-4 text-sm font-medium text-white hover:bg-info-600 disabled:opacity-60">
               <Search size={16} />
-              Search
+              {loading ? "Searching" : "Search"}
             </button>
             <button type="button" onClick={resetFilter} className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-gray-300 px-4 text-sm font-medium dark:border-gray-700">
               <X size={16} />
@@ -220,7 +254,7 @@ export default function PayoutTransactionsClient() {
           </div>
 
           <div className="rounded-md bg-gray-50 px-3 py-2 text-xs text-gray-600 dark:bg-white/[0.03] dark:text-gray-400">
-            Reports.getPayoutReports(filterData, page) with period, from, to, client_type, changed balances, and paging.
+            POST api/admin/reporting/payout-report?page={pagination.current_page} with period, from, to, client_type, changed balances, and paging.
           </div>
         </form>
       </section>
@@ -261,7 +295,7 @@ export default function PayoutTransactionsClient() {
               {!rows.length ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-                    No record found
+                    {loading ? "Loading report" : "No record found"}
                   </td>
                 </tr>
               ) : null}
@@ -279,8 +313,12 @@ export default function PayoutTransactionsClient() {
           </table>
         </div>
         {paging ? (
-          <div className="border-t border-gray-200 px-5 py-4 text-sm text-gray-500 dark:border-gray-800 dark:text-gray-400">
-            Showing 1 to {rows.length} of {rows.length} entries
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 px-5 py-4 text-sm text-gray-500 dark:border-gray-800 dark:text-gray-400">
+            <span>Showing {pagination.total ? `${pagination.from} to ${pagination.to} of ${pagination.total}` : rows.length} entries</span>
+            <div className="flex gap-2">
+              <button type="button" disabled={pagination.current_page <= 1 || loading} onClick={() => void search(pagination.current_page - 1)} className="h-8 rounded-md border border-gray-300 px-3 disabled:opacity-40 dark:border-gray-700">Prev</button>
+              <button type="button" disabled={pagination.current_page >= (pagination.last_page ?? 1) || loading} onClick={() => void search(pagination.current_page + 1)} className="h-8 rounded-md border border-gray-300 px-3 disabled:opacity-40 dark:border-gray-700">Next</button>
+            </div>
           </div>
         ) : null}
       </section>
