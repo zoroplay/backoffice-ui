@@ -60,6 +60,7 @@ const navItems: NavItem[] = [
         pro: false,
       },
       { name: "Network Sales", path: "/report/network_sales", pro: false },
+      { name: "Online Sales", path: "/report/online_sales", pro: false },
       {
         name: "Net Cash Report",
         path: "/report/net_cash_report",

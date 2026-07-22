@@ -17,6 +17,85 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: "/ReportingAndBI/ReportingDashboard",
+        destination: "/report/reporting_dashboard",
+        permanent: false,
+      },
+      {
+        source: "/ReportingAndBI/GamingActivity",
+        destination: "/report/gaming_activities",
+        permanent: false,
+      },
+      {
+        source: "/ReportingAndBI/NetworkSales",
+        destination: "/report/network_sales",
+        permanent: false,
+      },
+      {
+        source: "/ReportingAndBI/OnlineSales",
+        destination: "/report/online_sales",
+        permanent: false,
+      },
+      {
+        source: "/ReportingAndBI/RegistrationsHistory",
+        destination: "/report/registrations_history",
+        permanent: false,
+      },
+      {
+        source: "/ReportingAndBI/AccountingReport",
+        destination: "/report/accounting_report",
+        permanent: false,
+      },
+      {
+        source: "/ReportingAndBI/PayoutTransactions",
+        destination: "/report/payout_transactions",
+        permanent: false,
+      },
+      {
+        source: "/ReportingAndBI/NetCashReport",
+        destination: "/report/net_cash_report",
+        permanent: false,
+      },
+      {
+        source: "/ReportingAndBI/RetailCashReport",
+        destination: "/report/retail_cash_report",
+        permanent: false,
+      },
+      {
+        source: "/ReportingAndBI/MoneyTransactions",
+        destination: "/report/money_transactions",
+        permanent: false,
+      },
+      {
+        source: "/ReportingAndBI/TaxReport",
+        destination: "/report/tax_report",
+        permanent: false,
+      },
+      {
+        source: "/ReportingAndBI/TaxOnTurnoverReport",
+        destination: "/report/tax_on_turnover_report",
+        permanent: false,
+      },
+      {
+        source: "/ReportingAndBI/Commission",
+        destination: "/report/commission",
+        permanent: false,
+      },
+      {
+        source: "/ReportingAndBI/LoginsHistory",
+        destination: "/report/logins_history",
+        permanent: false,
+      },
+      {
+        source: "/ReportingAndBI/SystemTransactions",
+        destination: "/report/system_transactions",
+        permanent: false,
+      },
+    ];
+  },
   webpack(config) {
     // Grab the existing rule that handles SVG imports
     const fileLoaderRule = config.module.rules.find((rule) =>
