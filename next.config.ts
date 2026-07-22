@@ -304,6 +304,36 @@ const nextConfig: NextConfig = {
         destination: "/bonus-management/power-bonus-report",
         permanent: false,
       },
+      {
+        source: "/UserManagement/Users",
+        destination: "/user-management/users",
+        permanent: false,
+      },
+      {
+        source: "/UserManagement/AddUser",
+        destination: "/user-management/add-user",
+        permanent: false,
+      },
+      {
+        source: "/UserManagement/EditUser/:UserId",
+        destination: "/user-management/edit-user/:UserId",
+        permanent: false,
+      },
+      {
+        source: "/UserManagement/RolesPermissions",
+        destination: "/user-management/roles-permissions",
+        permanent: false,
+      },
+      {
+        source: "/UserManagement/ActivityLogs",
+        destination: "/user-management/activity-logs",
+        permanent: false,
+      },
+      {
+        source: "/UserManagement/ChangePassword",
+        destination: "/change-password",
+        permanent: false,
+      },
     ];
   },
   webpack(config) {
