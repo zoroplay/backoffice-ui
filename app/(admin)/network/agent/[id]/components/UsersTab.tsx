@@ -205,14 +205,13 @@ export default function UsersTab({ agentId }: UsersTabProps) {
                 <td className="whitespace-nowrap px-4 py-3 text-gray-700 dark:text-gray-300">{user.address}</td>
                 <td className="whitespace-nowrap px-4 py-3">
                   <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => toast.info("Edit user form parity is pending")}
+                    <Link
+                      href={`/network/agent/user/${user.id}?agentId=${agentId}`}
                       className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-info-500 text-white hover:bg-info-600"
                       title="Edit user"
                     >
                       <Edit size={15} />
-                    </button>
+                    </Link>
                     <button
                       type="button"
                       onClick={() => toast.info("Password modal parity is pending")}
