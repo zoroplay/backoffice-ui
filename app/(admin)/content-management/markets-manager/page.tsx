@@ -1,1206 +1,1127 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import Select, { type GroupBase, type MultiValue, type SingleValue } from "react-select";
+import { Plus, RefreshCw } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import Button from "@/components/ui/button/Button";
-import Form from "@/components/form/Form";
-import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
+import Input from "@/components/form/input/InputField";
 import TextArea from "@/components/form/input/TextArea";
-import Switch from "@/components/form/switch/Switch";
+import Button from "@/components/ui/button/Button";
 import { Modal, ModalBody, ModalFooter, ModalHeader } from "@/components/ui/modal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useTheme } from "@/context/ThemeContext";
-import { reactSelectStyles } from "@/utils/reactSelectStyles";
 import { withAuth } from "@/utils/withAuth";
 
 import {
-  MarketDefinition,
-  MarketGroup,
-  SelectOption,
-  TournamentMarket,
-  sportHierarchy,
-  type SportHierarchy,
-  marketDefinitions,
-  marketGroups,
-  sportsOptions,
-} from "./data";
-import {
-  MarketGroupRow,
-  MarketRow,
-  TournamentMarketRow,
-  marketColumns,
-  marketGroupColumns,
-  tournamentMarketColumns,
-  createMarketGroupActionColumn,
-  createTournamentMarketActionColumn,
-} from "./columns";
-import { MarketGroupingTab } from "./components/MarketGroupingTab";
-import { MarketsTab } from "./components/MarketsTab";
-import { MarketSettingsTab } from "./components/MarketSettingsTab";
+  addTournamentMarkets,
+  emptyOutcome,
+  fetchBetradarMarkets,
+  fetchFixtureSports,
+  fetchMarketGroups,
+  fetchMarkets,
+  fetchMarketSettingsMenu,
+  fetchMarketSettingsSports,
+  fetchTournamentMarkets,
+  findMenuCategory,
+  findMenuSport,
+  marketGroupLabel,
+  removeTournamentMarkets,
+  saveMarket,
+  saveMarketOutcomes,
+  toggleTournamentMarketCashout,
+  toggleTournamentMarketStatus,
+  type FixtureSport,
+  type MarketGroup,
+  type MarketOutcome,
+  type MarketRecord,
+  type MarketSavePayload,
+  type MarketType,
+  type SettingsSport,
+  type SportNode,
+  type TournamentMarket,
+} from "./api";
 
-type StatusOption = SelectOption<MarketDefinition["status"]>;
-type CashoutOption = SelectOption<MarketDefinition["cashout"]>;
-type MarketTypeOption = SelectOption<string>;
+type ActiveTab = "markets" | "settings";
 
 type MarketFormState = {
-  sport: SelectOption | null;
-  marketType: MarketTypeOption | null;
-  group: SelectOption | null;
+  id: string;
+  sportId: string;
+  marketTypeId: string;
+  groupId: string;
   name: string;
-  shortName: string;
+  displayName: string;
   description: string;
   specifier: string;
-  status: StatusOption | null;
-  cashout: CashoutOption | null;
-  priority: number;
-  isPopular: boolean;
+  status: string;
+  enableCashout: string;
+  priority: string;
+  isDefault: boolean;
 };
 
-type GroupFormState = {
-  sport: SelectOption | null;
-  name: string;
-  description: string;
+const blankMarketForm: MarketFormState = {
+  id: "",
+  sportId: "",
+  marketTypeId: "",
+  groupId: "",
+  name: "",
+  displayName: "",
+  description: "",
+  specifier: "",
+  status: "0",
+  enableCashout: "0",
+  priority: "0",
+  isDefault: false,
 };
 
-const statusOptions: StatusOption[] = [
-  { value: "Enabled", label: "Enabled" },
-  { value: "Disabled", label: "Disabled" },
-];
+function selectClassName() {
+  return "h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-brand-800";
+}
 
-const cashoutOptions: CashoutOption[] = [
-  { value: "Enabled", label: "Enabled" },
-  { value: "Disabled", label: "Disabled" },
-];
+function cardClassName() {
+  return "rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900";
+}
 
-const marketTypeOptions: MarketTypeOption[] = [
-  { value: "BetRadar", label: "BetRadar" },
-  { value: "Custom", label: "Custom" },
-  { value: "In-House", label: "In-House" },
-];
+function tableHeadClassName() {
+  return "border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:bg-gray-800 dark:text-gray-400";
+}
 
-type MarketAssignmentState = Record<string, string[]>;
+function tableCellClassName() {
+  return "border-b border-gray-200 px-4 py-3 text-sm text-gray-700 dark:border-gray-800 dark:text-gray-200";
+}
 
-const buildInitialAssignments = (): MarketAssignmentState => {
-  const initial: MarketAssignmentState = {};
-  sportHierarchy.forEach((entry) => {
-    entry.categories.forEach((category) => {
-      category.tournaments.forEach((tournament) => {
-        initial[tournament.tournament.value] = [...tournament.marketIds];
-      });
-    });
-  });
-  return initial;
-};
+function findGroup(groups: MarketGroup[], groupId: string) {
+  return groups.find((group) => group.id === groupId || group.marketGroupId === groupId) ?? null;
+}
 
-const mapGroupToRow = (group: MarketGroup): MarketGroupRow => ({
-  id: group.id,
-  name: group.name,
-  sport: sportsOptions.find((option) => option.value === group.sport)?.label ?? group.sport,
-  marketCount: group.marketCount,
-  description: group.description,
-  lastUpdated: group.lastUpdated,
-});
+function findSport(sports: FixtureSport[], sportId: string) {
+  return sports.find((sport) => sport.sportId === sportId || sport.id === sportId) ?? null;
+}
 
-const mapMarketToRow = (market: MarketDefinition): MarketRow => ({
-  id: market.id,
-  name: market.name,
-  marketType: market.marketType,
-  shortName: market.shortName,
-  description: market.description,
-  status: market.status,
-  cashout: market.cashout,
-  priority: market.priority,
-  isPopular: market.isPopular,
-  lastUpdated: market.lastUpdated,
-});
-
-const mapTournamentMarketToRow = (market: TournamentMarket): TournamentMarketRow => ({
-  id: market.id,
-  name: market.name,
-  status: market.status,
-  action: market.action ?? "Assigned",
-});
-
-const MarketsManagerPage: React.FC = () => {
-  const { theme } = useTheme();
-  const initialSportOption = sportsOptions[0] ?? null;
-
-  const createMarketFormState = useCallback(
-    (overrides?: Partial<MarketFormState>): MarketFormState => ({
-      sport: initialSportOption,
-      marketType: marketTypeOptions[0],
-      group: null,
-      name: "",
-      shortName: "",
-      description: "",
-      specifier: "",
-      status: statusOptions[0],
-      cashout: cashoutOptions[0],
-      priority: 1,
-      isPopular: false,
-      ...overrides,
-    }),
-    [initialSportOption]
+function findMarketType(types: MarketType[], marketTypeId: string, market?: MarketRecord | null) {
+  return (
+    types.find(
+      (type) =>
+        type.providerId === marketTypeId ||
+        type.marketId === marketTypeId ||
+        (market &&
+          (type.providerId === String(market.raw.market_type_id ?? "") ||
+            type.marketId === String(market.raw.marketID ?? "")))
+    ) ?? null
   );
+}
 
-  const [groups, setGroups] = useState<MarketGroup[]>(marketGroups);
-  const [markets, setMarkets] = useState<MarketDefinition[]>(marketDefinitions);
-  const [assignments, setAssignments] = useState<MarketAssignmentState>(() => buildInitialAssignments());
+function normalizeOutcomeRows(rows: MarketOutcome[]) {
+  return rows.length > 0 ? rows : [emptyOutcome()];
+}
 
-  const [groupFilter, setGroupFilter] = useState<SelectOption | null>(initialSportOption);
-  const [marketSelections, setMarketSelections] = useState<SelectOption[]>([]);
-  const [settingsSelections, setSettingsSelections] = useState<SelectOption[]>([]);
-  const [hasInitializedSettings, setHasInitializedSettings] = useState(false);
-  const [tournamentMarketNotes, setTournamentMarketNotes] = useState<Record<string, string>>({});
-  const [editingTournamentMarket, setEditingTournamentMarket] = useState<TournamentMarketRow | null>(null);
-  const [isTournamentMarketModalOpen, setIsTournamentMarketModalOpen] = useState(false);
-  const [tournamentNoteDraft, setTournamentNoteDraft] = useState("");
+function MarketsManagerPage() {
+  const [activeTab, setActiveTab] = useState<ActiveTab>("markets");
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
-  const [groupForm, setGroupForm] = useState<GroupFormState>({
-    sport: initialSportOption,
-    name: "",
-    description: "",
-  });
-  const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
+  const [sports, setSports] = useState<FixtureSport[]>([]);
+  const [marketTypes, setMarketTypes] = useState<MarketType[]>([]);
+  const [settingsSports, setSettingsSports] = useState<SettingsSport[]>([]);
+  const [sportsMenu, setSportsMenu] = useState<SportNode[]>([]);
 
-  const [isMarketModalOpen, setIsMarketModalOpen] = useState(false);
-  const [marketForm, setMarketForm] = useState<MarketFormState>(() => createMarketFormState());
-  const [editingMarketId, setEditingMarketId] = useState<string | null>(null);
+  const [selectedListSportId, setSelectedListSportId] = useState("");
+  const [selectedListGroupId, setSelectedListGroupId] = useState("0");
+  const [listGroups, setListGroups] = useState<MarketGroup[]>([]);
+  const [marketRows, setMarketRows] = useState<MarketRecord[]>([]);
+  const [marketListLoading, setMarketListLoading] = useState(false);
 
-  const [isAssignmentModalOpen, setIsAssignmentModalOpen] = useState(false);
-  const [selectedAssignmentMarkets, setSelectedAssignmentMarkets] = useState<SelectOption[]>([]);
+  const [marketForm, setMarketForm] = useState<MarketFormState>(blankMarketForm);
+  const [formGroups, setFormGroups] = useState<MarketGroup[]>([]);
+  const [savingMarket, setSavingMarket] = useState(false);
 
-  const handleGroupFilterChange = useCallback(
-    (option: SingleValue<SelectOption>) => {
-      setGroupFilter(option ?? null);
-    },
-    []
+  const [editingOutcomesMarket, setEditingOutcomesMarket] = useState<MarketRecord | null>(null);
+  const [outcomeRows, setOutcomeRows] = useState<MarketOutcome[]>([emptyOutcome()]);
+  const [savingOutcomes, setSavingOutcomes] = useState(false);
+
+  const [selectedSettingsSportId, setSelectedSettingsSportId] = useState("");
+  const [selectedSettingsCategoryId, setSelectedSettingsCategoryId] = useState("");
+  const [selectedSettingsTournamentId, setSelectedSettingsTournamentId] = useState("");
+  const [selectedSettingsMarketIds, setSelectedSettingsMarketIds] = useState<string[]>([]);
+  const [tournamentMarkets, setTournamentMarkets] = useState<TournamentMarket[]>([]);
+  const [tournamentMarketsLoading, setTournamentMarketsLoading] = useState(false);
+  const [settingsActionLoading, setSettingsActionLoading] = useState(false);
+
+  const selectedSettingsSport = useMemo(
+    () =>
+      settingsSports.find(
+        (sport) => sport.id === selectedSettingsSportId || sport.providerId === selectedSettingsSportId
+      ) ?? null,
+    [selectedSettingsSportId, settingsSports]
   );
-
-  const handleMarketSelectionsChange = useCallback(
-    (options: MultiValue<SelectOption>) => {
-      if (!options || options.length === 0) {
-        setMarketSelections([]);
-        return;
-      }
-
-      // Ensure only one entry per group (by prefix before colon)
-      const filterMap = new Map<string, SelectOption>();
-      
-      Array.from(options).forEach((option) => {
-        const [groupType] = option.value.split(":");
-        filterMap.set(groupType, option);
-      });
-      
-      setMarketSelections(Array.from(filterMap.values()));
-    },
-    []
+  const selectedMenuSport = useMemo(
+    () => findMenuSport(sportsMenu, selectedSettingsSport),
+    [selectedSettingsSport, sportsMenu]
+  );
+  const settingsCategories = useMemo(
+    () => selectedMenuSport?.categories ?? [],
+    [selectedMenuSport]
+  );
+  const selectedMenuCategory = useMemo(
+    () => findMenuCategory(selectedMenuSport, selectedSettingsCategoryId),
+    [selectedMenuSport, selectedSettingsCategoryId]
+  );
+  const settingsTournaments = useMemo(
+    () => selectedMenuCategory?.tournaments ?? [],
+    [selectedMenuCategory]
+  );
+  const selectedListGroup = useMemo(
+    () => findGroup(listGroups, selectedListGroupId),
+    [listGroups, selectedListGroupId]
+  );
+  const availableSettingsMarkets = useMemo(
+    () => selectedSettingsSport?.markets ?? [],
+    [selectedSettingsSport]
   );
 
   useEffect(() => {
-    if (!hasInitializedSettings && settingsSelections.length === 0 && sportsOptions.length > 0) {
-      const defaultSport = sportsOptions[0];
-      const sportEntry =
-        sportHierarchy.find((entry) => entry.sport.value === defaultSport.value) ?? null;
+    void initializePage();
+  }, []);
 
-      const initialSelections: SelectOption[] = [
-        { value: `sport:${defaultSport.value}`, label: defaultSport.label },
-      ];
+  async function initializePage() {
+    setInitialLoading(true);
+    try {
+      const [nextSports, nextMarketTypes, nextSettingsSports, nextSportsMenu] = await Promise.all([
+        fetchFixtureSports(),
+        fetchBetradarMarkets(),
+        fetchMarketSettingsSports(),
+        fetchMarketSettingsMenu(),
+      ]);
 
-      if (sportEntry?.categories[0]) {
-        const category = sportEntry.categories[0];
-        initialSelections.push({
-          value: `category:${category.category.value}`,
-          label: category.category.label,
-        });
+      setSports(nextSports);
+      setMarketTypes(nextMarketTypes);
+      setSettingsSports(nextSettingsSports);
+      setSportsMenu(nextSportsMenu);
 
-        if (category.tournaments[0]) {
-          initialSelections.push({
-            value: `tournament:${category.tournaments[0].tournament.value}`,
-            label: category.tournaments[0].tournament.label,
-          });
-        }
-      }
+      const defaultListSportId = nextSports[0]?.sportId ?? "";
+      const defaultSettingsSportId = nextSettingsSports[0]?.id ?? "";
 
-      setSettingsSelections(initialSelections);
-      setHasInitializedSettings(true);
-    }
-  }, [hasInitializedSettings, settingsSelections.length, sportsOptions]);
-
-  const settingsFilterState = useMemo<{
-    sport: SelectOption | null;
-    category: SelectOption | null;
-    tournament: SelectOption | null;
-  }>(() => {
-    let sport: SelectOption | null = null;
-    let category: SelectOption | null = null;
-    let tournament: SelectOption | null = null;
-
-    settingsSelections.forEach((option) => {
-      const [prefix] = option.value.split(":");
-      if (prefix === "sport") {
-        sport = {
-          value: option.value.slice("sport:".length),
-          label: option.label,
-        };
-      }
-      if (prefix === "category") {
-        category = {
-          value: option.value.slice("category:".length),
-          label: option.label,
-        };
-      }
-      if (prefix === "tournament") {
-        tournament = {
-          value: option.value.slice("tournament:".length),
-          label: option.label,
-        };
-      }
-    });
-
-    return { sport, category, tournament };
-  }, [settingsSelections]);
-
-  const activeSportHierarchy = useMemo<SportHierarchy | null>(() => {
-    const targetSport = settingsFilterState.sport?.value ?? null;
-    if (!targetSport) return null;
-    return sportHierarchy.find((item) => item.sport.value === targetSport) ?? null;
-  }, [settingsFilterState.sport]);
-
-  const settingsFilterOptions = useMemo<GroupBase<SelectOption>[]>(() => {
-    const sportOptionsList = sportsOptions.map((sport) => ({
-      value: `sport:${sport.value}`,
-      label: sport.label,
-    }));
-
-    const sportEntry = activeSportHierarchy;
-    const categoryOptionsList = sportEntry
-      ? sportEntry.categories.map((categoryEntry: SportHierarchy["categories"][number]) => ({
-          value: `category:${categoryEntry.category.value}`,
-          label: categoryEntry.category.label,
-        }))
-      : [];
-
-    const categoryEntry =
-      sportEntry && settingsFilterState.category
-        ? sportEntry.categories.find(
-            (categoryItem: SportHierarchy["categories"][number]) =>
-              categoryItem.category.value === settingsFilterState.category?.value
-          )
-        : null;
-
-    const tournamentOptionsList = categoryEntry
-      ? categoryEntry.tournaments.map(
-          (tournamentEntry: SportHierarchy["categories"][number]["tournaments"][number]) => ({
-            value: `tournament:${tournamentEntry.tournament.value}`,
-            label: tournamentEntry.tournament.label,
-          })
-        )
-      : [];
-
-    const optionGroups = [
-      { label: "Sport", options: sportOptionsList },
-    ];
-
-    if (categoryOptionsList.length > 0) {
-      optionGroups.push({ label: "Category", options: categoryOptionsList });
-    }
-
-    if (tournamentOptionsList.length > 0) {
-      optionGroups.push({ label: "Tournament", options: tournamentOptionsList });
-    }
-
-    return optionGroups;
-  }, [activeSportHierarchy, settingsFilterState.category, sportsOptions]);
-
-  const selectedSportValue = settingsFilterState.sport?.value ?? null;
-  const selectedCategoryValue = settingsFilterState.category?.value ?? null;
-  const selectedTournamentValue = settingsFilterState.tournament?.value ?? null;
-
-  const marketFilterOptions = useMemo<Array<{ label: string; options: SelectOption[] }>>(() => {
-    const sportOptionsList = sportsOptions.map((sport) => ({
-      value: `sport:${sport.value}`,
-      label: sport.label,
-    }));
-    const groupOptionsList = groups.map((group) => ({
-      value: `group:${group.id}`,
-      label: `${mapGroupToRow(group).sport} • ${group.name}`,
-    }));
-    return [
-      {
-        label: "Sport",
-        options: sportOptionsList,
-      },
-      {
-        label: "Market Group",
-        options: groupOptionsList,
-      },
-    ];
-  }, [groups, sportsOptions]);
-
-  const groupedRows = useMemo(() => {
-    return groups
-      .filter((group) => !groupFilter || group.sport === groupFilter.value)
-      .map(mapGroupToRow);
-  }, [groupFilter, groups]);
-
-  const sportSummary = useMemo(() => {
-    if (!groupFilter) return { total: groups.length, markets: groups.reduce((acc, cur) => acc + cur.marketCount, 0) };
-    const relevant = groups.filter((group) => group.sport === groupFilter.value);
-    return {
-      total: relevant.length,
-      markets: relevant.reduce((acc, cur) => acc + cur.marketCount, 0),
-    };
-  }, [groupFilter, groups]);
-
-  const marketFilterState = useMemo(() => {
-    let selectedSport: string | null = null;
-    const selectedGroupIds = new Set<string>();
-
-    marketSelections.forEach((selection) => {
-      if (selection.value.startsWith("sport:")) {
-        selectedSport = selection.value.slice("sport:".length);
-      } else if (selection.value.startsWith("group:")) {
-        selectedGroupIds.add(selection.value.slice("group:".length));
-      }
-    });
-
-    return {
-      selectedSport,
-      selectedGroupIds,
-    };
-  }, [marketSelections]);
-
-  const filteredMarketRows = useMemo(() => {
-    const { selectedSport, selectedGroupIds } = marketFilterState;
-
-    return markets
-      .filter((market) => {
-        const matchesSport = selectedSport ? market.sport === selectedSport : true;
-        const matchesGroup =
-          selectedGroupIds.size > 0 ? selectedGroupIds.has(market.groupId) : true;
-        return matchesSport && matchesGroup;
-      })
-      .map(mapMarketToRow);
-  }, [marketFilterState, markets]);
-
-  const groupOptionsForSport = useMemo(() => {
-    const sportValue = marketForm.sport?.value ?? marketFilterState.selectedSport ?? null;
-    return groups
-      .filter((group) => !sportValue || group.sport === sportValue)
-      .map((group) => ({ value: group.id, label: group.name }));
-  }, [groups, marketFilterState.selectedSport, marketForm.sport]);
-
-  const availableMarketsForSettings = useMemo(() => {
-    const pool =
-      markets.filter((market) => !selectedSportValue || market.sport === selectedSportValue) ??
-      markets;
-
-    const unique = new Map<string, MarketDefinition>();
-    pool.forEach((market) => {
-      if (!unique.has(market.id)) {
-        unique.set(market.id, market);
-      }
-    });
-
-    return Array.from(unique.values()).map((market) => ({
-      value: market.id,
-      label: `${market.name} (${market.shortName})`,
-    }));
-  }, [markets, selectedSportValue]);
-
-  const tournamentMarketRows = useMemo(() => {
-    if (!selectedTournamentValue) return [];
-    const marketIds = assignments[selectedTournamentValue] ?? [];
-    return marketIds
-      .map((marketId) => markets.find((market) => market.id === marketId))
-      .filter((market): market is MarketDefinition => Boolean(market))
-      .map((market) => {
-        const tournamentMarket: TournamentMarket = {
-          id: market.id,
-          sport: market.sport,
-          category: selectedCategoryValue ?? "",
-          tournament: selectedTournamentValue ?? "",
-          name: market.name,
-          status: market.status === "Enabled" ? "Active" : "Inactive",
-          action: tournamentMarketNotes[market.id] ?? "Assigned",
-        };
-        return mapTournamentMarketToRow(tournamentMarket);
-      });
-  }, [assignments, markets, selectedCategoryValue, selectedTournamentValue, tournamentMarketNotes]);
-
-  const summaryMarkets = useMemo(() => {
-    const total = filteredMarketRows.length;
-    const enabled = filteredMarketRows.filter((row) => row.status === "Enabled").length;
-    const cashoutEnabled = filteredMarketRows.filter((row) => row.cashout === "Enabled").length;
-    return { total, enabled, cashoutEnabled };
-  }, [filteredMarketRows]);
-
-  const handleSettingsSelectionChange = useCallback(
-    (value: MultiValue<SelectOption>) => {
-      if (!value || (Array.isArray(value) && value.length === 0)) {
-        setSettingsSelections([]);
-        setHasInitializedSettings(true);
-        return;
-      }
-
-      const typeOrder: Array<"sport" | "category" | "tournament"> = [
-        "sport",
-        "category",
-        "tournament",
-      ];
-      const typeMap = new Map<string, SelectOption>();
-
-      (value as SelectOption[]).forEach((option) => {
-        const [type] = option.value.split(":");
-        if (typeOrder.includes(type as any)) {
-          typeMap.set(type, option);
-        }
-      });
-
-      let sportOption = typeMap.get("sport") ?? null;
-      let categoryOption = typeMap.get("category") ?? null;
-      let tournamentOption = typeMap.get("tournament") ?? null;
-
-      if (sportOption) {
-        const sportValue = sportOption.value.slice("sport:".length);
-        const sportEntry = sportHierarchy.find(
-          (entry) => entry.sport.value === sportValue
-        );
-
-        if (!sportEntry) {
-          sportOption = null;
-          categoryOption = null;
-          tournamentOption = null;
-        } else {
-          if (categoryOption) {
-            const categoryValue = categoryOption.value.slice("category:".length);
-            const categoryEntry = sportEntry.categories.find(
-              (category) => category.category.value === categoryValue
-            );
-            if (!categoryEntry) {
-              categoryOption = null;
-              tournamentOption = null;
-            } else if (tournamentOption) {
-              const tournamentValue = tournamentOption.value.slice(
-                "tournament:".length
-              );
-              const tournamentExists = categoryEntry.tournaments.some(
-                (tournament) => tournament.tournament.value === tournamentValue
-              );
-              if (!tournamentExists) {
-                tournamentOption = null;
-              }
-            }
-          } else {
-            tournamentOption = null;
-          }
-        }
-      } else {
-        categoryOption = null;
-        tournamentOption = null;
-      }
-
-      const sanitized: SelectOption[] = [];
-      if (sportOption) sanitized.push(sportOption);
-      if (categoryOption) sanitized.push(categoryOption);
-      if (tournamentOption) sanitized.push(tournamentOption);
-
-      setSettingsSelections(sanitized);
-      setHasInitializedSettings(true);
-    },
-    [sportHierarchy]
-  );
-
-  const openCreateGroupModal = () => {
-    setEditingGroupId(null);
-    setGroupForm({
-      sport: groupFilter ?? initialSportOption,
-      name: "",
-      description: "",
-    });
-    setIsGroupModalOpen(true);
-  };
-
-  const openEditGroupModal = useCallback(
-    (row: MarketGroupRow) => {
-      const group = groups.find((item) => item.id === row.id);
-      if (!group) return;
-      const sportOption = sportsOptions.find((item) => item.value === group.sport) ?? null;
-      setEditingGroupId(group.id);
-      setGroupForm({
-        sport: sportOption,
-        name: group.name,
-        description: group.description,
-      });
-      setIsGroupModalOpen(true);
-    },
-    [groups, sportsOptions]
-  );
-
-  const handleGroupSubmit = () => {
-    if (!groupForm.sport || !groupForm.name.trim()) {
-      alert("Please provide a sport and group name.");
-      return;
-    }
-    const now = new Date().toISOString();
-    if (editingGroupId) {
-      setGroups((prev) =>
-        prev.map((group) =>
-          group.id === editingGroupId
-            ? {
-                ...group,
-                sport: groupForm.sport!.value,
-                name: groupForm.name.trim(),
-                description: groupForm.description.trim(),
-                lastUpdated: now,
-              }
-            : group
-        )
-      );
-      alert("Market group updated (mock).");
-    } else {
-      const newGroup: MarketGroup = {
-        id: `grp-${Date.now()}`,
-        sport: groupForm.sport.value,
-        name: groupForm.name.trim(),
-        description: groupForm.description.trim(),
-        marketCount: 0,
-        lastUpdated: now,
-      };
-      setGroups((prev) => [newGroup, ...prev]);
-      alert("Market group created (mock).");
-    }
-    setIsGroupModalOpen(false);
-  };
-
-  const handleDeleteGroup = useCallback(
-    (groupId: string) => {
-      const group = groups.find((item) => item.id === groupId);
-      if (!group) return;
-      const sportLabel = sportsOptions.find((option) => option.value === group.sport)?.label ?? group.sport;
-      const confirmed = window.confirm(`Remove "${group.name}" from ${sportLabel} groups?`);
-      if (!confirmed) return;
-
-      setGroups((prev) => prev.filter((item) => item.id !== groupId));
-      setMarkets((prev) => prev.filter((market) => market.groupId !== groupId));
-    },
-    [groups, sportsOptions]
-  );
-
-  const handleEditTournamentMarket = useCallback(
-    (row: TournamentMarketRow) => {
-      if (row.id.startsWith("placeholder")) return;
-      setEditingTournamentMarket(row);
-      setTournamentNoteDraft(tournamentMarketNotes[row.id] ?? row.action ?? "");
-      setIsTournamentMarketModalOpen(true);
-    },
-    [tournamentMarketNotes]
-  );
-
-  const groupColumns = useMemo(
-    () => [
-      ...marketGroupColumns,
-      createMarketGroupActionColumn({ onEdit: openEditGroupModal, onDelete: handleDeleteGroup }),
-    ],
-    [handleDeleteGroup, openEditGroupModal]
-  );
-
-  const openCreateMarketModal = () => {
-    setEditingMarketId(null);
-
-    const defaultSportOption =
-      selectedSportValue
-        ? sportsOptions.find((option) => option.value === selectedSportValue) ?? initialSportOption
-        : initialSportOption;
-
-    const defaultGroupOption =
-      marketFilterState.selectedGroupIds.size === 1
-        ? (() => {
-            const [groupId] = Array.from(marketFilterState.selectedGroupIds);
-            const group = groups.find((item) => item.id === groupId);
-            return group ? { value: group.id, label: group.name } : null;
-          })()
-        : null;
-
-    setMarketForm(
-      createMarketFormState({
-        sport: defaultSportOption,
-        group: defaultGroupOption,
-      })
-    );
-    setIsMarketModalOpen(true);
-  };
-
-  const openEditMarketModal = useCallback(
-    (row: MarketRow) => {
-      const market = markets.find((item) => item.id === row.id);
-      if (!market) return;
-      setEditingMarketId(market.id);
+      setSelectedListSportId(defaultListSportId);
+      setSelectedListGroupId("0");
+      setSelectedSettingsSportId(defaultSettingsSportId);
       setMarketForm({
-        sport: sportsOptions.find((option) => option.value === market.sport) ?? null,
-        marketType: marketTypeOptions.find((option) => option.value === market.marketType) ?? marketTypeOptions[0],
-        group: groups
-          .filter((group) => group.sport === market.sport)
-          .map((group) => ({ value: group.id, label: group.name }))
-          .find((option) => option.value === market.groupId) ?? null,
-        name: market.name,
-        shortName: market.shortName,
-        description: market.description,
-        specifier: market.specifier,
-        status: statusOptions.find((option) => option.value === market.status) ?? statusOptions[0],
-        cashout: cashoutOptions.find((option) => option.value === market.cashout) ?? cashoutOptions[1],
-        priority: market.priority,
-        isPopular: market.isPopular,
+        ...blankMarketForm,
+        sportId: defaultListSportId,
       });
-      setIsMarketModalOpen(true);
-    },
-    [groups, markets, sportsOptions]
-  );
 
-  const handleMarketSubmit = () => {
-    if (!marketForm.sport || !marketForm.group || !marketForm.name.trim()) {
-      alert("Please complete required fields: sport, group, and name.");
+      await Promise.all([
+        defaultListSportId ? loadMarketList(defaultListSportId, null) : Promise.resolve(),
+        defaultListSportId ? loadFormGroups(defaultListSportId) : Promise.resolve(),
+      ]);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to load markets manager");
+    } finally {
+      setInitialLoading(false);
+    }
+  }
+
+  async function refreshCurrentState() {
+    setRefreshing(true);
+    try {
+      const currentTournamentId = selectedSettingsTournamentId;
+      await initializePage();
+      if (currentTournamentId) {
+        setSelectedSettingsTournamentId(currentTournamentId);
+        await loadTournamentMarketsForSelection(currentTournamentId);
+      }
+    } finally {
+      setRefreshing(false);
+    }
+  }
+
+  async function loadMarketList(sportId: string, groupId: string | null) {
+    setMarketListLoading(true);
+    try {
+      const [groups, markets] = await Promise.all([fetchMarketGroups(sportId), fetchMarkets(sportId, groupId)]);
+      setListGroups(groups);
+      setMarketRows(markets);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to load markets");
+      setListGroups([]);
+      setMarketRows([]);
+    } finally {
+      setMarketListLoading(false);
+    }
+  }
+
+  async function loadFormGroups(sportId: string) {
+    try {
+      const groups = await fetchMarketGroups(sportId);
+      setFormGroups(groups);
+      return groups;
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to load market groups");
+      setFormGroups([]);
+      return [];
+    }
+  }
+
+  async function loadTournamentMarketsForSelection(tournamentId: string) {
+    setTournamentMarketsLoading(true);
+    try {
+      const markets = await fetchTournamentMarkets(tournamentId);
+      setTournamentMarkets(markets);
+      setSelectedSettingsMarketIds(markets.map((market) => market.id));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to load tournament markets");
+      setTournamentMarkets([]);
+      setSelectedSettingsMarketIds([]);
+    } finally {
+      setTournamentMarketsLoading(false);
+    }
+  }
+
+  function resetMarketForm(nextSportId = selectedListSportId) {
+    setMarketForm({
+      ...blankMarketForm,
+      sportId: nextSportId,
+    });
+  }
+
+  async function handleListSportChange(nextSportId: string) {
+    setSelectedListSportId(nextSportId);
+    setSelectedListGroupId("0");
+    resetMarketForm(nextSportId);
+    if (!nextSportId) {
+      setListGroups([]);
+      setMarketRows([]);
+      setFormGroups([]);
       return;
     }
-    const now = new Date().toISOString();
-    if (editingMarketId) {
-      setMarkets((prev) =>
-        prev.map((market) =>
-          market.id === editingMarketId
-            ? {
-                ...market,
-                sport: marketForm.sport!.value,
-                marketType: marketForm.marketType!.value,
-                groupId: marketForm.group!.value,
-                name: marketForm.name.trim(),
-                shortName: marketForm.shortName.trim(),
-                description: marketForm.description.trim(),
-                specifier: marketForm.specifier.trim(),
-                status: marketForm.status!.value as MarketDefinition["status"],
-                cashout: marketForm.cashout!.value as MarketDefinition["cashout"],
-                priority: marketForm.priority,
-                isPopular: marketForm.isPopular,
-                lastUpdated: now,
-              }
-            : market
-        )
-      );
-      alert("Market updated (mock).");
-    } else {
-      const newMarket: MarketDefinition = {
-        id: `market-${Date.now()}`,
-        sport: marketForm.sport.value,
-        marketType: marketForm.marketType?.value ?? "Custom",
-        groupId: marketForm.group.value,
-        name: marketForm.name.trim(),
-        shortName: marketForm.shortName.trim() || marketForm.name.trim().slice(0, 6),
-        description: marketForm.description.trim(),
-        specifier: marketForm.specifier.trim(),
-        status: (marketForm.status?.value ?? "Enabled") as MarketDefinition["status"],
-        cashout: (marketForm.cashout?.value ?? "Disabled") as MarketDefinition["cashout"],
-        priority: marketForm.priority,
-        isPopular: marketForm.isPopular,
-        lastUpdated: now,
-      };
-      setMarkets((prev) => [newMarket, ...prev]);
-      setGroups((prev) =>
-        prev.map((group) =>
-          group.id === newMarket.groupId
-            ? { ...group, marketCount: group.marketCount + 1, lastUpdated: now }
-            : group
-        )
-      );
-      alert("Market created (mock).");
-    }
-    setIsMarketModalOpen(false);
-  };
+    await Promise.all([loadMarketList(nextSportId, null), loadFormGroups(nextSportId)]);
+  }
 
-  const openAssignmentModal = () => {
-    if (!selectedTournamentValue) {
-      alert("Choose a tournament first.");
+  async function handleListGroupChange(nextGroupId: string) {
+    setSelectedListGroupId(nextGroupId);
+    if (!selectedListSportId) return;
+    await loadMarketList(selectedListSportId, nextGroupId === "0" ? null : nextGroupId);
+  }
+
+  async function handleFormSportChange(nextSportId: string) {
+    setMarketForm((current) => ({
+      ...current,
+      sportId: nextSportId,
+      groupId: "",
+    }));
+    if (!nextSportId) {
+      setFormGroups([]);
       return;
     }
-    const assignedIds = assignments[selectedTournamentValue] ?? [];
-    const availableOptions = availableMarketsForSettings.filter(
-      (option) => !assignedIds.includes(option.value)
+    await loadFormGroups(nextSportId);
+  }
+
+  async function handleEditMarket(market: MarketRecord) {
+    const nextSportId = market.sportId;
+    const groups = await loadFormGroups(nextSportId);
+    const matchedGroup = findGroup(groups, market.groupId);
+    const matchedType = findMarketType(marketTypes, market.marketTypeId, market);
+
+    setSelectedListSportId(nextSportId);
+    setSelectedListGroupId(matchedGroup?.marketGroupId || matchedGroup?.id || "0");
+    await loadMarketList(nextSportId, matchedGroup?.marketGroupId || matchedGroup?.id || null);
+
+    setMarketForm({
+      id: market.id,
+      sportId: nextSportId,
+      marketTypeId: matchedType?.providerId || matchedType?.marketId || market.marketTypeId,
+      groupId: matchedGroup?.id || matchedGroup?.marketGroupId || "",
+      name: market.name,
+      displayName: market.displayName,
+      description: market.description,
+      specifier: market.specifier,
+      status: String(market.status),
+      enableCashout: String(market.enableCashout),
+      priority: market.priority,
+      isDefault: market.isDefault === 1,
+    });
+    setActiveTab("markets");
+  }
+
+  function handleManageOutcomes(market: MarketRecord) {
+    setEditingOutcomesMarket(market);
+    setOutcomeRows(normalizeOutcomeRows(market.outcomes));
+  }
+
+  function handleOutcomeChange(index: number, field: keyof MarketOutcome, value: string | number) {
+    setOutcomeRows((current) =>
+      current.map((row, rowIndex) =>
+        rowIndex === index
+          ? {
+              ...row,
+              [field]: field === "status" ? Number(value) : String(value),
+            }
+          : row
+      )
     );
-    setSelectedAssignmentMarkets(availableOptions.slice(0, 3));
-    setIsAssignmentModalOpen(true);
-  };
+  }
 
-  const handleAssignMarkets = () => {
-    if (!selectedTournamentValue) return;
-    if (selectedAssignmentMarkets.length === 0) {
-      alert("Select at least one market to assign.");
+  function addOutcomeRow() {
+    setOutcomeRows((current) => [...current, emptyOutcome()]);
+  }
+
+  async function submitMarket(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const sport = findSport(sports, marketForm.sportId);
+    const group = findGroup(formGroups, marketForm.groupId);
+    const marketType = findMarketType(marketTypes, marketForm.marketTypeId, null);
+
+    if (!sport) {
+      toast.error("Select Sports");
       return;
     }
-    setAssignments((prev) => {
-      const existing = prev[selectedTournamentValue] ?? [];
-      const next = Array.from(
-        new Set([...existing, ...selectedAssignmentMarkets.map((option) => option.value)])
-      );
-      return {
-        ...prev,
-        [selectedTournamentValue]: next,
-      };
-    });
-    setIsAssignmentModalOpen(false);
-  };
+    if (!marketType) {
+      toast.error("Select Market");
+      return;
+    }
+    if (!group) {
+      toast.error("Select Market Group");
+      return;
+    }
+    if (!marketForm.name.trim()) {
+      toast.error("Please enter the market name");
+      return;
+    }
 
-  const handleRemoveTournamentMarket = (marketId: string) => {
-    if (marketId.startsWith("placeholder")) return;
-    if (!selectedTournamentValue) return;
-    const marketName =
-      tournamentMarketRows.find((row) => row.id === marketId)?.name ?? "this market";
-    const confirmed = window.confirm(
-      `Remove "${marketName}" from the selected tournament?`
+    const payload: MarketSavePayload = {
+      sportID: sport.sportId,
+      marketID: marketType.marketId,
+      groupID: group.marketGroupId,
+      name: marketForm.name.trim(),
+      displayName: marketForm.displayName.trim(),
+      description: marketForm.description.trim(),
+      isDefault: marketForm.isDefault ? 1 : 0,
+      enableCashout: Number(marketForm.enableCashout || 0),
+      status: Number(marketForm.status || 0),
+      specifier: marketForm.specifier.trim(),
+      priority: Number(marketForm.priority || 0),
+      id: marketForm.id,
+      sport_id: sport.id,
+      market_group_id: group.id,
+      market_type_id: marketType.providerId,
+    };
+
+    setSavingMarket(true);
+    try {
+      await saveMarket(payload);
+      toast.success("Market has been saved successfully.");
+      resetMarketForm(sport.sportId);
+      setSelectedListSportId(sport.sportId);
+      setSelectedListGroupId("0");
+      await Promise.all([loadMarketList(sport.sportId, null), loadFormGroups(sport.sportId)]);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to save market");
+    } finally {
+      setSavingMarket(false);
+    }
+  }
+
+  async function submitOutcomes() {
+    if (!editingOutcomesMarket) return;
+
+    setSavingOutcomes(true);
+    try {
+      await saveMarketOutcomes({
+        outcomes: outcomeRows,
+        marketID: editingOutcomesMarket.marketId,
+        marketName: editingOutcomesMarket.displayName || editingOutcomesMarket.name,
+        internalMarketID: editingOutcomesMarket.id,
+      });
+      toast.success("Outcomes have been updated.");
+      setEditingOutcomesMarket(null);
+      if (selectedListSportId) {
+        await loadMarketList(selectedListSportId, selectedListGroupId === "0" ? null : selectedListGroupId);
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to save outcomes");
+    } finally {
+      setSavingOutcomes(false);
+    }
+  }
+
+  function toggleSettingsMarketSelection(marketId: string, checked: boolean) {
+    setSelectedSettingsMarketIds((current) => {
+      if (checked) return Array.from(new Set([...current, marketId]));
+      return current.filter((id) => id !== marketId);
+    });
+  }
+
+  function handleSettingsSportChange(nextSportId: string) {
+    setSelectedSettingsSportId(nextSportId);
+    setSelectedSettingsCategoryId("");
+    setSelectedSettingsTournamentId("");
+    setSelectedSettingsMarketIds([]);
+    setTournamentMarkets([]);
+  }
+
+  function handleSettingsCategoryChange(nextCategoryId: string) {
+    setSelectedSettingsCategoryId(nextCategoryId);
+    setSelectedSettingsTournamentId("");
+    setSelectedSettingsMarketIds([]);
+    setTournamentMarkets([]);
+  }
+
+  async function handleSettingsTournamentChange(nextTournamentId: string) {
+    setSelectedSettingsTournamentId(nextTournamentId);
+    setSelectedSettingsMarketIds([]);
+    setTournamentMarkets([]);
+    if (!nextTournamentId) return;
+    await loadTournamentMarketsForSelection(nextTournamentId);
+  }
+
+  async function handleAddMarkets() {
+    if (!selectedSettingsTournamentId) {
+      toast.error("Select Tournament");
+      return;
+    }
+
+    setSettingsActionLoading(true);
+    try {
+      await addTournamentMarkets(selectedSettingsTournamentId, selectedSettingsMarketIds);
+      toast.success("Markets added");
+      await loadTournamentMarketsForSelection(selectedSettingsTournamentId);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to add markets");
+    } finally {
+      setSettingsActionLoading(false);
+    }
+  }
+
+  async function handleRemoveMarket(marketId: string) {
+    if (!selectedSettingsTournamentId) return;
+    if (!window.confirm("You will not be able to recover this market")) return;
+
+    setSettingsActionLoading(true);
+    try {
+      await removeTournamentMarkets(selectedSettingsTournamentId, [marketId]);
+      toast.success("Market has been removed");
+      await loadTournamentMarketsForSelection(selectedSettingsTournamentId);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to remove market");
+    } finally {
+      setSettingsActionLoading(false);
+    }
+  }
+
+  async function handleToggleCashout(marketId: string) {
+    if (!selectedSettingsTournamentId) return;
+    if (!window.confirm("You want to toggle cashout for this market")) return;
+
+    setSettingsActionLoading(true);
+    try {
+      await toggleTournamentMarketCashout(selectedSettingsTournamentId, marketId);
+      toast.success("Cashout has been toggled");
+      await loadTournamentMarketsForSelection(selectedSettingsTournamentId);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to toggle cashout");
+    } finally {
+      setSettingsActionLoading(false);
+    }
+  }
+
+  async function handleToggleStatus(marketId: string) {
+    if (!selectedSettingsTournamentId) return;
+
+    setSettingsActionLoading(true);
+    try {
+      await toggleTournamentMarketStatus(selectedSettingsTournamentId, marketId);
+      await loadTournamentMarketsForSelection(selectedSettingsTournamentId);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to toggle market status");
+    } finally {
+      setSettingsActionLoading(false);
+    }
+  }
+
+  if (initialLoading) {
+    return (
+      <div>
+        <PageBreadcrumb pageTitle="Markets Manager" />
+        <div className={`${cardClassName()} p-6`}>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading markets manager...</p>
+        </div>
+      </div>
     );
-    if (!confirmed) return;
-    setAssignments((prev) => {
-      const updated = (prev[selectedTournamentValue] ?? []).filter((id) => id !== marketId);
-      return {
-        ...prev,
-        [selectedTournamentValue]: updated,
-      };
-    });
-    setTournamentMarketNotes((prev) => {
-      if (!(marketId in prev)) return prev;
-      const next = { ...prev };
-      delete next[marketId];
-      return next;
-    });
-  };
-
-  const tournamentColumns = useMemo(
-    () => [
-      ...tournamentMarketColumns,
-      createTournamentMarketActionColumn({
-        onEdit: handleEditTournamentMarket,
-        onDelete: handleRemoveTournamentMarket,
-      }),
-    ],
-    [handleEditTournamentMarket, handleRemoveTournamentMarket]
-  );
+  }
 
   return (
-    <div className="space-y-6 p-4">
-      <PageBreadcrumb pageTitle="Markets Manager" />
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <PageBreadcrumb pageTitle="Markets Manager" />
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => void refreshCurrentState()}
+          startIcon={<RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />}
+          disabled={refreshing}
+        >
+          Refresh
+        </Button>
+      </div>
 
-      <Tabs defaultValue="grouping" className="space-y-6">
-        <TabsList className="mb-6 h-auto rounded-xl border border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 p-1.5 shadow-sm dark:border-gray-700 dark:from-gray-900/40 dark:to-gray-900/20">
-          <TabsTrigger
-            value="grouping"
-            className="inline-flex items-center gap-2 rounded-lg px-6 py-3 text-sm font-medium text-gray-600 transition-all duration-200 hover:bg-gray-50 hover:text-brand-500 data-[state=active]:border data-[state=active]:border-brand-200 data-[state=active]:bg-white data-[state=active]:text-brand-600 data-[state=active]:shadow-md dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-brand-300 dark:data-[state=active]:border-brand-700 dark:data-[state=active]:bg-gray-900 dark:data-[state=active]:text-brand-300"
-          >
-            Market Grouping
-          </TabsTrigger>
-          <TabsTrigger
-            value="markets"
-            className="inline-flex items-center gap-2 rounded-lg px-6 py-3 text-sm font-medium text-gray-600 transition-all duration-200 hover:bg-gray-50 hover:text-indigo-500 data-[state=active]:border data-[state=active]:border-indigo-200 data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-md dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-indigo-300 dark:data-[state=active]:border-indigo-700 dark:data-[state=active]:bg-gray-900 dark:data-[state=active]:text-indigo-300"
-          >
-            Markets
-          </TabsTrigger>
-          <TabsTrigger
-            value="settings"
-            className="inline-flex items-center gap-2 rounded-lg px-6 py-3 text-sm font-medium text-gray-600 transition-all duration-200 hover:bg-gray-50 hover:text-emerald-500 data-[state=active]:border data-[state=active]:border-emerald-200 data-[state=active]:bg-white data-[state=active]:text-emerald-600 data-[state=active]:shadow-md dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-emerald-300 dark:data-[state=active]:border-emerald-700 dark:data-[state=active]:bg-gray-900 dark:data-[state=active]:text-emerald-300"
-          >
-            Market Settings
-          </TabsTrigger>
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as ActiveTab)}>
+        <TabsList>
+          <TabsTrigger value="markets">Markets</TabsTrigger>
+          <TabsTrigger value="settings">Market Setting</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="grouping">
-          <MarketGroupingTab
-            theme={theme}
-            sportsOptions={sportsOptions}
-            groupFilter={groupFilter}
-            onGroupFilterChange={handleGroupFilterChange}
-            sportSummary={sportSummary}
-            groupColumns={groupColumns}
-            groupedRows={groupedRows}
-            onRowClick={openEditGroupModal}
-            onCreateGroup={openCreateGroupModal}
-          />
+        <TabsContent value="markets" className="space-y-6">
+          <div className={`${cardClassName()} p-6`}>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <Label htmlFor="market-list-sport">Sports</Label>
+                <select
+                  id="market-list-sport"
+                  className={selectClassName()}
+                  value={selectedListSportId}
+                  onChange={(event) => void handleListSportChange(event.target.value)}
+                >
+                  <option value="">Select Sports</option>
+                  {sports.map((sport) => (
+                    <option key={sport.sportId} value={sport.sportId}>
+                      {sport.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <Label htmlFor="market-list-group">Market Group</Label>
+                <select
+                  id="market-list-group"
+                  className={selectClassName()}
+                  value={selectedListGroupId}
+                  onChange={(event) => void handleListGroupChange(event.target.value)}
+                  disabled={!selectedListSportId}
+                >
+                  <option value="0">None</option>
+                  {listGroups.map((group) => (
+                    <option key={group.id} value={group.marketGroupId}>
+                      {group.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(340px,1fr)]">
+            <section className={cardClassName()}>
+              <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-800">
+                <h3 className="text-base font-semibold text-gray-800 dark:text-white">
+                  Available Markets in {marketGroupLabel(selectedListGroup)}
+                </h3>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="min-w-full table-fixed">
+                  <thead className={tableHeadClassName()}>
+                    <tr>
+                      <th className="px-4 py-3">Name</th>
+                      <th className="px-4 py-3">Description</th>
+                      <th className="px-4 py-3">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {marketListLoading ? (
+                      <tr>
+                        <td className={tableCellClassName()} colSpan={3}>
+                          Please wait...
+                        </td>
+                      </tr>
+                    ) : marketRows.length === 0 ? (
+                      <tr>
+                        <td className={tableCellClassName()} colSpan={3}>
+                          Please select a sport to display markets
+                        </td>
+                      </tr>
+                    ) : (
+                      marketRows.map((market) => (
+                        <tr key={market.id}>
+                          <td className={tableCellClassName()}>{market.name}</td>
+                          <td className={tableCellClassName()}>{market.description || "-"}</td>
+                          <td className={tableCellClassName()}>
+                            <div className="flex flex-wrap gap-3">
+                              <button
+                                type="button"
+                                className="text-brand-600 hover:text-brand-700 dark:text-brand-400"
+                                onClick={() => void handleEditMarket(market)}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                type="button"
+                                className="text-brand-600 hover:text-brand-700 dark:text-brand-400"
+                                onClick={() => handleManageOutcomes(market)}
+                              >
+                                Manage Outcomes
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section className={cardClassName()}>
+              <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-800">
+                <h3 className="text-base font-semibold text-gray-800 dark:text-white">
+                  {marketForm.id ? "Edit Market" : "Add/Edit Market"}
+                </h3>
+              </div>
+
+              <form className="space-y-4 p-6" onSubmit={(event) => void submitMarket(event)}>
+                <div>
+                  <Label htmlFor="market-form-sport">Sports</Label>
+                  <select
+                    id="market-form-sport"
+                    className={selectClassName()}
+                    value={marketForm.sportId}
+                    onChange={(event) => void handleFormSportChange(event.target.value)}
+                  >
+                    <option value="">Select Sports</option>
+                    {sports.map((sport) => (
+                      <option key={sport.sportId} value={sport.sportId}>
+                        {sport.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <Label htmlFor="market-form-type">Market Type (Betradar Markets)</Label>
+                  <select
+                    id="market-form-type"
+                    className={selectClassName()}
+                    value={marketForm.marketTypeId}
+                    onChange={(event) =>
+                      setMarketForm((current) => ({ ...current, marketTypeId: event.target.value }))
+                    }
+                  >
+                    <option value="">Select Market</option>
+                    {marketTypes.map((marketType) => (
+                      <option key={marketType.id} value={marketType.providerId}>
+                        {marketType.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <Label htmlFor="market-form-group">Group</Label>
+                  <select
+                    id="market-form-group"
+                    className={selectClassName()}
+                    value={marketForm.groupId}
+                    onChange={(event) =>
+                      setMarketForm((current) => ({ ...current, groupId: event.target.value }))
+                    }
+                  >
+                    <option value="">Select Market Group</option>
+                    {formGroups.map((group) => (
+                      <option key={group.id} value={group.id}>
+                        {group.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <Label htmlFor="market-form-name">Name</Label>
+                  <Input
+                    id="market-form-name"
+                    value={marketForm.name}
+                    onChange={(event) =>
+                      setMarketForm((current) => ({ ...current, name: event.target.value }))
+                    }
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="market-form-display-name">Short Name</Label>
+                  <Input
+                    id="market-form-display-name"
+                    value={marketForm.displayName}
+                    onChange={(event) =>
+                      setMarketForm((current) => ({ ...current, displayName: event.target.value }))
+                    }
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="market-form-description">Description</Label>
+                  <TextArea
+                    value={marketForm.description}
+                    onChange={(value) => setMarketForm((current) => ({ ...current, description: value }))}
+                    className="text-gray-800 dark:text-white/90"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="market-form-specifier">Specifier</Label>
+                  <Input
+                    id="market-form-specifier"
+                    value={marketForm.specifier}
+                    onChange={(event) =>
+                      setMarketForm((current) => ({ ...current, specifier: event.target.value }))
+                    }
+                  />
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <Label htmlFor="market-form-status">Status</Label>
+                    <select
+                      id="market-form-status"
+                      className={selectClassName()}
+                      value={marketForm.status}
+                      onChange={(event) =>
+                        setMarketForm((current) => ({ ...current, status: event.target.value }))
+                      }
+                    >
+                      <option value="1">Enabled</option>
+                      <option value="0">Disabled</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="market-form-cashout">Cashout</Label>
+                    <select
+                      id="market-form-cashout"
+                      className={selectClassName()}
+                      value={marketForm.enableCashout}
+                      onChange={(event) =>
+                        setMarketForm((current) => ({ ...current, enableCashout: event.target.value }))
+                      }
+                    >
+                      <option value="1">Enabled</option>
+                      <option value="0">Disabled</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="market-form-priority">Priority</Label>
+                  <Input
+                    id="market-form-priority"
+                    type="number"
+                    value={marketForm.priority}
+                    onChange={(event) =>
+                      setMarketForm((current) => ({ ...current, priority: event.target.value }))
+                    }
+                  />
+                </div>
+
+                <label className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
+                  <input
+                    type="checkbox"
+                    checked={marketForm.isDefault}
+                    onChange={(event) =>
+                      setMarketForm((current) => ({ ...current, isDefault: event.target.checked }))
+                    }
+                  />
+                  Is Popular
+                </label>
+
+                <div className="flex items-center justify-end gap-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => resetMarketForm(marketForm.sportId || selectedListSportId)}
+                  >
+                    Reset
+                  </Button>
+                  <Button type="submit" disabled={savingMarket}>
+                    {savingMarket ? "Saving..." : "Save"}
+                  </Button>
+                </div>
+              </form>
+            </section>
+          </div>
         </TabsContent>
 
-        <TabsContent value="markets">
-          <MarketsTab
-            theme={theme}
-            filterOptions={marketFilterOptions}
-            selections={marketSelections}
-            onSelectionsChange={handleMarketSelectionsChange}
-            summary={summaryMarkets}
-            columns={marketColumns}
-            rows={filteredMarketRows}
-            onCreateMarket={openCreateMarketModal}
-            onRowClick={openEditMarketModal}
-          />
-        </TabsContent>
+        <TabsContent value="settings" className="space-y-6">
+          <div className={`${cardClassName()} p-6`}>
+            <div className="grid gap-4 md:grid-cols-3">
+              <div>
+                <Label htmlFor="settings-sport">Sports</Label>
+                <select
+                  id="settings-sport"
+                  className={selectClassName()}
+                  value={selectedSettingsSportId}
+                  onChange={(event) => handleSettingsSportChange(event.target.value)}
+                >
+                  <option value="">Select Sports</option>
+                  {settingsSports.map((sport) => (
+                    <option key={sport.id} value={sport.id}>
+                      {sport.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-        <TabsContent value="settings">
-          <MarketSettingsTab
-            theme={theme}
-            filterOptions={settingsFilterOptions}
-            selections={settingsSelections}
-            onSelectionChange={handleSettingsSelectionChange}
-            availableMarkets={availableMarketsForSettings}
-            selectedTournament={selectedTournamentValue}
-            onOpenAssignmentModal={openAssignmentModal}
-            columns={tournamentColumns}
-            rows={tournamentMarketRows}
-          />
+              <div>
+                <Label htmlFor="settings-category">Category</Label>
+                <select
+                  id="settings-category"
+                  className={selectClassName()}
+                  value={selectedSettingsCategoryId}
+                  onChange={(event) => handleSettingsCategoryChange(event.target.value)}
+                  disabled={!selectedSettingsSportId}
+                >
+                  <option value="">Select Category</option>
+                  {settingsCategories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <Label htmlFor="settings-tournament">Tournament</Label>
+                <select
+                  id="settings-tournament"
+                  className={selectClassName()}
+                  value={selectedSettingsTournamentId}
+                  onChange={(event) => void handleSettingsTournamentChange(event.target.value)}
+                  disabled={!selectedSettingsCategoryId}
+                >
+                  <option value="">Select Tournament</option>
+                  {settingsTournaments.map((tournament) => (
+                    <option key={tournament.id} value={tournament.id}>
+                      {tournament.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
+            <section className={cardClassName()}>
+              <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-gray-800">
+                <h3 className="text-base font-semibold text-gray-800 dark:text-white">Available Markets</h3>
+                <Button
+                  size="sm"
+                  onClick={() => void handleAddMarkets()}
+                  disabled={!selectedSettingsTournamentId || settingsActionLoading}
+                >
+                  Add Markets
+                </Button>
+              </div>
+
+              <div className="max-h-[520px] overflow-y-auto">
+                <table className="min-w-full">
+                  <thead className={tableHeadClassName()}>
+                    <tr>
+                      <th className="px-4 py-3">Name</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {availableSettingsMarkets.length === 0 ? (
+                      <tr>
+                        <td className={tableCellClassName()}>Please select a sport to display markets</td>
+                      </tr>
+                    ) : (
+                      availableSettingsMarkets.map((market) => (
+                        <tr key={market.id}>
+                          <td className={tableCellClassName()}>
+                            <label className="flex items-center gap-3">
+                              <input
+                                type="checkbox"
+                                checked={selectedSettingsMarketIds.includes(market.id)}
+                                onChange={(event) =>
+                                  toggleSettingsMarketSelection(market.id, event.target.checked)
+                                }
+                                disabled={!selectedSettingsTournamentId}
+                              />
+                              <span>{market.name}</span>
+                            </label>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section className={cardClassName()}>
+              <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-800">
+                <h3 className="text-base font-semibold text-gray-800 dark:text-white">Tournament Markets</h3>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="min-w-full table-fixed">
+                  <thead className={tableHeadClassName()}>
+                    <tr>
+                      <th className="px-4 py-3">Name</th>
+                      <th className="px-4 py-3">Action</th>
+                      <th className="px-4 py-3">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {tournamentMarketsLoading ? (
+                      <tr>
+                        <td className={tableCellClassName()} colSpan={3}>
+                          Please wait...
+                        </td>
+                      </tr>
+                    ) : tournamentMarkets.length === 0 ? (
+                      <tr>
+                        <td className={tableCellClassName()} colSpan={3}>
+                          {selectedSettingsTournamentId ? "No Markets" : "Select a tournament to manage its markets."}
+                        </td>
+                      </tr>
+                    ) : (
+                      tournamentMarkets.map((market) => (
+                        <tr key={market.id}>
+                          <td className={tableCellClassName()}>{market.name}</td>
+                          <td className={tableCellClassName()}>
+                            <div className="flex flex-wrap gap-3">
+                              <button
+                                type="button"
+                                className="text-error-600 hover:text-error-700"
+                                onClick={() => void handleRemoveMarket(market.id)}
+                                disabled={settingsActionLoading}
+                              >
+                                Remove Market
+                              </button>
+                              <button
+                                type="button"
+                                className={
+                                  market.cashOutStatus === 1
+                                    ? "text-error-600 hover:text-error-700"
+                                    : "text-green-600 hover:text-green-700"
+                                }
+                                onClick={() => void handleToggleCashout(market.id)}
+                                disabled={settingsActionLoading}
+                              >
+                                {market.cashOutStatus === 1 ? "Disable Cashout" : "Enable Cashout"}
+                              </button>
+                            </div>
+                          </td>
+                          <td className={tableCellClassName()}>
+                            <input
+                              type="checkbox"
+                              checked={market.status === 1}
+                              onChange={() => void handleToggleStatus(market.id)}
+                              disabled={settingsActionLoading}
+                            />
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
         </TabsContent>
       </Tabs>
 
-      <Modal isOpen={isGroupModalOpen} onClose={() => setIsGroupModalOpen(false)} size="md">
-        <ModalHeader>{editingGroupId ? "Edit Market Group" : "Create Market Group"}</ModalHeader>
-        <ModalBody>
-          <Form
-            onSubmit={(event) => {
-              event.preventDefault();
-              handleGroupSubmit();
-            }}
-            className="space-y-4"
-          >
-            <div>
-              <Label>Sport</Label>
-              <Select<SelectOption, false>
-                styles={reactSelectStyles(theme)}
-                options={sportsOptions}
-                value={groupForm.sport}
-                onChange={(option: SingleValue<SelectOption>) =>
-      setGroupForm((prev) => ({ ...prev, sport: option ?? null }))
-                }
-              />
-            </div>
-            <div>
-              <Label htmlFor="groupName">Group Name</Label>
-              <Input
-                id="groupName"
-                placeholder="e.g. Goals & Totals"
-                value={groupForm.name}
-                onChange={(event) =>
-                  setGroupForm((prev) => ({ ...prev, name: event.target.value }))
-                }
-              />
-            </div>
-            <div>
-              <Label>Summary</Label>
-              <TextArea
-                placeholder="Describe the markets grouped together."
-                rows={3}
-                value={groupForm.description}
-                onChange={(value) =>
-                  setGroupForm((prev) => ({
-                    ...prev,
-                    description: value,
-                  }))
-                }
-              />
-            </div>
-          </Form>
-        </ModalBody>
-        <ModalFooter>
-          <Button variant="outline" onClick={() => setIsGroupModalOpen(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleGroupSubmit}>{editingGroupId ? "Update Group" : "Save Group"}</Button>
-        </ModalFooter>
-      </Modal>
-
-      <Modal isOpen={isMarketModalOpen} onClose={() => setIsMarketModalOpen(false)} size="lg">
-        <ModalHeader>{editingMarketId ? "Edit Market" : "Create Market"}</ModalHeader>
-        <ModalBody>
-          <Form
-            onSubmit={(event) => {
-              event.preventDefault();
-              handleMarketSubmit();
-            }}
-            className="space-y-5"
-          >
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div>
-                <Label>Sport</Label>
-                <Select<SelectOption, false>
-                  styles={reactSelectStyles(theme)}
-                  options={sportsOptions}
-                  value={marketForm.sport}
-                  onChange={(option: SingleValue<SelectOption>) => {
-                    setMarketForm((prev) => ({
-                      ...prev,
-                      sport: option ?? null,
-                      group: null,
-                    }));
-                  }}
-                />
-              </div>
-              <div>
-                <Label>Market Type</Label>
-                <Select<MarketTypeOption, false>
-                  styles={reactSelectStyles(theme)}
-                  options={marketTypeOptions}
-                  value={marketForm.marketType}
-                  onChange={(option: SingleValue<MarketTypeOption>) =>
-                    setMarketForm((prev) => ({ ...prev, marketType: option ?? null }))
-                  }
-                />
-              </div>
-              <div>
-                <Label>Group</Label>
-                <Select<SelectOption, false>
-                  styles={reactSelectStyles(theme)}
-                  options={groupOptionsForSport}
-                  value={marketForm.group}
-                  onChange={(option: SingleValue<SelectOption>) =>
-                    setMarketForm((prev) => ({ ...prev, group: option ?? null }))
-                  }
-                  placeholder="Select market group"
-                />
-              </div>
-              <div>
-                <Label htmlFor="marketName">Name</Label>
-                <Input
-                  id="marketName"
-                  placeholder="e.g. Total Goals Over/Under 2.5"
-                  value={marketForm.name}
-                  onChange={(event) =>
-                    setMarketForm((prev) => ({ ...prev, name: event.target.value }))
-                  }
-                />
-              </div>
-              <div>
-                <Label htmlFor="marketShortName">Short Name</Label>
-                <Input
-                  id="marketShortName"
-                  placeholder="Short label"
-                  value={marketForm.shortName}
-                  onChange={(event) =>
-                    setMarketForm((prev) => ({ ...prev, shortName: event.target.value }))
-                  }
-                />
-              </div>
-              <div>
-                <Label htmlFor="marketSpecifier">Specifier</Label>
-                <Input
-                  id="marketSpecifier"
-                  placeholder="e.g. Match, Player, Goals"
-                  value={marketForm.specifier}
-                  onChange={(event) =>
-                    setMarketForm((prev) => ({ ...prev, specifier: event.target.value }))
-                  }
-                />
-              </div>
-              <div>
-                <Label>Status</Label>
-                <Select<StatusOption, false>
-                  styles={reactSelectStyles(theme)}
-                  options={statusOptions}
-                  value={marketForm.status}
-                  onChange={(option: SingleValue<StatusOption>) =>
-                    setMarketForm((prev) => ({ ...prev, status: option ?? null }))
-                  }
-                />
-              </div>
-              <div>
-                <Label>Cashout</Label>
-                <Select<CashoutOption, false>
-                  styles={reactSelectStyles(theme)}
-                  options={cashoutOptions}
-                  value={marketForm.cashout}
-                  onChange={(option: SingleValue<CashoutOption>) =>
-                    setMarketForm((prev) => ({ ...prev, cashout: option ?? null }))
-                  }
-                />
-              </div>
-              <div>
-                <Label htmlFor="marketPriority">Priority</Label>
-                <Input
-                  id="marketPriority"
-                  type="number"
-                  min={0}
-                  value={marketForm.priority}
-                  onChange={(event) =>
-                    setMarketForm((prev) => ({
-                      ...prev,
-                      priority: Number(event.target.value),
-                    }))
-                  }
-                />
-              </div>
-              <div className="flex items-center gap-3">
-                <Switch
-                  label="Popular"
-                  defaultChecked={marketForm.isPopular}
-                  onChange={(checked) =>
-                    setMarketForm((prev) => ({
-                      ...prev,
-                      isPopular: checked,
-                    }))
-                  }
-                />
-              </div>
-              <div className="md:col-span-2">
-                <Label>Description</Label>
-                <TextArea
-                  placeholder="Provide more context for traders and front-end display."
-                  rows={3}
-                  value={marketForm.description}
-                  onChange={(value) =>
-                    setMarketForm((prev) => ({
-                      ...prev,
-                      description: value,
-                    }))
-                  }
-                />
-              </div>
-            </div>
-          </Form>
-        </ModalBody>
-        <ModalFooter>
-          <Button variant="outline" onClick={() => setIsMarketModalOpen(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleMarketSubmit}>{editingMarketId ? "Update Market" : "Save Market"}</Button>
-        </ModalFooter>
-      </Modal>
-
-      <Modal isOpen={isAssignmentModalOpen} onClose={() => setIsAssignmentModalOpen(false)} size="md">
-        <ModalHeader>Assign Markets to Tournament</ModalHeader>
-        <ModalBody>
-          <Form
-            onSubmit={(event) => {
-              event.preventDefault();
-              handleAssignMarkets();
-            }}
-            className="space-y-4"
-          >
-            <div>
-              <Label>Tournament</Label>
-              <Input
-                value={settingsFilterState.tournament?.label ?? "Select a tournament"}
-                disabled
-                className="bg-gray-100 dark:bg-gray-800"
-              />
-            </div>
-            <div>
-              <Label>Markets</Label>
-              <Select<SelectOption, true>
-                styles={reactSelectStyles(theme)}
-                options={availableMarketsForSettings}
-                value={selectedAssignmentMarkets}
-                onChange={(options: MultiValue<SelectOption>) =>
-                  setSelectedAssignmentMarkets(options as SelectOption[])
-                }
-                isMulti
-                placeholder="Select markets to add"
-              />
-            </div>
-          </Form>
-        </ModalBody>
-        <ModalFooter>
-          <Button variant="outline" onClick={() => setIsAssignmentModalOpen(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleAssignMarkets}>Assign Markets</Button>
-        </ModalFooter>
-      </Modal>
-
       <Modal
-        isOpen={isTournamentMarketModalOpen}
-        onClose={() => {
-          setIsTournamentMarketModalOpen(false);
-          setEditingTournamentMarket(null);
-          setTournamentNoteDraft("");
-        }}
-        size="md"
+        isOpen={Boolean(editingOutcomesMarket)}
+        onClose={() => setEditingOutcomesMarket(null)}
+        size="4xl"
       >
-        <ModalHeader>Edit Tournament Market</ModalHeader>
+        <ModalHeader>
+          Edit Market Outcomes for {editingOutcomesMarket?.displayName || editingOutcomesMarket?.name || ""}
+        </ModalHeader>
+
         <ModalBody>
-          <Form
-            onSubmit={(event) => {
-              event.preventDefault();
-              if (!editingTournamentMarket) return;
-              const draft = tournamentNoteDraft.trim();
-              setTournamentMarketNotes((prev) => {
-                if (draft.length === 0) {
-                  if (!(editingTournamentMarket.id in prev)) return prev;
-                  const next = { ...prev };
-                  delete next[editingTournamentMarket.id];
-                  return next;
-                }
-                return {
-                  ...prev,
-                  [editingTournamentMarket.id]: draft,
-                };
-              });
-              setIsTournamentMarketModalOpen(false);
-              setEditingTournamentMarket(null);
-              setTournamentNoteDraft("");
-            }}
-            className="space-y-4"
-          >
-            <div>
-              <Label>Market Name</Label>
-              <Input value={editingTournamentMarket?.name ?? ""} disabled />
-            </div>
-            <div>
-              <Label>Status</Label>
-              <Input value={editingTournamentMarket?.status ?? ""} disabled />
-            </div>
-            <div>
-              <Label>Notes / Action</Label>
-              <TextArea
-                rows={3}
-                placeholder="Add an internal note or action reminder"
-                value={tournamentNoteDraft}
-                onChange={(value) => setTournamentNoteDraft(value)}
-              />
-            </div>
-          </Form>
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead className={tableHeadClassName()}>
+                <tr>
+                  <th className="px-4 py-3">Name</th>
+                  <th className="px-4 py-3">Provider ID</th>
+                  <th className="px-4 py-3">Spread</th>
+                  <th className="px-4 py-3">Short Code (WA)</th>
+                  <th className="px-4 py-3">Short Code (EA)</th>
+                  <th className="px-4 py-3">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {outcomeRows.map((row, index) => (
+                  <tr key={`${row.outcomeID}-${index}`}>
+                    <td className={tableCellClassName()}>
+                      <Input
+                        value={row.outcomeName}
+                        onChange={(event) => handleOutcomeChange(index, "outcomeName", event.target.value)}
+                      />
+                    </td>
+                    <td className={tableCellClassName()}>
+                      <Input
+                        value={row.outcomeID}
+                        onChange={(event) => handleOutcomeChange(index, "outcomeID", event.target.value)}
+                      />
+                    </td>
+                    <td className={tableCellClassName()}>
+                      <Input
+                        value={row.specifier}
+                        onChange={(event) => handleOutcomeChange(index, "specifier", event.target.value)}
+                      />
+                    </td>
+                    <td className={tableCellClassName()}>
+                      <Input
+                        value={row.codeWA}
+                        onChange={(event) => handleOutcomeChange(index, "codeWA", event.target.value)}
+                      />
+                    </td>
+                    <td className={tableCellClassName()}>
+                      <Input
+                        value={row.codeEA}
+                        onChange={(event) => handleOutcomeChange(index, "codeEA", event.target.value)}
+                      />
+                    </td>
+                    <td className={tableCellClassName()}>
+                      <input
+                        type="checkbox"
+                        checked={row.status === 1}
+                        onChange={(event) =>
+                          handleOutcomeChange(index, "status", event.target.checked ? 1 : 0)
+                        }
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </ModalBody>
-        <ModalFooter>
+
+        <ModalFooter className="justify-between">
           <Button
+            type="button"
             variant="outline"
-            onClick={() => {
-              setIsTournamentMarketModalOpen(false);
-              setEditingTournamentMarket(null);
-              setTournamentNoteDraft("");
-            }}
+            startIcon={<Plus className="h-4 w-4" />}
+            onClick={addOutcomeRow}
           >
-            Cancel
+            Add New Row
           </Button>
-          <Button
-            onClick={() => {
-              if (!editingTournamentMarket) return;
-              const draft = tournamentNoteDraft.trim();
-              setTournamentMarketNotes((prev) => {
-                if (draft.length === 0) {
-                  if (!(editingTournamentMarket.id in prev)) return prev;
-                  const next = { ...prev };
-                  delete next[editingTournamentMarket.id];
-                  return next;
-                }
-                return {
-                  ...prev,
-                  [editingTournamentMarket.id]: draft,
-                };
-              });
-              setIsTournamentMarketModalOpen(false);
-              setEditingTournamentMarket(null);
-              setTournamentNoteDraft("");
-            }}
-          >
-            Save Changes
-          </Button>
+
+          <div className="flex items-center gap-3">
+            <Button type="button" variant="outline" onClick={() => setEditingOutcomesMarket(null)}>
+              Cancel
+            </Button>
+            <Button type="button" onClick={() => void submitOutcomes()} disabled={savingOutcomes}>
+              {savingOutcomes ? "Saving..." : "Save Changes"}
+            </Button>
+          </div>
         </ModalFooter>
       </Modal>
     </div>
   );
-};
+}
 
 export default withAuth(MarketsManagerPage);
-
