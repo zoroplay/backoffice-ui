@@ -1,705 +1,676 @@
 "use client";
 
-import React, { useCallback, useMemo, useState } from "react";
-import {
-  ChevronDown,
-  ChevronRight,
-  Edit2,
-  Plus,
-  Trash2,
-} from "lucide-react";
-import Select, { type SingleValue } from "react-select";
+import { useEffect, useMemo, useState } from "react";
+import { ChevronDown, ChevronRight, Edit2, MoveDown, MoveUp, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
 
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import Button from "@/components/ui/button/Button";
-import Form from "@/components/form/Form";
 import Input from "@/components/form/input/InputField";
-import FileInput from "@/components/form/input/FileInput";
 import Label from "@/components/form/Label";
-import Switch from "@/components/form/switch/Switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useTheme } from "@/context/ThemeContext";
-import { reactSelectStyles } from "@/utils/reactSelectStyles";
 import { withAuth } from "@/utils/withAuth";
 
 import {
+  fetchSportsMenu,
+  saveCategory,
+  saveSport,
+  saveTournament,
+  updateSportsMenuOrder,
   type CategoryNode,
-  type SelectOption,
+  type SportsMenuStatus,
   type SportNode,
-  type Status,
-  statusOptions,
-  sportsMenuSeed,
-} from "./data";
+  type TournamentNode,
+} from "./api";
+
+type TabKey = "sport" | "category" | "tournament";
 
 type SportFormState = {
+  id: string;
   name: string;
   order: string;
-  status: SelectOption<Status> | null;
-  featured: boolean;
+  status: SportsMenuStatus;
 };
 
 type CategoryFormState = {
-  sport: SelectOption | null;
+  id: string;
+  sportId: string;
   name: string;
   order: string;
-  status: SelectOption<Status> | null;
+  status: SportsMenuStatus;
 };
 
 type TournamentFormState = {
-  sport: SelectOption | null;
-  category: SelectOption | null;
+  id: string;
+  sportId: string;
+  categoryId: string;
   name: string;
   order: string;
-  status: SelectOption<Status> | null;
-  imageSource: string | null;
+  status: SportsMenuStatus;
+  imagePath: string;
 };
 
-const buildInitialSportForm = (): SportFormState => ({
+const blankSportForm: SportFormState = {
+  id: "",
   name: "",
-  order: "",
-  status: statusOptions[0],
-  featured: true,
-});
+  order: "1000",
+  status: "1",
+};
 
-const buildInitialCategoryForm = (): CategoryFormState => ({
-  sport: null,
+const blankCategoryForm: CategoryFormState = {
+  id: "",
+  sportId: "",
   name: "",
-  order: "",
-  status: statusOptions[0],
-});
+  order: "1000",
+  status: "1",
+};
 
-const buildInitialTournamentForm = (): TournamentFormState => ({
-  sport: null,
-  category: null,
+const blankTournamentForm: TournamentFormState = {
+  id: "",
+  sportId: "",
+  categoryId: "",
   name: "",
-  order: "",
-  status: statusOptions[0],
-  imageSource: null,
-});
+  order: "1000",
+  status: "1",
+  imagePath: "",
+};
 
-const SportsMenuPage: React.FC = () => {
-  const { theme } = useTheme();
-  const [sportsMenu, setSportsMenu] = useState<SportNode[]>(sportsMenuSeed);
-  const [expandedSports, setExpandedSports] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(sportsMenuSeed.map((sport) => [sport.id, true]))
-  );
+function reorderItem<T>(list: T[], index: number, delta: -1 | 1) {
+  const nextIndex = index + delta;
+  if (index < 0 || nextIndex < 0 || nextIndex >= list.length) return list;
+  const copy = list.slice();
+  const [item] = copy.splice(index, 1);
+  copy.splice(nextIndex, 0, item);
+  return copy;
+}
+
+function findSport(menu: SportNode[], sportId: string) {
+  return menu.find((sport) => sport.id === sportId) ?? null;
+}
+
+function findCategory(menu: SportNode[], sportId: string, categoryId: string) {
+  return findSport(menu, sportId)?.categories.find((category) => category.id === categoryId) ?? null;
+}
+
+function statusLabel(status: SportsMenuStatus) {
+  return status === "1" ? "Active" : "Deactivate";
+}
+
+function SportsMenuPage() {
+  const [menu, setMenu] = useState<SportNode[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<TabKey>("sport");
+  const [expandedSports, setExpandedSports] = useState<Record<string, boolean>>({});
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
+  const [sportForm, setSportForm] = useState<SportFormState>(blankSportForm);
+  const [categoryForm, setCategoryForm] = useState<CategoryFormState>(blankCategoryForm);
+  const [tournamentForm, setTournamentForm] = useState<TournamentFormState>(blankTournamentForm);
+  const [savingTab, setSavingTab] = useState<TabKey | null>(null);
+  const [updatingOrder, setUpdatingOrder] = useState(false);
 
-  const [sportForm, setSportForm] = useState<SportFormState>(() => buildInitialSportForm());
-  const [categoryForm, setCategoryForm] = useState<CategoryFormState>(() => buildInitialCategoryForm());
-  const [tournamentForm, setTournamentForm] = useState<TournamentFormState>(() => buildInitialTournamentForm());
-
-  const sportOptions = useMemo<SelectOption[]>(() => {
-    return sportsMenu.map((sport) => ({
-      value: sport.id,
-      label: sport.name,
-    }));
-  }, [sportsMenu]);
-
-  const categoryOptions = useMemo<SelectOption[]>(() => {
-    if (!tournamentForm.sport) return [];
-    const sport = sportsMenu.find((item) => item.id === tournamentForm.sport?.value);
-    return (
-      sport?.categories.map((category) => ({
-        value: category.id,
-        label: category.name,
-      })) ?? []
-    );
-  }, [sportsMenu, tournamentForm.sport]);
-
-  const toggleSport = useCallback((sportId: string) => {
-    setExpandedSports((prev) => ({
-      ...prev,
-      [sportId]: !prev[sportId],
-    }));
+  useEffect(() => {
+    void loadMenu();
   }, []);
 
-  const toggleCategory = useCallback((categoryId: string) => {
-    setExpandedCategories((prev) => ({
-      ...prev,
-      [categoryId]: !prev[categoryId],
-    }));
-  }, []);
+  async function loadMenu() {
+    setLoading(true);
+    try {
+      const nextMenu = await fetchSportsMenu();
+      setMenu(nextMenu);
+      setExpandedSports(Object.fromEntries(nextMenu.map((sport) => [sport.id, false])));
+      setExpandedCategories(
+        Object.fromEntries(
+          nextMenu.flatMap((sport) => sport.categories.map((category) => [category.id, false]))
+        )
+      );
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to load sports menu");
+    } finally {
+      setLoading(false);
+    }
+  }
 
-  const handleSportSubmit = () => {
+  async function persistOrder(nextMenu: SportNode[]) {
+    setUpdatingOrder(true);
+    setMenu(nextMenu);
+    try {
+      await updateSportsMenuOrder(nextMenu);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to update sports menu order");
+      await loadMenu();
+    } finally {
+      setUpdatingOrder(false);
+    }
+  }
+
+  const sportOptions = useMemo(
+    () => menu.map((sport) => ({ value: sport.id, label: sport.name })),
+    [menu]
+  );
+
+  const categoryOptions = useMemo(() => {
+    const sport = findSport(menu, tournamentForm.sportId || categoryForm.sportId);
+    return (sport?.categories ?? []).map((category) => ({
+      value: category.id,
+      label: category.name,
+    }));
+  }, [categoryForm.sportId, menu, tournamentForm.sportId]);
+
+  function resetSportForm() {
+    setSportForm(blankSportForm);
+  }
+
+  function resetCategoryForm() {
+    setCategoryForm(blankCategoryForm);
+  }
+
+  function resetTournamentForm() {
+    setTournamentForm(blankTournamentForm);
+  }
+
+  function selectSportForEdit(sport: SportNode) {
+    setSportForm({
+      id: sport.id,
+      name: sport.name,
+      order: sport.order,
+      status: sport.status,
+    });
+    setActiveTab("sport");
+  }
+
+  function selectCategoryForEdit(sport: SportNode, category: CategoryNode) {
+    setCategoryForm({
+      id: category.id,
+      sportId: sport.id,
+      name: category.name,
+      order: category.order,
+      status: category.status,
+    });
+    setActiveTab("category");
+  }
+
+  function selectTournamentForEdit(sport: SportNode, category: CategoryNode, tournament: TournamentNode) {
+    setTournamentForm({
+      id: tournament.id,
+      sportId: sport.id,
+      categoryId: category.id,
+      name: tournament.name,
+      order: tournament.order,
+      status: tournament.status,
+      imagePath: tournament.imagePath,
+    });
+    setActiveTab("tournament");
+  }
+
+  async function submitSport(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     if (!sportForm.name.trim()) {
-      alert("Please provide a sport name.");
+      toast.error("Please enter a name");
       return;
     }
-    const newSport: SportNode = {
-      id: `sport-${Date.now()}`,
-      name: sportForm.name.trim(),
-      order: Number(sportForm.order) || sportsMenu.length + 1,
-      status: (sportForm.status?.value ?? "Active") as Status,
-      categories: [],
-    };
-    setSportsMenu((prev) => [...prev, newSport]);
-    setExpandedSports((prev) => ({ ...prev, [newSport.id]: true }));
-    setSportForm(buildInitialSportForm());
-    alert("Sport saved (mock).");
-  };
 
-  const handleCategorySubmit = () => {
-    if (!categoryForm.sport) {
-      alert("Select a sport for this category.");
+    setSavingTab("sport");
+    try {
+      await saveSport({
+        id: sportForm.id || undefined,
+        name: sportForm.name.trim(),
+        order: sportForm.order,
+        status: sportForm.status,
+      });
+      toast.success("Saved");
+      resetSportForm();
+      await loadMenu();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to save sport");
+    } finally {
+      setSavingTab(null);
+    }
+  }
+
+  async function submitCategory(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!categoryForm.sportId) {
+      toast.error("Select Sports");
       return;
     }
     if (!categoryForm.name.trim()) {
-      alert("Please provide a category name.");
+      toast.error("Please enter a name");
       return;
     }
-    const sportId = categoryForm.sport.value;
-    const newCategory: CategoryNode = {
-      id: `cat-${Date.now()}`,
-      name: categoryForm.name.trim(),
-      order: Number(categoryForm.order) || 1,
-      status: (categoryForm.status?.value ?? "Active") as Status,
-      tournaments: [],
-    };
-    setSportsMenu((prev) =>
-      prev.map((sport) =>
-        sport.id === sportId
-          ? {
-              ...sport,
-              categories: [...sport.categories, newCategory],
-            }
-          : sport
-      )
-    );
-    setExpandedSports((prev) => ({ ...prev, [sportId]: true }));
-    setExpandedCategories((prev) => ({ ...prev, [newCategory.id]: true }));
-    setCategoryForm(buildInitialCategoryForm());
-    alert("Category saved (mock).");
-  };
 
-  const handleTournamentSubmit = () => {
-    if (!tournamentForm.sport || !tournamentForm.category) {
-      alert("Select a sport and category for this tournament.");
+    const sport = findSport(menu, categoryForm.sportId);
+    if (!sport) {
+      toast.error("Selected sport is unavailable");
+      return;
+    }
+
+    setSavingTab("category");
+    try {
+      await saveCategory({
+        id: categoryForm.id || undefined,
+        name: categoryForm.name.trim(),
+        sport_id: sport.providerId,
+        sport: sport.providerId,
+        order: categoryForm.order,
+        status: categoryForm.status,
+      });
+      toast.success("Saved");
+      resetCategoryForm();
+      await loadMenu();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to save category");
+    } finally {
+      setSavingTab(null);
+    }
+  }
+
+  async function submitTournament(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!tournamentForm.sportId) {
+      toast.error("Select Sports");
+      return;
+    }
+    if (!tournamentForm.categoryId) {
+      toast.error("Select Category");
       return;
     }
     if (!tournamentForm.name.trim()) {
-      alert("Please provide a tournament name.");
+      toast.error("Please enter a name");
       return;
     }
-    const sportId = tournamentForm.sport.value;
-    const categoryId = tournamentForm.category.value;
-    const newTournament = {
-      id: `tour-${Date.now()}`,
-      name: tournamentForm.name.trim(),
-      order: Number(tournamentForm.order) || 1,
-      status: (tournamentForm.status?.value ?? "Active") as Status,
-      image: tournamentForm.imageSource ?? undefined,
-    };
-    setSportsMenu((prev) =>
-      prev.map((sport) =>
-        sport.id === sportId
-          ? {
-              ...sport,
-              categories: sport.categories.map((category) =>
-                category.id === categoryId
-                  ? {
-                      ...category,
-                      tournaments: [...category.tournaments, newTournament],
-                    }
-                  : category
-              ),
-            }
-          : sport
-      )
+
+    const sport = findSport(menu, tournamentForm.sportId);
+    const category = findCategory(menu, tournamentForm.sportId, tournamentForm.categoryId);
+    if (!sport || !category) {
+      toast.error("Selected hierarchy is unavailable");
+      return;
+    }
+
+    setSavingTab("tournament");
+    try {
+      await saveTournament({
+        id: tournamentForm.id || undefined,
+        name: tournamentForm.name.trim(),
+        sport: sport.providerId,
+        sport_category_id: category.providerId,
+        order: tournamentForm.order,
+        status: tournamentForm.status,
+        image_path: tournamentForm.imagePath,
+      });
+      toast.success("Saved");
+      resetTournamentForm();
+      await loadMenu();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to save tournament");
+    } finally {
+      setSavingTab(null);
+    }
+  }
+
+  async function moveSport(index: number, delta: -1 | 1) {
+    await persistOrder(reorderItem(menu, index, delta));
+  }
+
+  async function moveCategory(sportId: string, index: number, delta: -1 | 1) {
+    const nextMenu = menu.map((sport) =>
+      sport.id === sportId
+        ? {
+            ...sport,
+            categories: reorderItem(sport.categories, index, delta),
+          }
+        : sport
     );
-    setExpandedSports((prev) => ({ ...prev, [sportId]: true }));
-    setExpandedCategories((prev) => ({ ...prev, [categoryId]: true }));
-    setTournamentForm(buildInitialTournamentForm());
-    alert("Tournament saved (mock).");
-  };
+    await persistOrder(nextMenu);
+  }
 
-  const handleTournamentSportChange = (option: SingleValue<SelectOption>) => {
-    setTournamentForm((prev) => ({
-      ...prev,
-      sport: option ?? null,
-      category: null,
-    }));
-  };
-
-  const handleTournamentCategoryChange = (option: SingleValue<SelectOption>) => {
-    setTournamentForm((prev) => ({
-      ...prev,
-      category: option ?? null,
-    }));
-  };
-
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) {
-      setTournamentForm((prev) => ({ ...prev, imageSource: null }));
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = typeof reader.result === "string" ? reader.result : null;
-      setTournamentForm((prev) => ({
-        ...prev,
-        imageSource: result,
-      }));
-    };
-    reader.readAsDataURL(file);
-  };
+  async function moveTournament(sportId: string, categoryId: string, index: number, delta: -1 | 1) {
+    const nextMenu = menu.map((sport) =>
+      sport.id === sportId
+        ? {
+            ...sport,
+            categories: sport.categories.map((category) =>
+              category.id === categoryId
+                ? {
+                    ...category,
+                    tournaments: reorderItem(category.tournaments, index, delta),
+                  }
+                : category
+            ),
+          }
+        : sport
+    );
+    await persistOrder(nextMenu);
+  }
 
   return (
     <div className="space-y-6 p-4">
       <PageBreadcrumb pageTitle="Sports Menu" />
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-gray-800">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Available Sports List</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Manage the hierarchy of sports, categories, and tournaments.
-              </p>
-            </div>
-            <Button
-              size="sm"
-              className="bg-brand-500 text-white hover:bg-brand-600"
-              onClick={() => alert("Sync with provider (mock).")}
-            >
-              Sync Feed
-            </Button>
+      <div className="flex flex-wrap gap-3">
+        <Button type="button" onClick={() => setExpandedSports(Object.fromEntries(menu.map((sport) => [sport.id, true])))} size="sm">
+          [+] Expand All
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => {
+            setExpandedSports(Object.fromEntries(menu.map((sport) => [sport.id, false])));
+            setExpandedCategories(
+              Object.fromEntries(menu.flatMap((sport) => sport.categories.map((category) => [category.id, false])))
+            );
+          }}
+          size="sm"
+        >
+          [-] Collapse All
+        </Button>
+        <Button type="button" variant="outline" onClick={() => void loadMenu()} disabled={loading} startIcon={<RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />}>
+          Reload Menu
+        </Button>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+        <section className="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-800">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Available Sports List</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Edit the live sports hierarchy and persist its order.
+            </p>
           </div>
 
-          <div className="max-h-[600px] overflow-y-auto px-6 pb-6 pt-4 custom-scrollbar">
-            <ul className="space-y-2">
-              {sportsMenu.map((sport) => {
-                const isExpanded = expandedSports[sport.id] ?? false;
-                return (
-                  <li key={sport.id} className="rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900/60">
-                    <div className="flex items-center justify-between px-3 py-2">
-                      <div className="flex items-center gap-3">
-                        <button
-                          type="button"
-                          onClick={() => toggleSport(sport.id)}
-                          className="flex h-6 w-6 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-600 hover:border-brand-400 hover:text-brand-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-brand-500 dark:hover:text-brand-300"
-                          aria-label={isExpanded ? "Collapse sport" : "Expand sport"}
-                        >
-                          {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                        </button>
-                        <div>
-                          <p className="font-semibold text-gray-900 dark:text-white">{sport.name}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            Order #{sport.order} · {sport.status}
-                          </p>
+          <div className="max-h-[700px] overflow-y-auto px-6 pb-6 pt-4 custom-scrollbar">
+            {loading ? (
+              <div className="text-center text-sm text-gray-500 dark:text-gray-400">
+                Loading Please wait....
+              </div>
+            ) : (
+              <ul className="space-y-3">
+                {menu.map((sport, sportIndex) => {
+                  const sportExpanded = expandedSports[sport.id] ?? false;
+
+                  return (
+                    <li key={sport.id} className="rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900/60">
+                      <div className="flex items-center justify-between gap-3 px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setExpandedSports((current) => ({ ...current, [sport.id]: !sportExpanded }))}
+                            className="rounded-md border border-gray-300 p-1 dark:border-gray-700"
+                          >
+                            {sportExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                          </button>
+                          <div>
+                            <p className="font-semibold text-gray-900 dark:text-white">{sport.name}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              Order #{sport.order} · {statusLabel(sport.status)}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <Button type="button" size="sm" variant="outline" onClick={() => void moveSport(sportIndex, -1)} disabled={sportIndex === 0 || updatingOrder}>
+                            <MoveUp className="h-4 w-4" />
+                          </Button>
+                          <Button type="button" size="sm" variant="outline" onClick={() => void moveSport(sportIndex, 1)} disabled={sportIndex === menu.length - 1 || updatingOrder}>
+                            <MoveDown className="h-4 w-4" />
+                          </Button>
+                          <Button type="button" size="sm" variant="outline" onClick={() => selectSportForEdit(sport)}>
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          className="text-gray-500 transition hover:text-brand-500 dark:text-gray-400 dark:hover:text-brand-300"
-                          onClick={() => alert("Edit sport (mock).")}
-                          aria-label="Edit sport"
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </button>
-                        <button
-                          type="button"
-                          className="text-gray-500 transition hover:text-red-500 dark:text-gray-400 dark:hover:text-red-400"
-                          onClick={() => alert("Delete sport (mock).")}
-                          aria-label="Delete sport"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                        <button
-                          type="button"
-                          className="text-gray-500 transition hover:text-emerald-500 dark:text-gray-400 dark:hover:text-emerald-300"
-                          onClick={() => alert("Add category (mock).")}
-                          aria-label="Add category"
-                        >
-                          <Plus className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
 
-                    {isExpanded && (
-                      <div className="border-t border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-950/80">
-                        {sport.categories.length === 0 ? (
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            No categories added yet.
-                          </p>
-                        ) : (
-                          <ul className="space-y-2">
-                            {sport.categories.map((category) => {
-                              const catExpanded = expandedCategories[category.id] ?? false;
-                              return (
-                                <li
-                                  key={category.id}
-                                  className="rounded-md border border-dashed border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900/60"
-                                >
-                                  <div className="flex items-center justify-between px-3 py-2">
-                                    <div className="flex items-center gap-3">
-                                      <button
-                                        type="button"
-                                        onClick={() => toggleCategory(category.id)}
-                                        className="flex h-6 w-6 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-600 hover:border-brand-400 hover:text-brand-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-brand-500 dark:hover:text-brand-300"
-                                        aria-label={catExpanded ? "Collapse category" : "Expand category"}
-                                      >
-                                        {catExpanded ? (
-                                          <ChevronDown className="h-4 w-4" />
-                                        ) : (
-                                          <ChevronRight className="h-4 w-4" />
-                                        )}
-                                      </button>
-                                      <div>
-                                        <p className="text-sm font-medium text-gray-900 dark:text-white">
-                                          {category.name}
-                                        </p>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                                          Order #{category.order} · {category.status}
-                                        </p>
-                                      </div>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                      <button
-                                        type="button"
-                                        className="text-gray-500 transition hover:text-brand-500 dark:text-gray-400 dark:hover:text-brand-300"
-                                        onClick={() => alert("Edit category (mock).")}
-                                        aria-label="Edit category"
-                                      >
-                                        <Edit2 className="h-4 w-4" />
-                                      </button>
-                                      <button
-                                        type="button"
-                                        className="text-gray-500 transition hover:text-red-500 dark:text-gray-400 dark:hover:text-red-400"
-                                        onClick={() => alert("Delete category (mock).")}
-                                        aria-label="Delete category"
-                                      >
-                                        <Trash2 className="h-4 w-4" />
-                                      </button>
-                                      <button
-                                        type="button"
-                                        className="text-gray-500 transition hover:text-emerald-500 dark:text-gray-400 dark:hover:text-emerald-300"
-                                        onClick={() => alert("Add tournament (mock).")}
-                                        aria-label="Add tournament"
-                                      >
-                                        <Plus className="h-4 w-4" />
-                                      </button>
+                      {sportExpanded ? (
+                        <ul className="space-y-2 border-t border-gray-200 px-4 py-3 dark:border-gray-800">
+                          {sport.categories.map((category, categoryIndex) => {
+                            const categoryExpanded = expandedCategories[category.id] ?? false;
+
+                            return (
+                              <li key={category.id} className="rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950">
+                                <div className="flex items-center justify-between gap-3 px-3 py-2">
+                                  <div className="flex items-center gap-3">
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setExpandedCategories((current) => ({
+                                          ...current,
+                                          [category.id]: !categoryExpanded,
+                                        }))
+                                      }
+                                      className="rounded-md border border-gray-300 p-1 dark:border-gray-700"
+                                    >
+                                      {categoryExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                                    </button>
+                                    <div>
+                                      <p className="font-medium text-gray-900 dark:text-white">{category.name}</p>
+                                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                                        Order #{category.order} · {statusLabel(category.status)}
+                                      </p>
                                     </div>
                                   </div>
 
-                                  {catExpanded && (
-                                    <div className="space-y-2 border-t border-dashed border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-950/70">
-                                      {category.tournaments.length === 0 ? (
-                                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                                          No tournaments configured.
-                                        </p>
-                                      ) : (
-                                        category.tournaments.map((tournament) => (
-                                          <div
-                                            key={tournament.id}
-                                            className="flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm dark:border-gray-800 dark:bg-gray-900/60"
-                                          >
-                                            <div>
-                                              <p className="font-medium text-gray-900 dark:text-white">
-                                                {tournament.name}
-                                              </p>
-                                              <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                Order #{tournament.order} · {tournament.status}
-                                              </p>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                              <button
-                                                type="button"
-                                                className="text-gray-500 transition hover:text-brand-500 dark:text-gray-400 dark:hover:text-brand-300"
-                                                onClick={() => alert("Edit tournament (mock).")}
-                                                aria-label="Edit tournament"
-                                              >
-                                                <Edit2 className="h-4 w-4" />
-                                              </button>
-                                              <button
-                                                type="button"
-                                                className="text-gray-500 transition hover:text-red-500 dark:text-gray-400 dark:hover:text-red-400"
-                                                onClick={() => alert("Delete tournament (mock).")}
-                                                aria-label="Delete tournament"
-                                              >
-                                                <Trash2 className="h-4 w-4" />
-                                              </button>
-                                            </div>
-                                          </div>
-                                        ))
-                                      )}
-                                    </div>
-                                  )}
-                                </li>
-                              );
-                            })}
-                          </ul>
-                        )}
-                      </div>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
+                                  <div className="flex items-center gap-2">
+                                    <Button type="button" size="sm" variant="outline" onClick={() => void moveCategory(sport.id, categoryIndex, -1)} disabled={categoryIndex === 0 || updatingOrder}>
+                                      <MoveUp className="h-4 w-4" />
+                                    </Button>
+                                    <Button type="button" size="sm" variant="outline" onClick={() => void moveCategory(sport.id, categoryIndex, 1)} disabled={categoryIndex === sport.categories.length - 1 || updatingOrder}>
+                                      <MoveDown className="h-4 w-4" />
+                                    </Button>
+                                    <Button type="button" size="sm" variant="outline" onClick={() => selectCategoryForEdit(sport, category)}>
+                                      <Edit2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+
+                                {categoryExpanded ? (
+                                  <ul className="space-y-2 border-t border-gray-200 px-3 py-2 dark:border-gray-800">
+                                    {category.tournaments.map((tournament, tournamentIndex) => (
+                                      <li key={tournament.id} className="flex items-center justify-between gap-3 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-800 dark:bg-gray-900/60">
+                                        <div>
+                                          <p className="font-medium text-gray-900 dark:text-white">{tournament.name}</p>
+                                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                                            Order #{tournament.order} · {statusLabel(tournament.status)}
+                                          </p>
+                                        </div>
+
+                                        <div className="flex items-center gap-2">
+                                          <Button type="button" size="sm" variant="outline" onClick={() => void moveTournament(sport.id, category.id, tournamentIndex, -1)} disabled={tournamentIndex === 0 || updatingOrder}>
+                                            <MoveUp className="h-4 w-4" />
+                                          </Button>
+                                          <Button type="button" size="sm" variant="outline" onClick={() => void moveTournament(sport.id, category.id, tournamentIndex, 1)} disabled={tournamentIndex === category.tournaments.length - 1 || updatingOrder}>
+                                            <MoveDown className="h-4 w-4" />
+                                          </Button>
+                                          <Button type="button" size="sm" variant="outline" onClick={() => selectTournamentForEdit(sport, category, tournament)}>
+                                            <Edit2 className="h-4 w-4" />
+                                          </Button>
+                                        </div>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                ) : null}
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      ) : null}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </div>
-        </div>
+        </section>
 
-        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <Tabs defaultValue="sports" className="space-y-6">
-            <div className="px-6 pt-6 pb-0">
-              <TabsList className="mb-6 h-auto w-full rounded-xl border border-dashed border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 p-1.5 shadow-sm dark:border-gray-700 dark:from-gray-900/40 dark:to-gray-900/20">
-              <TabsTrigger
-                value="sports"
-                className="inline-flex items-center gap-2 rounded-lg p-3 text-sm font-medium text-gray-600 transition-all duration-200 hover:bg-gray-50 hover:text-brand-500 data-[state=active]:ring-1 data-[state=active]:ring-brand-200 data-[state=active]:bg-white data-[state=active]:text-brand-600 data-[state=active]:shadow-sm dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-brand-300 dark:data-[state=active]:ring-brand-700 dark:data-[state=active]:bg-gray-900 dark:data-[state=active]:text-brand-300"
-              >
-                Sports Mgmt.
-              </TabsTrigger>
-              <TabsTrigger
-                value="categories"
-                className="inline-flex items-center gap-2 rounded-lg p-3 text-sm font-medium text-gray-600 transition-all duration-200 hover:bg-gray-50 hover:text-indigo-500 data-[state=active]:ring-1 data-[state=active]:ring-indigo-200 data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-indigo-300 dark:data-[state=active]:ring-indigo-700 dark:data-[state=active]:bg-gray-900 dark:data-[state=active]:text-indigo-300"
-              >
-                Category Mgmt.
-              </TabsTrigger>
-              <TabsTrigger
-                value="tournaments"
-                className="inline-flex items-center gap-2 rounded-lg p-3 text-sm font-medium text-gray-600 transition-all duration-200 hover:bg-gray-50 hover:text-emerald-500 data-[state=active]:ring-1 data-[state=active]:ring-emerald-200 data-[state=active]:bg-white data-[state=active]:text-emerald-600 data-[state=active]:shadow-sm dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-emerald-300 dark:data-[state=active]:ring-emerald-700 dark:data-[state=active]:bg-gray-900 dark:data-[state=active]:text-emerald-300"
-              >
-                Tournament Mgmt.
-              </TabsTrigger>
-              </TabsList>
-            </div>
+        <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TabKey)}>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="sport">Sports Mgmt.</TabsTrigger>
+              <TabsTrigger value="category">Category Mgmt.</TabsTrigger>
+              <TabsTrigger value="tournament">Tournament Mgmt.</TabsTrigger>
+            </TabsList>
 
-            <TabsContent value="sports" className="px-6 pb-6">
-              <Form
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  handleSportSubmit();
-                }}
-                className="space-y-5"
-              >
-                <div className="space-y-2">
-                  <Label htmlFor="sportName">Name *</Label>
-                  <Input
-                    id="sportName"
-                    placeholder="Enter sport name"
-                    value={sportForm.name}
-                    onChange={(event) =>
-                      setSportForm((prev) => ({ ...prev, name: event.target.value }))
-                    }
-                  />
+            <TabsContent value="sport" className="pt-5">
+              <form className="space-y-4" onSubmit={(event) => void submitSport(event)}>
+                <div>
+                  <Label htmlFor="sport-name">Name</Label>
+                  <Input id="sport-name" value={sportForm.name} onChange={(event) => setSportForm((current) => ({ ...current, name: event.target.value }))} />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="sportOrder">Order Position</Label>
-                  <Input
-                    id="sportOrder"
-                    type="number"
-                    placeholder="e.g. 1"
-                    value={sportForm.order}
-                    onChange={(event) =>
-                      setSportForm((prev) => ({ ...prev, order: event.target.value }))
-                    }
-                  />
+                <div>
+                  <Label htmlFor="sport-order">Order Position</Label>
+                  <Input id="sport-order" value={sportForm.order} onChange={(event) => setSportForm((current) => ({ ...current, order: event.target.value }))} />
                 </div>
-                <div className="space-y-2">
-                  <Label>Status</Label>
-                  <Select<SelectOption<Status>, false>
-                    styles={reactSelectStyles(theme)}
-                    options={statusOptions}
+                <div>
+                  <Label htmlFor="sport-status">Status</Label>
+                  <select
+                    id="sport-status"
                     value={sportForm.status}
-                    onChange={(option: SingleValue<SelectOption<Status>>) =>
-                      setSportForm((prev) => ({ ...prev, status: option ?? null }))
-                    }
-                  />
-                </div>
-                <div className="flex items-center justify-between rounded-lg border border-dashed border-gray-200 px-3 py-2 dark:border-gray-700">
-                  <div>
-                    <p className="text-sm font-medium text-gray-800 dark:text-gray-200">Feature on homepage</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Toggle whether this sport shows on the public landing page.
-                    </p>
-                  </div>
-                  <Switch
-                    label=""
-                    defaultChecked={sportForm.featured}
-                    onChange={(checked) =>
-                      setSportForm((prev) => ({ ...prev, featured: checked }))
-                    }
-                  />
+                    onChange={(event) => setSportForm((current) => ({ ...current, status: event.target.value as SportsMenuStatus }))}
+                    className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
+                  >
+                    <option value="1">Active</option>
+                    <option value="0">Deactivate</option>
+                  </select>
                 </div>
                 <div className="flex gap-3">
-                  <Button type="submit" className="bg-brand-500 text-white hover:bg-brand-600">
-                    Save
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setSportForm(buildInitialSportForm())}
-                  >
-                    Reset
-                  </Button>
+                  <Button type="submit" disabled={savingTab === "sport"}>{savingTab === "sport" ? "Saving..." : "Save"}</Button>
+                  <Button type="button" variant="outline" onClick={resetSportForm}>Reset</Button>
                 </div>
-              </Form>
+              </form>
             </TabsContent>
 
-            <TabsContent value="categories" className="px-6 pb-6">
-              <Form
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  handleCategorySubmit();
-                }}
-                className="space-y-5"
-              >
-                <div className="space-y-2">
-                  <Label>Sports *</Label>
-                  <Select<SelectOption, false>
-                    styles={reactSelectStyles(theme)}
-                    options={sportOptions}
-                    value={categoryForm.sport}
-                    placeholder="Select sport"
-                    onChange={(option: SingleValue<SelectOption>) =>
-                      setCategoryForm((prev) => ({ ...prev, sport: option ?? null }))
-                    }
-                  />
+            <TabsContent value="category" className="pt-5">
+              <form className="space-y-4" onSubmit={(event) => void submitCategory(event)}>
+                <div>
+                  <Label htmlFor="category-sport">Sports</Label>
+                  <select
+                    id="category-sport"
+                    value={categoryForm.sportId}
+                    onChange={(event) => setCategoryForm((current) => ({ ...current, sportId: event.target.value }))}
+                    className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
+                  >
+                    <option value="">Select Sports</option>
+                    {sportOptions.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="categoryName">Name *</Label>
-                  <Input
-                    id="categoryName"
-                    placeholder="Enter category name"
-                    value={categoryForm.name}
-                    onChange={(event) =>
-                      setCategoryForm((prev) => ({ ...prev, name: event.target.value }))
-                    }
-                  />
+                <div>
+                  <Label htmlFor="category-name">Name</Label>
+                  <Input id="category-name" value={categoryForm.name} onChange={(event) => setCategoryForm((current) => ({ ...current, name: event.target.value }))} />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="categoryOrder">Order Position</Label>
-                  <Input
-                    id="categoryOrder"
-                    type="number"
-                    placeholder="e.g. 100"
-                    value={categoryForm.order}
-                    onChange={(event) =>
-                      setCategoryForm((prev) => ({ ...prev, order: event.target.value }))
-                    }
-                  />
+                <div>
+                  <Label htmlFor="category-order">Order Position</Label>
+                  <Input id="category-order" value={categoryForm.order} onChange={(event) => setCategoryForm((current) => ({ ...current, order: event.target.value }))} />
                 </div>
-                <div className="space-y-2">
-                  <Label>Status</Label>
-                  <Select<SelectOption<Status>, false>
-                    styles={reactSelectStyles(theme)}
-                    options={statusOptions}
+                <div>
+                  <Label htmlFor="category-status">Status</Label>
+                  <select
+                    id="category-status"
                     value={categoryForm.status}
-                    onChange={(option: SingleValue<SelectOption<Status>>) =>
-                      setCategoryForm((prev) => ({ ...prev, status: option ?? null }))
-                    }
-                  />
+                    onChange={(event) => setCategoryForm((current) => ({ ...current, status: event.target.value as SportsMenuStatus }))}
+                    className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
+                  >
+                    <option value="1">Active</option>
+                    <option value="0">Deactivate</option>
+                  </select>
                 </div>
                 <div className="flex gap-3">
-                  <Button type="submit" className="bg-brand-500 text-white hover:bg-brand-600">
-                    Save
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setCategoryForm(buildInitialCategoryForm())}
-                  >
-                    Reset
-                  </Button>
+                  <Button type="submit" disabled={savingTab === "category"}>{savingTab === "category" ? "Saving..." : "Save"}</Button>
+                  <Button type="button" variant="outline" onClick={resetCategoryForm}>Reset</Button>
                 </div>
-              </Form>
+              </form>
             </TabsContent>
 
-            <TabsContent value="tournaments" className="px-6 pb-6">
-              <Form
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  handleTournamentSubmit();
-                }}
-                className="space-y-5"
-              >
-                <div className="space-y-2">
-                  <Label>Sports *</Label>
-                  <Select<SelectOption, false>
-                    styles={reactSelectStyles(theme)}
-                    options={sportOptions}
-                    value={tournamentForm.sport}
-                    placeholder="Select sport"
-                    onChange={handleTournamentSportChange}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Categories *</Label>
-                  <Select<SelectOption, false>
-                    styles={reactSelectStyles(theme)}
-                    options={categoryOptions}
-                    value={tournamentForm.category}
-                    placeholder="Select category"
-                    onChange={handleTournamentCategoryChange}
-                    isDisabled={!tournamentForm.sport}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="tournamentName">Name *</Label>
-                  <Input
-                    id="tournamentName"
-                    placeholder="Enter tournament name"
-                    value={tournamentForm.name}
+            <TabsContent value="tournament" className="pt-5">
+              <form className="space-y-4" onSubmit={(event) => void submitTournament(event)}>
+                <div>
+                  <Label htmlFor="tournament-sport">Sports</Label>
+                  <select
+                    id="tournament-sport"
+                    value={tournamentForm.sportId}
                     onChange={(event) =>
-                      setTournamentForm((prev) => ({ ...prev, name: event.target.value }))
+                      setTournamentForm((current) => ({
+                        ...current,
+                        sportId: event.target.value,
+                        categoryId: "",
+                      }))
                     }
-                  />
+                    className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
+                  >
+                    <option value="">Select Sports</option>
+                    {sportOptions.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="tournamentOrder">Order Position</Label>
-                  <Input
-                    id="tournamentOrder"
-                    type="number"
-                    placeholder="e.g. 200"
-                    value={tournamentForm.order}
-                    onChange={(event) =>
-                      setTournamentForm((prev) => ({ ...prev, order: event.target.value }))
-                    }
-                  />
+                <div>
+                  <Label htmlFor="tournament-category">Categories</Label>
+                  <select
+                    id="tournament-category"
+                    value={tournamentForm.categoryId}
+                    onChange={(event) => setTournamentForm((current) => ({ ...current, categoryId: event.target.value }))}
+                    className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
+                  >
+                    <option value="">Select Category</option>
+                    {categoryOptions.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
                 </div>
-                <div className="space-y-2">
-                  <Label>Status</Label>
-                  <Select<SelectOption<Status>, false>
-                    styles={reactSelectStyles(theme)}
-                    options={statusOptions}
+                <div>
+                  <Label htmlFor="tournament-name">Name</Label>
+                  <Input id="tournament-name" value={tournamentForm.name} onChange={(event) => setTournamentForm((current) => ({ ...current, name: event.target.value }))} />
+                </div>
+                <div>
+                  <Label htmlFor="tournament-order">Order Position</Label>
+                  <Input id="tournament-order" value={tournamentForm.order} onChange={(event) => setTournamentForm((current) => ({ ...current, order: event.target.value }))} />
+                </div>
+                <div>
+                  <Label htmlFor="tournament-status">Status</Label>
+                  <select
+                    id="tournament-status"
                     value={tournamentForm.status}
-                    onChange={(option: SingleValue<SelectOption<Status>>) =>
-                      setTournamentForm((prev) => ({ ...prev, status: option ?? null }))
-                    }
-                  />
+                    onChange={(event) => setTournamentForm((current) => ({ ...current, status: event.target.value as SportsMenuStatus }))}
+                    className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
+                  >
+                    <option value="1">Active</option>
+                    <option value="0">Deactivate</option>
+                  </select>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="tournamentImage">Select Image</Label>
-                  <FileInput id="tournamentImage" accept="image/*" onChange={handleImageUpload} />
-                  {tournamentForm.imageSource && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Image selected (mock preview not rendered).
-                    </p>
-                  )}
+                <div>
+                  <Label htmlFor="tournament-image">Select Image</Label>
+                  {tournamentForm.imagePath ? (
+                    <img src={tournamentForm.imagePath} alt="Tournament" className="mb-3 h-24 rounded-lg border border-gray-200 object-cover dark:border-gray-700" />
+                  ) : null}
+                  <input
+                    id="tournament-image"
+                    type="file"
+                    accept="image/*"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (!file) return;
+                      const reader = new FileReader();
+                      reader.onload = () => {
+                        setTournamentForm((current) => ({
+                          ...current,
+                          imagePath: typeof reader.result === "string" ? reader.result : "",
+                        }));
+                      };
+                      reader.readAsDataURL(file);
+                    }}
+                    className="block w-full text-sm text-gray-500 file:mr-4 file:rounded-lg file:border-0 file:bg-brand-500 file:px-4 file:py-2 file:text-white"
+                  />
                 </div>
                 <div className="flex gap-3">
-                  <Button type="submit" className="bg-brand-500 text-white hover:bg-brand-600">
-                    Save
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setTournamentForm(buildInitialTournamentForm())}
-                  >
-                    Reset
-                  </Button>
+                  <Button type="submit" disabled={savingTab === "tournament"}>{savingTab === "tournament" ? "Saving..." : "Save"}</Button>
+                  <Button type="button" variant="outline" onClick={resetTournamentForm}>Reset</Button>
                 </div>
-              </Form>
+              </form>
             </TabsContent>
           </Tabs>
-        </div>
+        </section>
       </div>
     </div>
   );
-};
+}
 
 export default withAuth(SportsMenuPage);
-
-
