@@ -203,12 +203,7 @@ const filterGroups = useMemo<FilterGroup[]>(() => {
   };
 
   const handleManageAccess = () => {
-    const userId = selectedUser?.id;
-    const targetPath = userId
-      ? `/user-management/roles-permissions?userId=${encodeURIComponent(userId)}`
-      : "/user-management/roles-permissions";
-
-    router.push(targetPath);
+    router.push("/user-management/roles-permissions");
     closeAllModals();
   };
 
@@ -595,4 +590,3 @@ const filterGroups = useMemo<FilterGroup[]>(() => {
 }
 
 export default withAuth(UsersPage);
-
