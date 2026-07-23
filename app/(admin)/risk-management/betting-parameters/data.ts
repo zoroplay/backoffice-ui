@@ -1,150 +1,164 @@
-export type ChannelType = "Online" | "Retail";
+export type RiskCategory = "online" | "retail";
 
-export type TimeOfDay = "Day" | "Night";
+export type RiskPeriod = "day" | "night";
 
-export interface BettingParameters {
-  minimumWithdrawal: string;
-  maximumWithdrawal: string;
-  minimumAvailableCredit?: string;
-  maxPayout: string;
-  maxOddLength: string;
-  singleStakeMin: string;
-  singleStakeMax: string;
-  combStakeMin: string;
-  combStakeMax: string;
-  ticketSizeMin: string;
-  ticketSizeMax: string;
-  liveTicketMin: string;
-  liveTicketMax: string;
-  cancelTicketMinutes: string;
-  dailyCancelLimit: string;
-  singleTicketMaxWinning: string;
-  maxDuplicateTickets: string;
-  acceptPreMatchBets: boolean;
-  acceptLiveBets: boolean;
-  enableCashout: boolean;
-  enableCutX: boolean;
-  enableSystemBet: boolean;
-  enableSplitBet: boolean;
-  minBonusOdds: string;
-  holdBetsFrom: string;
-}
+export type RiskPayload = Record<string, string | number>;
 
-export type BettingParametersState = Record<
-  ChannelType,
-  Record<TimeOfDay, BettingParameters>
->;
+export const categoryLabels: Record<RiskCategory, string> = {
+  online: "Online",
+  retail: "Retail",
+};
 
-export const defaultBettingParameters: BettingParametersState = {
-  Online: {
-    Day: {
-      minimumWithdrawal: "100",
-      maximumWithdrawal: "1000000",
-      maxPayout: "10000000",
-      maxOddLength: "1000000",
-      singleStakeMin: "100",
-      singleStakeMax: "1000000",
-      combStakeMin: "100",
-      combStakeMax: "1000000",
-      ticketSizeMin: "0",
-      ticketSizeMax: "50",
-      liveTicketMin: "1",
-      liveTicketMax: "40",
-      cancelTicketMinutes: "300",
-      dailyCancelLimit: "300",
-      singleTicketMaxWinning: "3000000",
-      maxDuplicateTickets: "4",
-      acceptPreMatchBets: true,
-      acceptLiveBets: true,
-      enableCashout: true,
-      enableCutX: true,
-      enableSystemBet: true,
-      enableSplitBet: true,
-      minBonusOdds: "1.18",
-      holdBetsFrom: "1000",
+export const riskCategories: RiskCategory[] = ["online", "retail"];
+
+export const riskPeriods: RiskPeriod[] = ["day", "night"];
+
+export const defaultRiskPayloads: Record<RiskCategory, Record<RiskPeriod, RiskPayload>> = {
+  online: {
+    day: {
+      period: "day",
+      category: "online",
+      min_withdrawal_day: "1000",
+      max_withdrawal_day: "10000000",
+      max_payout_day: "10000000",
+      min_single_odd_length_day: "1000000",
+      max_single_odd_length_day: "1000000",
+      min_combi_odd_length_day: "1000000",
+      max_combi_odd_length_day: "1000000",
+      live_size_min_day: 1,
+      live_size_max_day: 40,
+      single_min_day: "100",
+      single_max_day: "1000000",
+      combi_min_day: "100",
+      combi_max_day: "1000000",
+      size_min_day: "0",
+      size_max_day: "50",
+      max_time_to_cancel_day: "300",
+      daily_cancel_limit_day: "",
+      single_max_winning_day: "3000000",
+      max_duplicate_ticket_day: 4,
+      min_bonus_odd_day: 1.18,
+      max_no_of_draws_day: 3,
+      hold_bets_day: 10000,
+      enable_cashout_day: 0,
+      enable_cut_x_day: 0,
+      accept_prematch_bets_day: 1,
+      accept_live_bets_day: 1,
+      allow_system_bet_day: 1,
+      allow_split_bet_day: 1,
     },
-    Night: {
-      minimumWithdrawal: "200",
-      maximumWithdrawal: "1500000",
-      maxPayout: "12000000",
-      maxOddLength: "1200000",
-      singleStakeMin: "150",
-      singleStakeMax: "1200000",
-      combStakeMin: "150",
-      combStakeMax: "1200000",
-      ticketSizeMin: "0",
-      ticketSizeMax: "45",
-      liveTicketMin: "1",
-      liveTicketMax: "35",
-      cancelTicketMinutes: "180",
-      dailyCancelLimit: "250",
-      singleTicketMaxWinning: "3200000",
-      maxDuplicateTickets: "3",
-      acceptPreMatchBets: true,
-      acceptLiveBets: true,
-      enableCashout: true,
-      enableCutX: false,
-      enableSystemBet: true,
-      enableSplitBet: false,
-      minBonusOdds: "1.25",
-      holdBetsFrom: "1200",
+    night: {
+      period: "night",
+      category: "online",
+      min_withdrawal_night: "1000",
+      max_withdrawal_night: "10000000",
+      max_payout_night: "10000000",
+      min_single_odd_length_night: "1000000",
+      max_single_odd_length_night: "1000000",
+      min_combi_odd_length_night: "1000000",
+      max_combi_odd_length_night: "1000000",
+      live_size_min_night: 1,
+      live_size_max_night: 40,
+      single_min_night: "100",
+      single_max_night: "1000000",
+      combi_min_night: "100",
+      combi_max_night: "1000000",
+      size_min_night: "0",
+      size_max_night: "50",
+      max_time_to_cancel_night: "300",
+      daily_cancel_limit_night: "",
+      single_max_winning_night: "3000000",
+      max_duplicate_ticket_night: 4,
+      min_bonus_odd_night: 1.18,
+      max_no_of_draws_night: 3,
+      hold_bets_night: 10000,
+      enable_cashout_night: 0,
+      enable_cut_x_night: 0,
+      accept_prematch_bets_night: 1,
+      accept_live_bets_night: 1,
+      allow_system_bet_night: 1,
+      allow_split_bet_night: 1,
     },
   },
-  Retail: {
-    Day: {
-      minimumWithdrawal: "1000",
-      maximumWithdrawal: "1000000",
-      minimumAvailableCredit: "25000",
-      maxPayout: "10000000",
-      maxOddLength: "1000000",
-      singleStakeMin: "100",
-      singleStakeMax: "1000000",
-      combStakeMin: "100",
-      combStakeMax: "1000000",
-      ticketSizeMin: "0",
-      ticketSizeMax: "50",
-      liveTicketMin: "1",
-      liveTicketMax: "40",
-      cancelTicketMinutes: "300",
-      dailyCancelLimit: "300",
-      singleTicketMaxWinning: "3000000",
-      maxDuplicateTickets: "4",
-      acceptPreMatchBets: true,
-      acceptLiveBets: true,
-      enableCashout: true,
-      enableCutX: true,
-      enableSystemBet: true,
-      enableSplitBet: true,
-      minBonusOdds: "1.18",
-      holdBetsFrom: "1000",
+  retail: {
+    day: {
+      period: "day",
+      category: "retail",
+      min_withdrawal_day: "10000",
+      max_withdrawal_day: "1000000",
+      network_min_available_credit_day: "25000",
+      max_payout_day: "10000000",
+      min_single_odd_length_day: "1000000",
+      max_single_odd_length_day: "10000000",
+      min_combi_odd_length_day: "1000000",
+      max_combi_odd_length_day: "10000000",
+      live_size_min_day: 1,
+      live_size_max_day: 40,
+      single_min_day: "100",
+      single_max_day: "1000000",
+      combi_min_day: "100",
+      combi_max_day: "1000000",
+      size_min_day: "0",
+      size_max_day: "50",
+      max_time_to_cancel_day: "300",
+      daily_cancel_limit_day: "",
+      single_max_winning_day: "3000000",
+      max_duplicate_ticket_day: 4,
+      min_bonus_odd_day: 1.18,
+      max_no_of_draws_day: 3,
+      hold_bets_from_day: 10000,
+      enable_cashout_day: 0,
+      enable_cut_x_day: 0,
+      accept_prematch_bets_day: 1,
+      accept_live_bets_day: 1,
+      accept_system_bet_day: 1,
+      accept_split_bet_day: 1,
     },
-    Night: {
-      minimumWithdrawal: "1500",
-      maximumWithdrawal: "1200000",
-      minimumAvailableCredit: "30000",
-      maxPayout: "12000000",
-      maxOddLength: "1200000",
-      singleStakeMin: "150",
-      singleStakeMax: "1200000",
-      combStakeMin: "150",
-      combStakeMax: "1200000",
-      ticketSizeMin: "0",
-      ticketSizeMax: "45",
-      liveTicketMin: "1",
-      liveTicketMax: "35",
-      cancelTicketMinutes: "240",
-      dailyCancelLimit: "280",
-      singleTicketMaxWinning: "3200000",
-      maxDuplicateTickets: "3",
-      acceptPreMatchBets: true,
-      acceptLiveBets: true,
-      enableCashout: true,
-      enableCutX: false,
-      enableSystemBet: true,
-      enableSplitBet: false,
-      minBonusOdds: "1.2",
-      holdBetsFrom: "1500",
+    night: {
+      period: "night",
+      category: "retail",
+      min_withdrawal_night: "10000",
+      max_withdrawal_night: "1000000",
+      network_min_available_credit_night: "25000",
+      max_payout_night: "10000000",
+      min_single_odd_length_night: "1000000",
+      max_single_odd_length_night: "10000000",
+      min_combi_odd_length_night: "1000000",
+      max_combi_odd_length_night: "10000000",
+      live_size_min_night: 1,
+      live_size_max_night: 40,
+      single_min_night: "100",
+      single_max_night: "1000000",
+      combi_min_night: "100",
+      combi_max_night: "1000000",
+      size_min_night: "0",
+      size_max_night: "50",
+      max_time_to_cancel_night: "300",
+      daily_cancel_limit_night: "",
+      single_max_winning_night: "3000000",
+      max_duplicate_ticket_night: 4,
+      min_bonus_odd_night: 1.18,
+      max_no_of_draws_night: 3,
+      hold_bets_from_night: 10000,
+      enable_cashout_night: 0,
+      enable_cut_x_night: 0,
+      accept_prematch_bets_night: 1,
+      accept_live_bets_night: 1,
+      accept_system_bet_night: 1,
+      accept_split_bet_night: 1,
     },
   },
 };
 
+export function cloneDefaultRiskPayloads() {
+  return {
+    online: {
+      day: { ...defaultRiskPayloads.online.day },
+      night: { ...defaultRiskPayloads.online.night },
+    },
+    retail: {
+      day: { ...defaultRiskPayloads.retail.day },
+      night: { ...defaultRiskPayloads.retail.night },
+    },
+  };
+}
