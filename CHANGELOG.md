@@ -1,3 +1,32 @@
+# [1.3.0](https://github.com/zoroplay/backoffice-ui/compare/v1.2.0...v1.3.0) (2026-07-23)
+
+
+### Features
+
+* add banner firebase upload support ([faa6219](https://github.com/zoroplay/backoffice-ui/commit/faa62190aa9ea98d5ca1e92fa6381a17a25c6fb1))
+* align player message templates ([56fabe8](https://github.com/zoroplay/backoffice-ui/commit/56fabe857db26e8101c50e4af6d1d7b2023eca06))
+* align profile session page ([1f4aa90](https://github.com/zoroplay/backoffice-ui/commit/1f4aa907afd9e082dca9aace2d08387da446cf50))
+* clarify inactive communication pages ([59baf40](https://github.com/zoroplay/backoffice-ui/commit/59baf40953dbd021f4f2993a4160d865f9dd52e6))
+* wire activity logs report ([e1e27a1](https://github.com/zoroplay/backoffice-ui/commit/e1e27a1eb853941f13a4273d65a63da710edb2d1))
+* wire banking cashflow manager ([4502606](https://github.com/zoroplay/backoffice-ui/commit/45026062ba0de064dd55f7215e0e740f9cd942b3))
+* wire betting parameters settings ([6c65e1c](https://github.com/zoroplay/backoffice-ui/commit/6c65e1c17934a72a62c0116f606b18c7a9a52884))
+* wire bonus settings pages ([fd33b9f](https://github.com/zoroplay/backoffice-ui/commit/fd33b9f5881b63f816d471f23c2e0b015f751583))
+* wire cms banners management ([29e0a85](https://github.com/zoroplay/backoffice-ui/commit/29e0a853795d79e5fae215658222b889c430ab88))
+* wire cms pages management ([7bdf63a](https://github.com/zoroplay/backoffice-ui/commit/7bdf63ac21f8a8936958cc4fc62aaea8ed7c4490))
+* wire grant mass bonuses ([6be5b2b](https://github.com/zoroplay/backoffice-ui/commit/6be5b2b516f34bdae75961f7642f0f7e060a7ad6))
+* wire markets manager workflows ([48a9623](https://github.com/zoroplay/backoffice-ui/commit/48a96231325c4b09ba4d768b8ff210171c1177ba))
+* wire network commission reporting ([c1919c9](https://github.com/zoroplay/backoffice-ui/commit/c1919c9e1aebb469dac0a6320a898cbfe480bda4))
+* wire player management reports ([e9113ce](https://github.com/zoroplay/backoffice-ui/commit/e9113ce1d1da77feb9cbf62d02d73d619ddb50a9))
+* wire pool fixtures workflow ([ab7a444](https://github.com/zoroplay/backoffice-ui/commit/ab7a44453788d9467584889f32d30e2c3df55295))
+* wire pools sales reports ([0b39f8c](https://github.com/zoroplay/backoffice-ui/commit/0b39f8c22b4e577f1ec6aa86fd2fa324bcfc801b))
+* wire pools ticket lookup pages ([6a8499c](https://github.com/zoroplay/backoffice-ui/commit/6a8499cff10d6c427db533e968907f4db8cc2627))
+* wire promotions management ([5754c40](https://github.com/zoroplay/backoffice-ui/commit/5754c404ad725d40ce0e6623e9d7b9d73b04a320))
+* wire roles and permissions management ([46c7ea3](https://github.com/zoroplay/backoffice-ui/commit/46c7ea38b23f4a73f43c306c0954127734c9f161))
+* wire site menu management ([68c55e8](https://github.com/zoroplay/backoffice-ui/commit/68c55e849b4090ef4f52ae60258611c5ff4a8c13))
+* wire sports menu management ([c1cb9d3](https://github.com/zoroplay/backoffice-ui/commit/c1cb9d33a779291b9b44c01197d9c19b08b0e39b))
+* wire top bets management ([78bbcea](https://github.com/zoroplay/backoffice-ui/commit/78bbcea52697908fc4221652039c328d91f706b0))
+* wire user management user flows ([da2af4d](https://github.com/zoroplay/backoffice-ui/commit/da2af4da1fb43b1df5e0afc1196215ef5b8e465b))
+
 # [1.2.0](https://github.com/zoroplay/backoffice-ui/compare/v1.1.0...v1.2.0) (2026-07-23)
 
 
