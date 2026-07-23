@@ -7,6 +7,7 @@ import type { ChangeEvent } from "react";
 import { toast } from "sonner";
 
 import Button from "@/components/ui/button/Button";
+import { uploadFileToFirebase } from "@/utils/firebaseUpload";
 import {
   bannerPosition,
   createBanner,
@@ -44,8 +45,10 @@ export default function BannerEditorClient({ mode, bannerId }: BannerEditorProps
     id: bannerId,
   }));
   const [selectedFileName, setSelectedFileName] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(mode === "edit");
   const [saving, setSaving] = useState(false);
+  const [submissionStage, setSubmissionStage] = useState<"idle" | "uploading" | "saving">("idle");
   const [error, setError] = useState("");
   const [popupLimitReached, setPopupLimitReached] = useState(false);
 
@@ -70,9 +73,15 @@ export default function BannerEditorClient({ mode, bannerId }: BannerEditorProps
 
         if (mode === "edit" && bannerId) {
           const banner = await fetchBanner(bannerId);
-          if (!cancelled) setFormData(normalizeBannerForm(banner ?? { id: bannerId }));
+          if (!cancelled) {
+            setFormData(normalizeBannerForm(banner ?? { id: bannerId }));
+            setSelectedFile(null);
+            setSelectedFileName("");
+          }
         } else if (!cancelled) {
           setFormData(initialForm);
+          setSelectedFile(null);
+          setSelectedFileName("");
         }
       } catch (loadError) {
         if (!cancelled) {
@@ -102,6 +111,7 @@ export default function BannerEditorClient({ mode, bannerId }: BannerEditorProps
 
     try {
       setSelectedFileName(file.name);
+      setSelectedFile(file);
       updateValue("image", await fileToDataUrl(file));
     } catch {
       setError("Unable to preview selected image");
@@ -127,10 +137,21 @@ export default function BannerEditorClient({ mode, bannerId }: BannerEditorProps
     setSaving(true);
 
     try {
+      let payload = formData;
+
+      if (selectedFile) {
+        setSubmissionStage("uploading");
+        const image = await uploadFileToFirebase(selectedFile, `Banners/${formData.clientId}`);
+        payload = { ...formData, image };
+        setFormData(payload);
+      }
+
+      setSubmissionStage("saving");
+
       if (mode === "add") {
-        await createBanner(formData);
+        await createBanner(payload);
       } else {
-        await updateBanner(formData);
+        await updateBanner(payload);
       }
 
       toast.success("Banner has been saved!");
@@ -139,8 +160,16 @@ export default function BannerEditorClient({ mode, bannerId }: BannerEditorProps
       toast.error(saveError instanceof Error ? saveError.message : "Failed to save banner");
     } finally {
       setSaving(false);
+      setSubmissionStage("idle");
     }
   }
+
+  const saveButtonText =
+    submissionStage === "uploading"
+      ? "Uploading image..."
+      : submissionStage === "saving"
+      ? "Saving..."
+      : "Save";
 
   return (
     <section className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-950">
@@ -200,7 +229,11 @@ export default function BannerEditorClient({ mode, bannerId }: BannerEditorProps
                 </Button>
                 <input
                   value={formData.image}
-                  onChange={(event) => updateValue("image", event.target.value)}
+                  onChange={(event) => {
+                    setSelectedFile(null);
+                    setSelectedFileName("");
+                    updateValue("image", event.target.value);
+                  }}
                   placeholder="Existing image URL or uploaded preview"
                   className="h-11 min-w-72 flex-1 rounded-lg border border-gray-300 px-3 text-sm text-gray-800 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
                 />
@@ -213,7 +246,7 @@ export default function BannerEditorClient({ mode, bannerId }: BannerEditorProps
 
           <div className="grid gap-3 sm:grid-cols-2">
             <Button type="submit" disabled={saving}>
-              {saving ? "Saving..." : "Save"}
+              {saveButtonText}
             </Button>
             <Link
               href="/content-management/banners"
