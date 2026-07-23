@@ -1,45 +1,47 @@
 import React from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import Image from "next/image";
 import { Edit, Trash2 } from "lucide-react";
 
 import Button from "@/components/ui/button/Button";
 import Badge from "@/components/ui/badge/Badge";
+import type { BannerPosition, BannerTarget, BannerType } from "./api";
 
 export interface BannerRow {
   id: string;
   title: string;
-  type: string;
-  target: string;
-  position: string;
+  bannerType: BannerType;
+  target: BannerTarget;
+  position: BannerPosition;
   link: string;
-  imageUrl: string;
-  isActive: boolean;
-  lastUpdated: string;
+  image: string;
 }
 
 export type BannerActionCallbacks = {
   onEdit: (banner: BannerRow) => void;
   onDelete: (bannerId: string) => void;
+  deletingId?: string;
 };
+
+function titleCase(value: string) {
+  if (value === "popup") return "Pop Up";
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
 
 export const columns: ColumnDef<BannerRow>[] = [
   {
-    accessorKey: "imageUrl",
+    accessorKey: "image",
     header: "Image",
     cell: ({ row }) => {
-      const imageUrl = row.getValue("imageUrl") as string;
-      return (
-        <div className="relative h-14 w-24 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
-          <Image
-            src={imageUrl}
-            alt={row.original.title}
-            fill
-            sizes="96px"
-            className="object-cover"
-            unoptimized
-          />
-        </div>
+      const image = row.getValue("image") as string;
+
+      return image ? (
+        <img
+          src={image}
+          alt={row.original.title}
+          className="h-16 max-w-36 rounded-md border border-gray-200 object-cover dark:border-gray-700"
+        />
+      ) : (
+        <span className="text-xs text-gray-500 dark:text-gray-400">No image</span>
       );
     },
   },
@@ -48,59 +50,35 @@ export const columns: ColumnDef<BannerRow>[] = [
     header: "Title",
   },
   {
-    accessorKey: "type",
+    accessorKey: "bannerType",
     header: "Type",
-  },
-  {
-    accessorKey: "target",
-    header: "Target",
+    cell: ({ row }) => titleCase(row.getValue("bannerType") as string),
   },
   {
     accessorKey: "position",
     header: "Position",
+    cell: ({ row }) => titleCase(row.getValue("position") as string),
   },
   {
-    accessorKey: "link",
-    header: "Link",
-    cell: ({ row }) => (
-      <a
-        href={row.getValue("link") as string}
-        target="_blank"
-        rel="noreferrer"
-        className="text-sm text-brand-500 underline"
-      >
-        {row.getValue("link") as string}
-      </a>
-    ),
-  },
-  {
-    accessorKey: "isActive",
-    header: "Status",
+    accessorKey: "target",
+    header: "Target",
     cell: ({ row }) => {
-      const isActive = row.getValue("isActive") as boolean;
-      // Badge should be imported from your UI library
-      // Example: import Badge from "@/components/ui/badge/Badge";
+      const target = row.getValue("target") as BannerTarget;
+
       return (
-        <Badge
-          color={isActive ? "success" : "neutral"}
-          variant="light"
-          className={
-            isActive
-              ? "text-emerald-700 dark:text-emerald-300"
-              : "text-gray-600 dark:text-gray-300"
-          }
-        >
-          {isActive ? "Active" : "Inactive"}
+        <Badge variant="light" color={target === "mobile" ? "warning" : "info"} size="sm">
+          {titleCase(target)}
         </Badge>
       );
     },
   },
   {
-    accessorKey: "lastUpdated",
-    header: "Last Updated",
+    accessorKey: "link",
+    header: "Link",
     cell: ({ row }) => {
-      const date = new Date(row.getValue("lastUpdated") as string);
-      return date.toLocaleString();
+      const link = row.getValue("link") as string;
+
+      return link ? <span className="whitespace-normal break-all text-sm">{link}</span> : "-";
     },
   },
 ];
@@ -124,15 +102,16 @@ export const createActionColumn = (
         <Edit size={16} />
       </Button>
       <Button
-        variant="outline"
+        variant="error"
         size="sm"
         onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
           event.stopPropagation();
           callbacks.onDelete(row.original.id);
         }}
+        disabled={callbacks.deletingId === row.original.id}
         className="px-3 py-2"
       >
-        <Trash2 size={16} className="text-red-500" />
+        <Trash2 size={16} />
       </Button>
     </div>
   ),
