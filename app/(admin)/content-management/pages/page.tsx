@@ -1,387 +1,183 @@
 "use client";
 
-import React, { useCallback, useMemo, useState } from "react";
-import Select, { type SingleValue, type MultiValue } from "react-select";
-import type { Row } from "@tanstack/react-table";
-import type { Range } from "react-date-range";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Plus, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
 
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import { defaultDateRange } from "@/components/common/DateRangeFilter";
-import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
 import { DataTable } from "@/components/tables/DataTable";
 import Button from "@/components/ui/button/Button";
-import { Modal, ModalBody, ModalFooter, ModalHeader } from "@/components/ui/modal";
-import Form from "@/components/form/Form";
-import Input from "@/components/form/input/InputField";
-import Label from "@/components/form/Label";
-import TextArea from "@/components/form/input/TextArea";
-import Switch from "@/components/form/switch/Switch";
-import { useTheme } from "@/context/ThemeContext";
-import { reactSelectStyles } from "@/utils/reactSelectStyles";
+import Badge from "@/components/ui/badge/Badge";
 import { withAuth } from "@/utils/withAuth";
 
-import { columns, ContentPageRow, createActionColumn } from "./columns";
-import { ContentPage, contentPages } from "./data";
+import { columns, createActionColumn, type ContentPageRow } from "./columns";
+import {
+  deleteContentPage,
+  fetchContentPages,
+  pageCreatedBy,
+  pageId,
+  pageTarget,
+  pageTitle,
+  type ContentPageRecord,
+} from "./api";
 
-type FilterOption = { value: string; label: string };
-type TargetOption = { value: ContentPage["target"]; label: string };
-
-const filterOptions: { label: string; options: FilterOption[] }[] = [
-  {
-    label: "Target",
-    options: [
-      { value: "target:Web", label: "Web" },
-      { value: "target:Mobile", label: "Mobile" },
-      { value: "target:Hybrid", label: "Hybrid" },
-    ],
-  },
-  {
-    label: "Status",
-    options: [
-      { value: "status:Active", label: "Active" },
-      { value: "status:Inactive", label: "Inactive" },
-    ],
-  },
-];
-
-const targetOptions: TargetOption[] = [
-  { value: "Web", label: "Web" },
-  { value: "Mobile", label: "Mobile" },
-  { value: "Hybrid", label: "Hybrid" },
-];
-
-const mapPageToRow = (page: ContentPage): ContentPageRow => ({
-  id: page.id,
-  title: page.title,
-  target: page.target,
-  createdBy: page.createdBy,
-  content: page.content,
-  isActive: page.isActive,
-  lastUpdated: page.lastUpdated,
-});
-
-const applyFilter = (rows: ContentPageRow[], filters: FilterOption[]) => {
-  if (filters.length === 0) return rows;
-
-  let filtered = rows.slice();
-
-  filters.forEach((filter) => {
-    const [type, value] = filter.value.split(":");
-
-    if (type === "target") {
-      filtered = filtered.filter((row) => row.target === value);
-    } else if (type === "status") {
-      const shouldBeActive = value === "Active";
-      filtered = filtered.filter((row) => row.isActive === shouldBeActive);
-    }
-  });
-
-  return filtered;
-};
+function mapPageToRow(page: ContentPageRecord): ContentPageRow {
+  return {
+    id: pageId(page),
+    title: pageTitle(page),
+    target: pageTarget(page),
+    createdBy: pageCreatedBy(page),
+  };
+}
 
 function PagesPage() {
-  const { theme } = useTheme();
-
-  const [pages, setPages] = useState<ContentPageRow[]>(() => contentPages.map(mapPageToRow));
-  const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
-  const [selectedFilters, setSelectedFilters] = useState<FilterOption[]>([]);
-  const [filteredRows, setFilteredRows] = useState<ContentPageRow[]>(() => contentPages.map(mapPageToRow));
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingPage, setEditingPage] = useState<ContentPageRow | null>(null);
-  const [targetSelection, setTargetSelection] = useState<TargetOption | null>(targetOptions[0]);
-  const [formValues, setFormValues] = useState({
-    title: "",
-    createdBy: "",
-    content: "",
-    isActive: true,
-  });
-  const [formKey, setFormKey] = useState(0);
+  const router = useRouter();
+  const [pages, setPages] = useState<ContentPageRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState("");
 
   const summary = useMemo(() => {
-    const total = filteredRows.length;
-    const webCount = filteredRows.filter((row) => row.target === "Web").length;
-    const mobileCount = filteredRows.filter((row) => row.target === "Mobile").length;
+    const webCount = pages.filter((page) => page.target === "web").length;
+    const mobileCount = pages.filter((page) => page.target === "mobile").length;
 
     return {
-      total,
+      total: pages.length,
       webCount,
       mobileCount,
     };
-  }, [filteredRows]);
+  }, [pages]);
 
-  const openCreateModal = () => {
-    setEditingPage(null);
-    setFormValues({
-      title: "",
-      createdBy: "",
-      content: "",
-      isActive: true,
-    });
-    setTargetSelection(targetOptions[0]);
-    setFormKey((key) => key + 1);
-    setIsModalOpen(true);
-  };
-
-  const handleEdit = useCallback((page: ContentPageRow) => {
-    setEditingPage(page);
-    setFormValues({
-      title: page.title,
-      createdBy: page.createdBy,
-      content: page.content,
-      isActive: page.isActive,
-    });
-    setTargetSelection(targetOptions.find((option) => option.value === page.target) ?? null);
-    setFormKey((key) => key + 1);
-    setIsModalOpen(true);
+  const loadPages = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await fetchContentPages();
+      setPages(response.map(mapPageToRow));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to load pages");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const handleDelete = useCallback(
-    (pageId: string) => {
-      const page = pages.find((item) => item.id === pageId);
-      if (!page) return;
-      const confirmed = window.confirm(`Remove "${page.title}" from published pages?`);
-      if (!confirmed) return;
+  useEffect(() => {
+    void loadPages();
+  }, [loadPages]);
 
-      const updatedPages = pages.filter((item) => item.id !== pageId);
-      setPages(updatedPages);
+  const handleEdit = useCallback(
+    (page: ContentPageRow) => {
+      router.push(`/content-management/pages/${encodeURIComponent(page.id)}`);
     },
-    [pages]
+    [router]
   );
 
-  const closeModal = () => {
-    setIsModalOpen(false);
-  };
+  const handleDelete = useCallback(
+    async (pageIdValue: string) => {
+      const page = pages.find((item) => item.id === pageIdValue);
+      if (!page) return;
 
-  const handleSearch = () => {
-    setFilteredRows(applyFilter(pages, selectedFilters));
-  };
+      const confirmed = window.confirm(`Delete "${page.title}"?`);
+      if (!confirmed) return;
 
-  const handleClear = () => {
-    setSelectedFilters([]);
-    setDateRange(defaultDateRange);
-    setFilteredRows(pages);
-  };
-
-  const handleFilterChange = (newValue: MultiValue<FilterOption>) => {
-    if (!newValue || newValue.length === 0) {
-      setSelectedFilters([]);
-      return;
-    }
-
-    // Ensure only one entry per group (by prefix before colon)
-    const filterMap = new Map<string, FilterOption>();
-    
-    Array.from(newValue).forEach((filter) => {
-      const [groupType] = filter.value.split(":");
-      filterMap.set(groupType, filter);
-    });
-    
-    setSelectedFilters(Array.from(filterMap.values()));
-  };
-
-  const handleFormSubmit = () => {
-    if (!formValues.title.trim()) {
-      alert("Please provide a page title.");
-      return;
-    }
-
-    if (!targetSelection) {
-      alert("Please choose a target platform.");
-      return;
-    }
-
-    const now = new Date().toISOString();
-
-    if (editingPage) {
-      const updatedPages = pages.map((page) =>
-        page.id === editingPage.id
-          ? {
-              ...page,
-              title: formValues.title.trim(),
-              createdBy: formValues.createdBy.trim() || "Admin",
-              content: formValues.content.trim(),
-              target: targetSelection.value,
-              isActive: formValues.isActive,
-              lastUpdated: now,
-            }
-          : page
-      );
-      setPages(updatedPages);
-      alert("Page updated (mock).");
-    } else {
-      const newPage: ContentPageRow = {
-        id: `page-${Date.now()}`,
-        title: formValues.title.trim(),
-        createdBy: formValues.createdBy.trim() || "Admin",
-        content: formValues.content.trim(),
-        target: targetSelection.value,
-        isActive: formValues.isActive,
-        lastUpdated: now,
-      };
-
-      setPages((prev) => [newPage, ...prev]);
-      alert("Page created (mock).");
-    }
-
-    setIsModalOpen(false);
-  };
+      setDeletingId(pageIdValue);
+      try {
+        await deleteContentPage(pageIdValue);
+        toast.success("Page has been removed");
+        await loadPages();
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Unable to delete page");
+      } finally {
+        setDeletingId("");
+      }
+    },
+    [loadPages, pages]
+  );
 
   const columnsWithActions = useMemo(
-    () => [...columns, createActionColumn({ onEdit: handleEdit, onDelete: handleDelete })],
-    [handleDelete, handleEdit]
+    () => [
+      ...columns,
+      createActionColumn({
+        onEdit: handleEdit,
+        onDelete: handleDelete,
+        deletingId,
+      }),
+    ],
+    [deletingId, handleDelete, handleEdit]
   );
 
   return (
     <div className="space-y-6 p-4">
       <PageBreadcrumb pageTitle="Pages" />
 
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-900">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="space-y-1">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Manage Static Pages</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Publish compliance updates, onboarding content, and campaign landing pages in one place.
+      <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">List</h2>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Manage CMS pages and their web or mobile target.
             </p>
           </div>
-          <Button onClick={openCreateModal} className="bg-brand-500 text-white hover:bg-brand-600 dark:bg-brand-500 dark:text-white dark:hover:bg-brand-600">
-            Add New Page
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void loadPages()}
+              disabled={loading}
+              startIcon={<RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />}
+            >
+              Refresh
+            </Button>
+            <Link
+              href="/content-management/pages/add-new"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-success-500 px-4 py-3 text-sm font-medium text-white shadow-theme-xs transition hover:bg-success-600"
+            >
+              <Plus className="h-4 w-4" />
+              Add New Page
+            </Link>
+          </div>
         </div>
 
-        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-          <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900/60">
+        <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-3">
+          <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900/60">
             <p className="text-sm text-gray-500 dark:text-gray-400">Total Pages</p>
-            <p className="text-2xl font-semibold text-gray-900 dark:text-white">{summary.total}</p>
+            <p className="mt-1 text-2xl font-semibold text-gray-900 dark:text-white">{summary.total}</p>
           </div>
-          <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900/60">
+          <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900/60">
             <p className="text-sm text-gray-500 dark:text-gray-400">Web Target</p>
-            <p className="text-2xl font-semibold text-gray-900 dark:text-white">{summary.webCount}</p>
+            <p className="mt-1 text-2xl font-semibold text-gray-900 dark:text-white">{summary.webCount}</p>
           </div>
-            <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900/60">
+          <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900/60">
             <p className="text-sm text-gray-500 dark:text-gray-400">Mobile Target</p>
-            <p className="text-2xl font-semibold text-gray-900 dark:text-white">{summary.mobileCount}</p>
+            <p className="mt-1 text-2xl font-semibold text-gray-900 dark:text-white">{summary.mobileCount}</p>
           </div>
         </div>
-      </div>
+      </section>
 
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-900">
-        <TableFilterToolbar<FilterOption, true>
-          dateRange={dateRange}
-          onDateRangeChange={setDateRange}
-          actions={{
-            onSearch: handleSearch,
-            onClear: handleClear,
-          }}
-          selectProps={{
-            containerClassName: "max-w-[22rem]",
-            options: filterOptions,
-            placeholder: "Filter Options",
-            value: selectedFilters,
-            onChange: handleFilterChange,
-            isClearable: true,
-            isMulti: true,
-          }}
-        />
-
-        <div className="mt-6 space-y-4">
-          <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-800/70">
-            <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100">List</h3>
+      <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+        {loading ? (
+          <div className="rounded-lg border border-gray-100 px-4 py-10 text-center text-sm text-gray-500 dark:border-gray-800 dark:text-gray-400">
+            Loading Please wait....
           </div>
-
+        ) : pages.length === 0 ? (
+          <div className="rounded-lg border border-gray-100 px-4 py-10 text-center text-sm text-gray-500 dark:border-gray-800 dark:text-gray-400">
+            No record found
+          </div>
+        ) : (
           <DataTable
             columns={columnsWithActions}
-            data={filteredRows}
-            onRowClick={(row: Row<ContentPageRow>) => handleEdit(row.original)}
+            data={pages}
+            onRowClick={(row) => handleEdit(row.original)}
           />
+        )}
+
+        <div className="mt-4 flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400">
+          <Badge variant="light" color="info" size="sm">Web</Badge>
+          <Badge variant="light" color="warning" size="sm">Mobile</Badge>
         </div>
-      </div>
-
-      <Modal isOpen={isModalOpen} onClose={closeModal} size="lg">
-        <ModalHeader>{editingPage ? "Edit Page" : "Add New Page"}</ModalHeader>
-        <ModalBody>
-          <Form
-            key={formKey}
-            onSubmit={() => {
-              handleFormSubmit();
-            }}
-            className="space-y-6"
-          >
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div>
-                <Label htmlFor="pageTitle">Title</Label>
-                <Input
-                  id="pageTitle"
-                  placeholder="Enter page title"
-                  defaultValue={formValues.title}
-                  onChange={(event) =>
-                    setFormValues((prev) => ({ ...prev, title: event.target.value }))
-                  }
-                />
-              </div>
-              <div>
-                <Label htmlFor="pageAuthor">Created By</Label>
-                <Input
-                  id="pageAuthor"
-                  placeholder="Author name"
-                  defaultValue={formValues.createdBy}
-                  onChange={(event) =>
-                    setFormValues((prev) => ({ ...prev, createdBy: event.target.value }))
-                  }
-                />
-              </div>
-              <div className="md:col-span-2">
-                <Label>Target</Label>
-                <Select<TargetOption, false>
-                  styles={reactSelectStyles(theme)}
-                  options={targetOptions}
-                  value={targetSelection}
-                  onChange={(option) => setTargetSelection(option as TargetOption)}
-                />
-              </div>
-              <div className="md:col-span-2">
-                <Label>Page Content</Label>
-                <TextArea
-                  placeholder="Enter content..."
-                  rows={4}
-                  value={formValues.content}
-                  onChange={(value) =>
-                    setFormValues((prev) => ({
-                      ...prev,
-                      content: value,
-                    }))
-                  }
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <Switch
-                key={`active-${formKey}`}
-                label="Is Active"
-                defaultChecked={formValues.isActive}
-                onChange={(checked) =>
-                  setFormValues((prev) => ({
-                    ...prev,
-                    isActive: checked,
-                  }))
-                }
-              />
-              
-            </div>
-          </Form>
-        </ModalBody>
-        <ModalFooter>
-          <Button variant="outline" onClick={closeModal}>
-            Cancel
-          </Button>
-          <Button onClick={handleFormSubmit}>
-            {editingPage ? "Update Page" : "Save Page"}
-          </Button>
-        </ModalFooter>
-      </Modal>
+      </section>
     </div>
   );
 }
 
 export default withAuth(PagesPage);
-
