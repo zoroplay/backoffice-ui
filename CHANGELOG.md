@@ -1,3 +1,24 @@
+# [1.2.0](https://github.com/zoroplay/backoffice-ui/compare/v1.1.0...v1.2.0) (2026-07-23)
+
+
+### Features
+
+* wire network agency list endpoint ([4f94474](https://github.com/zoroplay/backoffice-ui/commit/4f9447438ce7b5a41a338c6ef941df30c2725dca))
+* wire network agent activity logs ([3daca98](https://github.com/zoroplay/backoffice-ui/commit/3daca98dc4f8e053f839cf40ace0195ff48c0416))
+* wire network agent activity tabs ([852173f](https://github.com/zoroplay/backoffice-ui/commit/852173f1dd17bf470d7edc7bea084c95feee026a))
+* wire network agent banking transfers ([40e434e](https://github.com/zoroplay/backoffice-ui/commit/40e434e9a9abb5428160b197c0ef67bd16f03805))
+* wire network agent commission profiles ([3001578](https://github.com/zoroplay/backoffice-ui/commit/300157823abebe7e13140a50f192d213ecc53aaa))
+* wire network agent creation ([094a8f1](https://github.com/zoroplay/backoffice-ui/commit/094a8f12423611ff9fe208f9ae900e9c1cbfabec))
+* wire network agent detail endpoints ([5a1ee46](https://github.com/zoroplay/backoffice-ui/commit/5a1ee4669963518dc2ed81638fb42f9d03dd2f19))
+* wire network agent user creation ([85a5cc9](https://github.com/zoroplay/backoffice-ui/commit/85a5cc95716a063c5eca88920d4295f0ea297a12))
+* wire network agent user editor ([b7b20b3](https://github.com/zoroplay/backoffice-ui/commit/b7b20b33eb04bbcadf59e8bc497b68cf51d87bd4))
+* wire network agent user password changes ([7684fe0](https://github.com/zoroplay/backoffice-ui/commit/7684fe02f93479d44ad4ccb09f417242e1279f8c))
+* wire network commissions ([c969bd8](https://github.com/zoroplay/backoffice-ui/commit/c969bd820c86680f21f9aa2fe6c4ca0b159505e2))
+* wire network pending agent requests ([72f6aa7](https://github.com/zoroplay/backoffice-ui/commit/72f6aa7fa907a291bbf80273c944520eb26ba8d1))
+* wire remaining ticket endpoints ([c0699d9](https://github.com/zoroplay/backoffice-ui/commit/c0699d99fb2042b148b9caccc22cd2a7ddb4fb9f))
+* wire ticket operations endpoints ([bfc1581](https://github.com/zoroplay/backoffice-ui/commit/bfc158164a9827933e8a9bac37c0751485de2a53))
+* wire unsettled bets endpoint ([4d520d4](https://github.com/zoroplay/backoffice-ui/commit/4d520d452d29f0301354acae2b20f243bb161a69))
+
 # [1.1.0](https://github.com/zoroplay/backoffice-ui/compare/v1.0.0...v1.1.0) (2026-07-22)
 
 
