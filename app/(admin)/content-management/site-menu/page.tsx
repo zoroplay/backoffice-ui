@@ -1,316 +1,431 @@
 "use client";
 
-import React, { useId, useMemo, useState } from "react";
-import Select, { type SingleValue, type MultiValue } from "react-select";
-import type { Range } from "react-date-range";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Edit3, RefreshCw, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import { defaultDateRange } from "@/components/common/DateRangeFilter";
-import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
-import { DataTable } from "@/components/tables/DataTable";
-import Button from "@/components/ui/button/Button";
-import { Modal, ModalBody, ModalFooter, ModalHeader } from "@/components/ui/modal";
 import Form from "@/components/form/Form";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
-import Switch from "@/components/form/switch/Switch";
-import { useTheme } from "@/context/ThemeContext";
-import { reactSelectStyles } from "@/utils/reactSelectStyles";
+import Button from "@/components/ui/button/Button";
+import Badge from "@/components/ui/badge/Badge";
+import { GETREQUEST, POSTREQUEST } from "@/utils/base_request";
 import { withAuth } from "@/utils/withAuth";
 
-import { columns, SiteMenuRow } from "./columns";
-import { SiteMenuItem, siteMenuItems } from "./data";
+type AnyRecord = Record<string, any>;
 
-type FilterOption = { value: string; label: string };
+type MenuTarget = "web" | "shop" | "mobile" | "";
 
-const filterOptions: { label: string; options: FilterOption[] }[] = [
-  {
-    label: "Placement",
-    options: [
-      { value: "placement:Web", label: "Web" },
-      { value: "placement:Mobile", label: "Mobile" },
-      { value: "placement:Hybrid", label: "Hybrid" },
-    ],
-  },
-  {
-    label: "Status",
-    options: [
-      { value: "status:Active", label: "Active" },
-      { value: "status:Inactive", label: "Inactive" },
-    ],
-  },
+type SiteMenu = {
+  id?: string | number;
+  title?: string;
+  target?: MenuTarget | string;
+  parent?: string | number | null;
+  parent_id?: string | number | null;
+  link?: string;
+  order?: string | number;
+  status?: boolean | string | number;
+  new_window?: boolean | string | number;
+};
+
+type MenuForm = {
+  title: string;
+  target: MenuTarget;
+  parent_id: string;
+  link: string;
+  order: string;
+  status: boolean;
+  new_window: boolean;
+  id: string;
+};
+
+const blankForm: MenuForm = {
+  title: "",
+  target: "web",
+  parent_id: "",
+  link: "#",
+  order: "0",
+  status: true,
+  new_window: false,
+  id: "",
+};
+
+const targetOptions: { value: Exclude<MenuTarget, "">; label: string; color: "info" | "warning" | "success" }[] = [
+  { value: "web", label: "Web", color: "info" },
+  { value: "mobile", label: "Mobile", color: "warning" },
+  { value: "shop", label: "Shop", color: "success" },
 ];
 
-const mapItemToRow = (item: SiteMenuItem): SiteMenuRow => ({
-  id: item.id,
-  title: item.title,
-  placement: item.placement,
-  parent: item.parent,
-  url: item.url,
-  order: item.order,
-  isActive: item.isActive,
-  openInNewTab: item.openInNewTab,
-  lastUpdated: item.lastUpdated,
-});
+function asRecord(value: unknown): AnyRecord {
+  return value && typeof value === "object" ? (value as AnyRecord) : {};
+}
+
+function listFrom(value: unknown): SiteMenu[] {
+  if (Array.isArray(value)) return value as SiteMenu[];
+
+  const record = asRecord(value);
+  if (Array.isArray(record.data)) return record.data as SiteMenu[];
+  if (Array.isArray(record.data?.data)) return record.data.data as SiteMenu[];
+  if (Array.isArray(record.menus)) return record.menus as SiteMenu[];
+
+  return [];
+}
+
+function successFrom(value: unknown) {
+  const record = asRecord(value);
+  return record.success === true || record.status === true || record.status_code === 200 || record.status_code === 201;
+}
+
+function menuId(menu: SiteMenu) {
+  return String(menu.id ?? "");
+}
+
+function menuTitle(menu: SiteMenu) {
+  return String(menu.title ?? "Untitled menu");
+}
+
+function menuTarget(menu: SiteMenu): MenuTarget {
+  const target = String(menu.target ?? "web").toLowerCase();
+  if (target === "shop" || target === "mobile" || target === "web") return target;
+  return "web";
+}
+
+function parentValue(menu: SiteMenu) {
+  return String(menu.parent_id ?? menu.parent ?? "");
+}
+
+function boolValue(value: SiteMenu["status"]) {
+  return value === true || value === 1 || value === "1" || value === "true";
+}
+
+function numberOrString(value: string) {
+  const numeric = Number(value);
+  return value.trim() !== "" && Number.isFinite(numeric) ? numeric : value;
+}
+
+function targetMeta(target: MenuTarget | string) {
+  return targetOptions.find((option) => option.value === String(target).toLowerCase()) ?? targetOptions[0];
+}
 
 function SiteMenuPage() {
-  const { theme } = useTheme();
-  const [dateRange, setDateRange] = useState<Range>(defaultDateRange);
-  const [selectedFilters, setSelectedFilters] = useState<FilterOption[]>([]);
-  const [filteredRows, setFilteredRows] = useState<SiteMenuRow[]>(siteMenuItems.map(mapItemToRow));
-  const [selectedRow, setSelectedRow] = useState<SiteMenuRow | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const placementSelectId = useId();
-  const parentSelectId = useId();
+  const [menus, setMenus] = useState<SiteMenu[]>([]);
+  const [form, setForm] = useState<MenuForm>(blankForm);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState("");
 
-  const filterData = (filters: FilterOption[]) => {
-    let data = siteMenuItems.slice();
+  const sortedMenus = useMemo(
+    () =>
+      menus.slice().sort((left, right) => {
+        const leftOrder = Number(left.order ?? 0);
+        const rightOrder = Number(right.order ?? 0);
+        if (leftOrder !== rightOrder) return leftOrder - rightOrder;
+        return menuTitle(left).localeCompare(menuTitle(right));
+      }),
+    [menus]
+  );
 
-    if (filters.length > 0) {
-      filters.forEach((filter) => {
-        const [type, value] = filter.value.split(":");
-        if (type === "placement") {
-          data = data.filter((item) => item.placement === value);
-        } else if (type === "status") {
-          const isActive = value === "Active";
-          data = data.filter((item) => item.isActive === isActive);
-        }
-      });
+  const activeCount = useMemo(() => menus.filter((menu) => boolValue(menu.status)).length, [menus]);
+
+  const loadMenus = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await GETREQUEST<unknown>("/api/admin/content-management/menus");
+
+      if (!response.ok) {
+        toast.error(response.error ?? "Unable to load site menus");
+        return;
+      }
+
+      setMenus(listFrom(response.data));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to load site menus");
+    } finally {
+      setLoading(false);
     }
+  }, []);
 
-    return data.map(mapItemToRow);
-  };
+  useEffect(() => {
+    void loadMenus();
+  }, [loadMenus]);
 
-  const handleSearch = () => {
-    setFilteredRows(filterData(selectedFilters));
-  };
+  function editMenu(menu: SiteMenu) {
+    setForm({
+      title: String(menu.title ?? ""),
+      target: menuTarget(menu),
+      parent_id: parentValue(menu),
+      link: String(menu.link ?? "#"),
+      order: String(menu.order ?? "0"),
+      status: boolValue(menu.status),
+      new_window: boolValue(menu.new_window),
+      id: menuId(menu),
+    });
+  }
 
-  const handleClear = () => {
-    setSelectedFilters([]);
-    setDateRange(defaultDateRange);
-    setFilteredRows(siteMenuItems.map(mapItemToRow));
-  };
+  function resetForm() {
+    setForm(blankForm);
+  }
 
-  const handleFilterChange = (newValue: MultiValue<FilterOption>) => {
-    if (!newValue || newValue.length === 0) {
-      setSelectedFilters([]);
+  async function submitMenu() {
+    if (!form.title.trim()) {
+      toast.error("Title is required");
       return;
     }
 
-    // Ensure only one entry per group (by prefix before colon)
-    const filterMap = new Map<string, FilterOption>();
-    
-    Array.from(newValue).forEach((filter) => {
-      const [groupType] = filter.value.split(":");
-      filterMap.set(groupType, filter);
-    });
-    
-    setSelectedFilters(Array.from(filterMap.values()));
-  };
+    if (!form.link.trim()) {
+      toast.error("URL is required");
+      return;
+    }
 
-  const summary = useMemo(() => {
-    const total = filteredRows.length;
-    const active = filteredRows.filter((row) => row.isActive).length;
-    const newTab = filteredRows.filter((row) => row.openInNewTab).length;
+    setSaving(true);
+    try {
+      const payload = {
+        title: form.title.trim(),
+        target: form.target,
+        parent_id: form.parent_id,
+        link: form.link.trim(),
+        order: numberOrString(form.order),
+        status: form.status,
+        new_window: form.new_window,
+        id: form.id,
+      };
+      const response = await POSTREQUEST<unknown>("/api/admin/content-management/menus", payload);
 
-    return {
-      total,
-      active,
-      newTab,
-    };
-  }, [filteredRows]);
+      if (!response.ok || !successFrom(response.data)) {
+        toast.error(response.error ?? "An error occured");
+        return;
+      }
 
-  const handleRowClick = (row: SiteMenuRow) => {
-    setSelectedRow(row);
-    setIsModalOpen(true);
-  };
+      const record = asRecord(response.data);
+      const updatedMenus = listFrom(response.data);
 
-  const handleCloseModal = () => {
-    setSelectedRow(null);
-    setIsModalOpen(false);
-  };
+      if (updatedMenus.length > 0) {
+        setMenus(updatedMenus);
+      } else if (!form.id && record.menu) {
+        setMenus((current) => [...current, record.menu as SiteMenu]);
+      } else {
+        await loadMenus();
+      }
 
-  const handleManualSave = () => {
-    alert("Menu item saved! (mock)");
-    handleCloseModal();
-  };
+      toast.success(form.id ? "Menu has been updated." : "Menu created successfully.");
+      resetForm();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "An error occured");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function deleteMenu(id: string) {
+    if (!id || !window.confirm("Are you sure you want to delete this menu item?")) return;
+
+    setDeletingId(id);
+    try {
+      const response = await GETREQUEST<unknown>(`/api/admin/content-management/menu/delete/${id}`);
+
+      if (!response.ok || !successFrom(response.data)) {
+        toast.error(response.error ?? "An error occured");
+        return;
+      }
+
+      setMenus((current) => current.filter((menu) => menuId(menu) !== id));
+      if (form.id === id) resetForm();
+      toast.success("Menu item has been removed");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "An error occured");
+    } finally {
+      setDeletingId("");
+    }
+  }
 
   return (
     <div className="space-y-6 p-4">
-      <PageBreadcrumb pageTitle="Site Menu" />
+      <PageBreadcrumb pageTitle="Site Menus" />
 
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-900">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="space-y-1">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Manage navigation across platforms</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Review menu entries, update hierarchy, and deploy consistent brand experiences.
-            </p>
-          </div>
-          <Button onClick={() => setIsModalOpen(true)} className="bg-brand-500 text-white hover:bg-brand-600">
-            Add Menu Item
-          </Button>
-        </div>
-
-        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-          <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900/60">
-            <p className="text-sm text-gray-500 dark:text-gray-400">Total Menu Items</p>
-            <p className="text-2xl font-semibold text-gray-900 dark:text-white">{summary.total}</p>
-          </div>
-          <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900/60">
-            <p className="text-sm text-gray-500 dark:text-gray-400">Active Items</p>
-            <p className="text-2xl font-semibold text-gray-900 dark:text-white">{summary.active}</p>
-          </div>
-          <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900/60">
-            <p className="text-sm text-gray-500 dark:text-gray-400">Open in New Tab</p>
-            <p className="text-2xl font-semibold text-gray-900 dark:text-white">{summary.newTab}</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-900">
-        <TableFilterToolbar<FilterOption, true>
-          dateRange={dateRange}
-          onDateRangeChange={setDateRange}
-          actions={{
-            onSearch: handleSearch,
-            onClear: handleClear,
-          }}
-          selectProps={{
-            containerClassName: "max-w-[22rem]",
-            options: filterOptions,
-            placeholder: "Filter Options",
-            value: selectedFilters,
-            onChange: handleFilterChange,
-            isClearable: true,
-            isMulti: true,
-          }}
-        />
-
-        <div className="mt-6 space-y-4">
-          <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-800/70">
-            <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100">Menu Items</h3>
-          </div>
-
-          <DataTable columns={columns} data={filteredRows} onRowClick={(row) => handleRowClick(row.original)} />
-        </div>
-      </div>
-
-      <Modal isOpen={isModalOpen} onClose={handleCloseModal} size="lg">
-        <ModalHeader>{selectedRow ? "Menu Item Details" : "Create Menu Item"}</ModalHeader>
-        <ModalBody>
-          {selectedRow ? (
-            <div className="space-y-4 text-sm text-gray-700 dark:text-gray-300">
-              <div className="flex flex-wrap justify-between gap-3">
-                <div>
-                  <p className="text-xs uppercase text-gray-500 dark:text-gray-400">Title</p>
-                  <p className="text-base font-medium text-gray-900 dark:text-gray-100">{selectedRow.title}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs uppercase text-gray-500 dark:text-gray-400">Placement</p>
-                  <p className="text-base font-medium text-gray-900 dark:text-gray-100">{selectedRow.placement}</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div>
-                  <p className="text-xs uppercase text-gray-500 dark:text-gray-400">Parent Menu</p>
-                  <p className="text-base text-gray-900 dark:text-gray-100">{selectedRow.parent ?? "—"}</p>
-                </div>
-                <div>
-                  <p className="text-xs uppercase text-gray-500 dark:text-gray-400">Order</p>
-                  <p className="text-base text-gray-900 dark:text-gray-100">{selectedRow.order}</p>
-                </div>
-                <div className="md:col-span-2">
-                  <p className="text-xs uppercase text-gray-500 dark:text-gray-400">URL</p>
-                  <p className="text-base text-gray-900 dark:text-gray-100">{selectedRow.url}</p>
-                </div>
-                <div>
-                  <p className="text-xs uppercase text-gray-500 dark:text-gray-400">Status</p>
-                  <p className="text-base text-gray-900 dark:text-gray-100">{selectedRow.isActive ? "Active" : "Inactive"}</p>
-                </div>
-                <div>
-                  <p className="text-xs uppercase text-gray-500 dark:text-gray-400">Open in New Tab</p>
-                  <p className="text-base text-gray-900 dark:text-gray-100">{selectedRow.openInNewTab ? "Yes" : "No"}</p>
-                </div>
-                <div className="md:col-span-2">
-                  <p className="text-xs uppercase text-gray-500 dark:text-gray-400">Last Updated</p>
-                  <p className="text-base text-gray-900 dark:text-gray-100">
-                    {new Date(selectedRow.lastUpdated).toLocaleString()}
-                  </p>
-                </div>
-              </div>
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(24rem,30rem)]">
+        <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Menu Items</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {menus.length} total, {activeCount} active
+              </p>
             </div>
-          ) : (
-            <Form
-              onSubmit={() => {
-                handleManualSave();
-              }}
-              className="space-y-6"
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void loadMenus()}
+              disabled={loading}
+              startIcon={<RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />}
             >
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div>
-                  <Label htmlFor="menuTitle">Title</Label>
-                  <Input id="menuTitle" placeholder="Enter menu title" />
-                </div>
-                <div>
-                  <Label>Placement</Label>
-                  <Select
-                    styles={reactSelectStyles(theme)}
-                    options={[
-                      { value: "Web", label: "Web" },
-                      { value: "Mobile", label: "Mobile" },
-                      { value: "Hybrid", label: "Hybrid" },
-                    ]}
-                    placeholder="Select placement"
-                    instanceId={`site-menu-placement-${placementSelectId}`}
-                  />
-                </div>
-                <div>
-                  <Label>Parent Menu</Label>
-                  <Select
-                    styles={reactSelectStyles(theme)}
-                    options={[
-                      { value: "Main Navigation", label: "Main Navigation" },
-                      { value: "Sportsbook", label: "Sportsbook" },
-                      { value: "Quick Links", label: "Quick Links" },
-                      { value: "Footer Links", label: "Footer Links" },
-                    ]}
-                    placeholder="Select parent"
-                    isClearable
-                    instanceId={`site-menu-parent-${parentSelectId}`}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="menuOrder">Display Order</Label>
-                  <Input id="menuOrder" type="number" min={0} placeholder="0" />
-                </div>
-                <div className="md:col-span-2">
-                  <Label htmlFor="menuUrl">Destination URL</Label>
-                  <Input id="menuUrl" placeholder="/path-or-external-link" />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <Switch label="Is Active" defaultChecked />
-                <Switch label="Open in new window" defaultChecked={false}/>
-              </div>
-            </Form>
-          )}
-        </ModalBody>
-        <ModalFooter>
-          <Button variant="outline" onClick={handleCloseModal} type="button">
-            Close
-          </Button>
-          {!selectedRow && (
-            <Button onClick={handleManualSave} className="bg-brand-500 text-white hover:bg-brand-600">
-              Save Item
+              Refresh
             </Button>
-          )}
-        </ModalFooter>
-      </Modal>
+          </div>
+
+          <div className="mt-5 divide-y divide-gray-100 rounded-lg border border-gray-100 dark:divide-gray-800 dark:border-gray-800">
+            {loading ? (
+              <div className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">Loading site menus...</div>
+            ) : sortedMenus.length === 0 ? (
+              <div className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">No menu items found.</div>
+            ) : (
+              sortedMenus.map((menu) => {
+                const id = menuId(menu);
+                const target = targetMeta(menuTarget(menu));
+
+                return (
+                  <div key={id || `${menuTitle(menu)}-${menu.order}`} className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0 space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => editMenu(menu)}
+                          className="truncate text-left text-sm font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-400"
+                        >
+                          {menuTitle(menu)}
+                        </button>
+                        <Badge variant="light" color={target.color} size="sm">
+                          {target.label}
+                        </Badge>
+                        <Badge variant="light" color={boolValue(menu.status) ? "success" : "neutral"} size="sm">
+                          {boolValue(menu.status) ? "Active" : "Inactive"}
+                        </Badge>
+                      </div>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
+                        <span>URL: {menu.link || "#"}</span>
+                        <span>Order: {String(menu.order ?? 0)}</span>
+                        <span>Parent: {parentValue(menu) || "None"}</span>
+                        <span>New window: {boolValue(menu.new_window) ? "Yes" : "No"}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex shrink-0 items-center gap-2">
+                      <Button variant="outline" size="sm" onClick={() => editMenu(menu)} startIcon={<Edit3 className="h-4 w-4" />}>
+                        Edit
+                      </Button>
+                      <Button
+                        variant="error"
+                        size="sm"
+                        onClick={() => void deleteMenu(id)}
+                        disabled={deletingId === id}
+                        startIcon={<Trash2 className="h-4 w-4" />}
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </section>
+
+        <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{form.id ? "Edit Menu Item" : "Add Menu Item"}</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Changes are saved to the CMS menu endpoint.</p>
+          </div>
+
+          <Form onSubmit={() => void submitMenu()} className="mt-5 space-y-5">
+            <div>
+              <Label htmlFor="site-menu-target">Target</Label>
+              <select
+                id="site-menu-target"
+                value={form.target}
+                onChange={(event) => setForm((current) => ({ ...current, target: event.target.value as MenuTarget }))}
+                className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
+              >
+                {targetOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <Label htmlFor="site-menu-title">Title</Label>
+              <Input
+                id="site-menu-title"
+                value={form.title}
+                onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
+                placeholder="Title"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="site-menu-parent">Parent Menu</Label>
+              <select
+                id="site-menu-parent"
+                value={form.parent_id}
+                onChange={(event) => setForm((current) => ({ ...current, parent_id: event.target.value }))}
+                className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
+              >
+                <option value="">Parent Menu</option>
+                {sortedMenus
+                  .filter((menu) => menuId(menu) !== form.id)
+                  .map((menu) => (
+                    <option key={menuId(menu)} value={menuId(menu)}>
+                      {menuTitle(menu)}
+                    </option>
+                  ))}
+              </select>
+            </div>
+
+            <div>
+              <Label htmlFor="site-menu-link">URL</Label>
+              <Input
+                id="site-menu-link"
+                value={form.link}
+                onChange={(event) => setForm((current) => ({ ...current, link: event.target.value }))}
+                placeholder="URL"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="site-menu-order">Order</Label>
+              <Input
+                id="site-menu-order"
+                type="number"
+                value={form.order}
+                onChange={(event) => setForm((current) => ({ ...current, order: event.target.value }))}
+                placeholder="0"
+              />
+            </div>
+
+            <label className="flex items-center gap-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+              <input
+                type="checkbox"
+                checked={form.status}
+                onChange={(event) => setForm((current) => ({ ...current, status: event.target.checked }))}
+                className="h-4 w-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500"
+              />
+              is Active
+            </label>
+
+            <label className="flex items-center gap-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+              <input
+                type="checkbox"
+                checked={form.new_window}
+                onChange={(event) => setForm((current) => ({ ...current, new_window: event.target.checked }))}
+                className="h-4 w-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500"
+              />
+              Open in new window
+            </label>
+
+            <div className="flex flex-wrap gap-3 pt-2">
+              <Button type="submit" disabled={saving}>
+                {saving ? "Saving..." : "Save"}
+              </Button>
+              <Button type="button" variant="outline" onClick={resetForm} disabled={saving}>
+                Cancel
+              </Button>
+            </div>
+          </Form>
+        </section>
+      </div>
     </div>
   );
 }
 
 export default withAuth(SiteMenuPage);
-
