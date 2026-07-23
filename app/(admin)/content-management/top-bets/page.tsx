@@ -1,368 +1,398 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
-import Select, { type SingleValue } from "react-select";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { RefreshCw, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import Button from "@/components/ui/button/Button";
-import { Modal, ModalBody, ModalFooter, ModalHeader } from "@/components/ui/modal";
-import Form from "@/components/form/Form";
+import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
-import { Plus, Trash2 } from "lucide-react";
-import { useTheme } from "@/context/ThemeContext";
-import { reactSelectStyles } from "@/utils/reactSelectStyles";
+import Button from "@/components/ui/button/Button";
+import { getStoredToken } from "@/utils/session";
 import { withAuth } from "@/utils/withAuth";
 
-import { sportsData } from "./data";
+type AnyRecord = Record<string, any>;
 
-interface Option {
-  value: string;
-  label: string;
-}
+type SportOption = {
+  sport_id?: string | number;
+  sportId?: string | number;
+  id?: string | number;
+  sport_name?: string;
+  sportName?: string;
+  name?: string;
+};
 
-interface TopTournament {
-  id: string;
-  sport: string;
-  category: string;
-  tournament: string;
-  showOnHome: boolean;
-  showOnSideMenu: boolean;
-}
+type TournamentOption = {
+  tournament_id?: string | number;
+  tournamentID?: string | number;
+  id?: string | number;
+  name?: string;
+  tournament_name?: string;
+  tournamentName?: string;
+};
 
-const yesNoOptions: Option[] = [
-  { value: "yes", label: "Yes" },
-  { value: "no", label: "No" },
+type TopTournament = {
+  id?: string | number;
+  tournament_name?: string;
+  tournamentName?: string;
+  name?: string;
+  source?: string;
+  priority?: string | number;
+};
+
+type FormState = {
+  sportId: string;
+  tournamentId: string;
+  source: string;
+  priority: string;
+};
+
+const platformOptions = [
+  { value: "web", label: "Web" },
+  { value: "mobile", label: "Mobile" },
+  { value: "retail", label: "Retail" },
 ];
 
-const topTournamentSeed: TopTournament[] = [
-  {
-    id: "top-1",
-    sport: "Soccer",
-    category: "International",
-    tournament: "UEFA Champions League",
-    showOnHome: true,
-    showOnSideMenu: false,
-  },
-  {
-    id: "top-2",
-    sport: "Soccer",
-    category: "International",
-    tournament: "World Cup Qualification UEFA",
-    showOnHome: true,
-    showOnSideMenu: true,
-  },
-];
+const blankForm: FormState = {
+  sportId: "",
+  tournamentId: "",
+  source: "web",
+  priority: "100",
+};
+
+function fixtureBase() {
+  return (
+    process.env.NEXT_PUBLIC_FIXTURE_API ||
+    process.env.NEXT_PUBLIC_FIXTURE_API_URL ||
+    process.env.NEXT_PUBLIC_BETTING_API ||
+    process.env.NEXT_PUBLIC_BETTING_API_URL ||
+    process.env.NEXT_PUBLIC_BASE_URL ||
+    ""
+  ).replace(/\/+$/, "");
+}
+
+function fixtureUrl(path: string) {
+  return `${fixtureBase()}/${path.replace(/^\/+/, "")}`;
+}
+
+function authHeaders(json = true) {
+  const headers: Record<string, string> = {
+    "client-code": process.env.NEXT_PUBLIC_CLIENT_CODE ?? "",
+    "SBE-Client-ID": process.env.NEXT_PUBLIC_CLIENT_ID ?? "",
+    "sbe-client-id": process.env.NEXT_PUBLIC_CLIENT_ID ?? "",
+  };
+  const token = getStoredToken();
+
+  if (json) headers["Content-Type"] = "application/json";
+  if (token) headers.Authorization = token;
+  return headers;
+}
+
+async function requestFixture<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(fixtureUrl(path), {
+    ...init,
+    headers: {
+      ...authHeaders(init?.body instanceof FormData ? false : true),
+      ...(init?.headers ?? {}),
+    },
+  });
+  const body = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new Error(body?.message || body?.error || `Request failed with status ${response.status}`);
+  }
+
+  return body as T;
+}
+
+function listFrom(value: unknown): AnyRecord[] {
+  if (Array.isArray(value)) return value;
+  const record = value && typeof value === "object" ? (value as AnyRecord) : {};
+  if (Array.isArray(record.data)) return record.data;
+  if (Array.isArray(record.data?.data)) return record.data.data;
+  return [];
+}
+
+function sportId(sport: SportOption) {
+  return String(sport.sport_id ?? sport.sportId ?? sport.id ?? "");
+}
+
+function sportLabel(sport: SportOption) {
+  return String(sport.sport_name ?? sport.sportName ?? sport.name ?? sportId(sport) ?? "-");
+}
+
+function tournamentId(tournament: TournamentOption) {
+  return String(tournament.tournament_id ?? tournament.tournamentID ?? tournament.id ?? "");
+}
+
+function tournamentLabel(tournament: TournamentOption | TopTournament) {
+  return String(tournament.tournament_name ?? tournament.tournamentName ?? tournament.name ?? tournamentId(tournament as TournamentOption) ?? "-");
+}
+
+function topTournamentId(item: TopTournament) {
+  return String(item.id ?? "");
+}
+
+function isCreated(value: unknown) {
+  const record = value && typeof value === "object" ? (value as AnyRecord) : {};
+  return record.status_code === 201 || record.success === true;
+}
+
+function isDeleted(value: unknown) {
+  const record = value && typeof value === "object" ? (value as AnyRecord) : {};
+  return record.status_code === 200 || record.success === true;
+}
 
 function TopBetsPage() {
-  const { theme } = useTheme();
+  const [topTournaments, setTopTournaments] = useState<TopTournament[]>([]);
+  const [sports, setSports] = useState<SportOption[]>([]);
+  const [tournaments, setTournaments] = useState<TournamentOption[]>([]);
+  const [form, setForm] = useState<FormState>(blankForm);
+  const [loading, setLoading] = useState(true);
+  const [loadingTournaments, setLoadingTournaments] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [removingId, setRemovingId] = useState("");
 
-  const sportOptions = useMemo<Option[]>(
-    () => sportsData.map((sport) => ({ value: sport.id, label: sport.name })),
-    []
+  const selectedSport = useMemo(
+    () => sports.find((sport) => sportId(sport) === form.sportId) ?? null,
+    [form.sportId, sports]
   );
 
-  const [selectedSport, setSelectedSport] = useState<Option | null>(sportOptions[0] ?? null);
-  const [selectedCategory, setSelectedCategory] = useState<Option | null>(null);
-  const [selectedTournament, setSelectedTournament] = useState<Option | null>(null);
-  const [showOnHome, setShowOnHome] = useState<Option>(yesNoOptions[0]);
-  const [showOnSideMenu, setShowOnSideMenu] = useState<Option>(yesNoOptions[1]);
-  const [topTournaments, setTopTournaments] = useState<TopTournament[]>(topTournamentSeed);
-  const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
-  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
-  const [tournamentToRemove, setTournamentToRemove] = useState<TopTournament | null>(null);
+  const selectedTournament = useMemo(
+    () => tournaments.find((tournament) => tournamentId(tournament) === form.tournamentId) ?? null,
+    [form.tournamentId, tournaments]
+  );
 
-  const availableCategories = useMemo<Option[]>(() => {
-    if (!selectedSport) return [];
-    const sport = sportsData.find((item) => item.id === selectedSport.value);
-    if (!sport) return [];
-    return sport.categories.map((category) => ({ value: category.id, label: category.name }));
-  }, [selectedSport]);
+  const loadTopBets = useCallback(async () => {
+    const body = await requestFixture<any>("/top_tournament");
+    setTopTournaments(listFrom(body) as TopTournament[]);
+  }, []);
 
-  const availableTournaments = useMemo<Option[]>(() => {
-    if (!selectedSport || !selectedCategory) return [];
-    const sport = sportsData.find((item) => item.id === selectedSport.value);
-    const category = sport?.categories.find((item) => item.id === selectedCategory.value);
-    if (!category) return [];
-    return category.tournaments.map((tournament) => ({
-      value: tournament.id,
-      label: tournament.name,
-    }));
-  }, [selectedSport, selectedCategory]);
+  const loadSports = useCallback(async () => {
+    const body = await requestFixture<any>("/sports");
+    setSports(listFrom(body) as SportOption[]);
+  }, []);
+
+  const loadInitialData = useCallback(async () => {
+    setLoading(true);
+    try {
+      await Promise.all([loadTopBets(), loadSports()]);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "An error occured");
+    } finally {
+      setLoading(false);
+    }
+  }, [loadSports, loadTopBets]);
 
   useEffect(() => {
-    if (!selectedSport) {
-      setSelectedCategory(null);
-      return;
+    void loadInitialData();
+  }, [loadInitialData]);
+
+  async function loadTournaments(nextSportId: string) {
+    setForm((current) => ({ ...current, sportId: nextSportId, tournamentId: "" }));
+    setTournaments([]);
+
+    if (!nextSportId) return;
+
+    setLoadingTournaments(true);
+    try {
+      const body = await requestFixture<any>(`/tournaments/${nextSportId}`);
+      setTournaments(listFrom(body) as TournamentOption[]);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to load tournaments");
+    } finally {
+      setLoadingTournaments(false);
     }
-    const nextCategory = availableCategories[0] ?? null;
-    setSelectedCategory(nextCategory);
-  }, [selectedSport, availableCategories]);
+  }
 
-  useEffect(() => {
-    if (!selectedCategory) {
-      setSelectedTournament(null);
-      return;
-    }
-    const nextTournament = availableTournaments[0] ?? null;
-    setSelectedTournament(nextTournament);
-  }, [selectedCategory, availableTournaments]);
+  async function saveTopBet(event: React.FormEvent) {
+    event.preventDefault();
 
-  const handleAddTopTournament = () => {
-    if (!selectedSport || !selectedCategory || !selectedTournament) {
-      alert("Please select sport, category, and tournament.");
-      return;
-    }
-
-    const sportName = selectedSport.label;
-    const categoryName = selectedCategory.label;
-    const tournamentName = selectedTournament.label;
-
-    const alreadyExists = topTournaments.some(
-      (item) =>
-        item.sport === sportName &&
-        item.category === categoryName &&
-        item.tournament === tournamentName
-    );
-
-    if (alreadyExists) {
-      alert("This tournament is already in the top list.");
+    if (!selectedSport || !selectedTournament) {
+      toast.error("Select sport and tournament");
       return;
     }
 
-    setTopTournaments((prev) => [
-      {
-        id: `top-${Date.now()}`,
-        sport: sportName,
-        category: categoryName,
-        tournament: tournamentName,
-        showOnHome: showOnHome.value === "yes",
-        showOnSideMenu: showOnSideMenu.value === "yes",
-      },
-      ...prev,
-    ]);
+    setSaving(true);
+    try {
+      const payload = {
+        sport_id: Number(form.sportId) || form.sportId,
+        tournament_id: Number(form.tournamentId) || form.tournamentId,
+        source: form.source,
+        priority: Number.parseInt(form.priority, 10) || 0,
+      };
+      const body = await requestFixture<any>("/top_tournament", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
 
-    alert("Top tournament saved (mock).");
-    setIsFormModalOpen(false);
-  };
+      if (!isCreated(body)) {
+        toast.error("An error occured");
+        return;
+      }
 
-  const handleRemoveTournament = (item: TopTournament) => {
-    setTournamentToRemove(item);
-    setIsRemoveModalOpen(true);
-  };
+      toast.success(`${tournamentLabel(selectedTournament)} has been added to top bets`);
+      setForm(blankForm);
+      setTournaments([]);
+      await loadTopBets();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "An error occured");
+    } finally {
+      setSaving(false);
+    }
+  }
 
-  const confirmRemoveTournament = () => {
-    if (!tournamentToRemove) return;
+  async function removeTopBet(item: TopTournament) {
+    const id = topTournamentId(item);
+    if (!id) {
+      toast.error("Unable to determine top bet id");
+      return;
+    }
+    if (!window.confirm("Are you sure you want to remove this item?")) return;
 
-    setTopTournaments((prev) => prev.filter((item) => item.id !== tournamentToRemove.id));
-    setIsRemoveModalOpen(false);
-    setTournamentToRemove(null);
-  };
+    setRemovingId(id);
+    try {
+      const body = await requestFixture<any>(`/top_tournament/${id}`, { method: "DELETE" });
 
-  const summary = useMemo(() => {
-    const total = topTournaments.length;
-    const homeCount = topTournaments.filter((item) => item.showOnHome).length;
-    const sideMenuCount = topTournaments.filter((item) => item.showOnSideMenu).length;
-    return { total, homeCount, sideMenuCount };
-  }, [topTournaments]);
+      if (!isDeleted(body)) {
+        toast.error("An error occured");
+        return;
+      }
+
+      toast.success("Item has been removed");
+      setTopTournaments((current) => current.filter((topBet) => topTournamentId(topBet) !== id));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "An error occured");
+    } finally {
+      setRemovingId("");
+    }
+  }
 
   return (
     <div className="space-y-6 p-4">
       <PageBreadcrumb pageTitle="Top Bets" />
 
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-900">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="space-y-1">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Curated Tournaments</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Highlight key competitions across products for quick access and ongoing campaigns.
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-          <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900/60">
-            <p className="text-sm text-gray-500 dark:text-gray-400">Total Top Tournaments</p>
-            <p className="text-2xl font-semibold text-gray-900 dark:text-white">{summary.total}</p>
-          </div>
-          <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900/60">
-            <p className="text-sm text-gray-500 dark:text-gray-400">Visible on Home</p>
-            <p className="text-2xl font-semibold text-gray-900 dark:text-white">{summary.homeCount}</p>
-          </div>
-          <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900/60">
-            <p className="text-sm text-gray-500 dark:text-gray-400">On Side Menu</p>
-            <p className="text-2xl font-semibold text-gray-900 dark:text-white">{summary.sideMenuCount}</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid gap-6">
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-900">
-          <div className="flex items-center justify-between gap-4">
+      <div className="grid gap-6 xl:grid-cols-2">
+        <section className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-950">
+          <div className="flex items-center justify-between gap-3 border-b border-gray-200 px-5 py-4 dark:border-gray-800">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Top Tournaments</h3>
+              <h1 className="text-base font-semibold text-gray-900 dark:text-white">Top Tournaments</h1>
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Drag-and-drop ordering will be available once API sorting is ready. For now, items are listed by most recent additions.
+                Tournaments currently promoted as top bets.
               </p>
             </div>
-            <Button
-              onClick={() => setIsFormModalOpen(true)}
-              className="bg-brand-500 text-white hover:bg-brand-600 dark:bg-brand-500 dark:text-white dark:hover:bg-brand-600"
-              
-            >
-              Add Tournament
+            <Button type="button" variant="outline" size="sm" onClick={() => void loadInitialData()} disabled={loading} startIcon={<RefreshCw size={16} />}>
+              Refresh
             </Button>
           </div>
 
-          <div className="mt-4 space-y-3">
-            {topTournaments.length === 0 && (
-              <div className="rounded-lg border border-dashed border-gray-300 p-4 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
-                No tournaments have been pinned yet. Add one using the form.
+          <div className="max-h-[520px] overflow-y-auto p-5">
+            {loading ? (
+              <div className="py-10 text-center text-sm text-gray-500 dark:text-gray-400">Loading top bets...</div>
+            ) : topTournaments.length ? (
+              <ul className="space-y-3">
+                {topTournaments.map((topBet) => {
+                  const id = topTournamentId(topBet);
+                  return (
+                    <li key={id || tournamentLabel(topBet)} className="flex items-center justify-between gap-4 rounded-lg border border-gray-200 px-4 py-3 dark:border-gray-800">
+                      <div>
+                        <h2 className="text-sm font-semibold text-brand-600 dark:text-brand-300">{tournamentLabel(topBet)}</h2>
+                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Platform: {String(topBet.source || "-")}</p>
+                        {topBet.priority !== undefined ? (
+                          <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">Priority: {String(topBet.priority)}</p>
+                        ) : null}
+                      </div>
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-1 rounded-md border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-60 dark:border-red-500/30 dark:text-red-300 dark:hover:bg-red-500/10"
+                        disabled={removingId === id}
+                        onClick={() => void removeTopBet(topBet)}
+                      >
+                        <Trash2 size={14} />
+                        {removingId === id ? "Removing..." : "Remove"}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <div className="rounded-lg border border-dashed border-gray-300 p-8 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
+                No record found
               </div>
             )}
-            {topTournaments.map((item) => (
-              <div
-                key={item.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-800/60"
-              >
-                <div className="space-y-1 text-sm text-gray-700 dark:text-gray-200">
-                  <p className="font-medium text-gray-900 dark:text-gray-100">
-                    {item.sport} → {item.category} → {item.tournament}
-                  </p>
-                  <div className="flex flex-wrap gap-2 text-xs">
-                    <span
-                      className={`rounded-full px-2 py-1 font-medium ${
-                        item.showOnHome
-                          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300"
-                          : "bg-gray-200 text-gray-600 dark:bg-gray-700/60 dark:text-gray-300"
-                      }`}
-                    >
-                      Home: {item.showOnHome ? "Yes" : "No"}
-                    </span>
-                    <span
-                      className={`rounded-full px-2 py-1 font-medium ${
-                        item.showOnSideMenu
-                          ? "bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300"
-                          : "bg-gray-200 text-gray-600 dark:bg-gray-700/60 dark:text-gray-300"
-                      }`}
-                    >
-                      Side Menu: {item.showOnSideMenu ? "Yes" : "No"}
-                    </span>
-                  </div>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleRemoveTournament(item)}
-                  className="px-2"
-                  aria-label={`Remove ${item.tournament}`}
-                >
-                  <Trash2 size={16} className="text-red-500" />
-                </Button>
-              </div>
-            ))}
           </div>
-        </div>
+        </section>
+
+        <section className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-950">
+          <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">Add Tournament to Top Bet</h2>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Select a sport, load its tournaments, then set platform and priority.
+            </p>
+          </div>
+
+          <form className="space-y-5 p-5" onSubmit={saveTopBet}>
+            <div>
+              <Label>Sports</Label>
+              <select
+                value={form.sportId}
+                onChange={(event) => void loadTournaments(event.target.value)}
+                className="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+              >
+                <option value="">Select Sports</option>
+                {sports.map((sport) => (
+                  <option key={sportId(sport)} value={sportId(sport)}>
+                    {sportLabel(sport)}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <Label>Tournament</Label>
+              <select
+                value={form.tournamentId}
+                onChange={(event) => setForm((current) => ({ ...current, tournamentId: event.target.value }))}
+                disabled={!form.sportId || loadingTournaments}
+                className="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+              >
+                <option value="">{loadingTournaments ? "Loading tournaments..." : "Select League"}</option>
+                {tournaments.map((tournament) => (
+                  <option key={tournamentId(tournament)} value={tournamentId(tournament)}>
+                    {tournamentLabel(tournament)}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <Label>Platform</Label>
+              <select
+                value={form.source}
+                onChange={(event) => setForm((current) => ({ ...current, source: event.target.value }))}
+                className="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+              >
+                {platformOptions.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <Label>Priority</Label>
+              <Input
+                type="number"
+                value={form.priority}
+                onChange={(event) => setForm((current) => ({ ...current, priority: event.target.value }))}
+              />
+            </div>
+
+            <Button type="submit" disabled={saving}>
+              {saving ? "Saving..." : "Save"}
+            </Button>
+          </form>
+        </section>
       </div>
-
-      <Modal isOpen={isRemoveModalOpen} onClose={() => setIsRemoveModalOpen(false)}>
-        <ModalHeader>Remove Tournament</ModalHeader>
-        <ModalBody>
-          <p className="text-sm text-gray-600 dark:text-gray-300">
-            Are you sure you want to remove
-            {" "}
-            <span className="font-semibold text-gray-900 dark:text-gray-100">
-              {tournamentToRemove?.tournament}
-            </span>
-            {" "}
-            from the Top Bets list?
-          </p>
-        </ModalBody>
-        <ModalFooter>
-          <Button variant="outline" onClick={() => setIsRemoveModalOpen(false)}>
-            Cancel
-          </Button>
-          <Button onClick={confirmRemoveTournament}>Remove</Button>
-        </ModalFooter>
-      </Modal>
-
-      <Modal isOpen={isFormModalOpen} onClose={() => setIsFormModalOpen(false)} size="lg">
-        <ModalHeader>Add Tournament to Top Bet</ModalHeader>
-        <ModalBody>
-          <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-            Selections cascade from sport to category to tournament. Toggle platform visibility before saving.
-          </p>
-          <Form
-            onSubmit={(event) => {
-              event.preventDefault();
-              handleAddTopTournament();
-            }}
-            className="space-y-5"
-          >
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div>
-                <Label>Sport</Label>
-                <Select<Option, false>
-                  styles={reactSelectStyles(theme)}
-                  options={sportOptions}
-                  placeholder="Select sport"
-                  value={selectedSport}
-                  onChange={(option: SingleValue<Option>) => setSelectedSport(option ?? null)}
-                />
-              </div>
-              <div>
-                <Label>Category / Country</Label>
-                <Select<Option, false>
-                  styles={reactSelectStyles(theme)}
-                  options={availableCategories}
-                  placeholder="Select category"
-                  value={selectedCategory}
-                  onChange={(option: SingleValue<Option>) => setSelectedCategory(option ?? null)}
-                  isDisabled={availableCategories.length === 0}
-                />
-              </div>
-              <div>
-                <Label>Tournament</Label>
-                <Select<Option, false>
-                  styles={reactSelectStyles(theme)}
-                  options={availableTournaments}
-                  placeholder="Select tournament"
-                  value={selectedTournament}
-                  onChange={(option: SingleValue<Option>) => setSelectedTournament(option ?? null)}
-                  isDisabled={availableTournaments.length === 0}
-                />
-              </div>
-              <div>
-                <Label>Show on Home Screen</Label>
-                <Select<Option, false>
-                  styles={reactSelectStyles(theme)}
-                  options={yesNoOptions}
-                  value={showOnHome}
-                  onChange={(option: SingleValue<Option>) =>
-                    setShowOnHome(option ?? yesNoOptions[0])
-                  }
-                />
-              </div>
-              <div>
-                <Label>Show on Side Menu</Label>
-                <Select<Option, false>
-                  styles={reactSelectStyles(theme)}
-                  options={yesNoOptions}
-                  value={showOnSideMenu}
-                  onChange={(option: SingleValue<Option>) =>
-                    setShowOnSideMenu(option ?? yesNoOptions[1])
-                  }
-                />
-              </div>
-            </div>
-            <div className="flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setIsFormModalOpen(false)}>
-                Cancel
-              </Button>
-              <Button type="submit">Save</Button>
-            </div>
-          </Form>
-        </ModalBody>
-      </Modal>
     </div>
   );
 }
