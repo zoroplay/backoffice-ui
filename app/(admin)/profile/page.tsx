@@ -1,275 +1,186 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import { Camera, Mail, Phone, MapPin, Calendar, User, Save } from "lucide-react";
+import Link from "next/link";
+import type React from "react";
+import { KeyRound, LogOut, Mail, Shield, User, Users } from "lucide-react";
+
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import Button from "@/components/ui/button/Button";
 import Badge from "@/components/ui/badge/Badge";
+import Button from "@/components/ui/button/Button";
+import { useAuth } from "@/context/AuthContext";
 import { withAuth } from "@/utils/withAuth";
 
-const inputClassName =
-  "w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-brand-500";
+function firstText(...values: unknown[]) {
+  for (const value of values) {
+    if (typeof value === "string" && value.trim()) return value.trim();
+    if (typeof value === "number") return String(value);
+  }
+
+  return "-";
+}
+
+function imageSource(value: unknown) {
+  if (typeof value === "string" && value.trim()) return value;
+  return "/images/user/owner.jpg";
+}
 
 function ProfilePage() {
-  const [userData, setUserData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    location: "",
-    bio: "",
-    avatar: "/images/user/owner.jpg",
-  });
-  const [isSaving, setIsSaving] = useState(false);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { session, signOut } = useAuth();
+  const user = session?.user;
+  const roles = session?.roles ?? [];
+  const permissions = session?.permissions ?? [];
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const authData = JSON.parse(
-        window.localStorage.getItem("authData") || "{}"
-      );
-      const savedAvatar = authData?.data?.avatar;
-      setUserData({
-        name: authData?.data?.name || authData?.data?.username || "User",
-        email: authData?.data?.email || "user@example.com",
-        phone: authData?.data?.phone || "+234 801 234 5678",
-        location: authData?.data?.location || "Lagos, Nigeria",
-        bio: authData?.data?.bio || "",
-        avatar: savedAvatar && savedAvatar.trim() !== "" ? savedAvatar : "/images/user/owner.jpg",
-      });
-    }
-  }, []);
-
-  const handleChange = (field: keyof typeof userData, value: string) => {
-    setUserData((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleImageClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      // Validate file type
-      if (!file.type.startsWith("image/")) {
-        alert("Please select an image file");
-        return;
-      }
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        alert("Image size should be less than 5MB");
-        return;
-      }
-      // Create a preview URL
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setUserData((prev) => ({
-          ...prev,
-          avatar: reader.result as string,
-        }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
-    setIsSaving(true);
-    setSuccessMessage(null);
-
-    setTimeout(() => {
-      setIsSaving(false);
-      setSuccessMessage("Profile updated successfully!");
-      if (typeof window !== "undefined") {
-        const authData = JSON.parse(
-          window.localStorage.getItem("authData") || "{}"
-        );
-        localStorage.setItem(
-          "authData",
-          JSON.stringify({
-            ...authData,
-            data: { ...authData.data, ...userData },
-          })
-        );
-      }
-    }, 600);
-  };
+  const displayName = firstText(user?.name, user?.username, user?.email, "User");
+  const username = firstText(user?.username, user?.name);
+  const email = firstText(user?.email);
+  const roleNames = roles
+    .map((role) => firstText(role.name, role.id))
+    .filter((role) => role !== "-");
 
   return (
     <div className="space-y-6 p-4">
       <PageBreadcrumb pageTitle="Profile" />
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Profile Card */}
-        <div className="lg:col-span-1">
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950">
-            <div className="flex flex-col items-center text-center">
-              <div className="relative mb-4">
-                <div className="relative h-32 w-32 overflow-hidden rounded-full border-4 border-gray-200 shadow-lg dark:border-gray-700">
-                  <Image
-                    src={userData.avatar}
-                    alt={userData.name}
-                    fill
-                    sizes="128px"
-                    className="object-cover"
-                    unoptimized
-                  />
-                </div>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleImageChange}
-                  accept="image/*"
-                  className="hidden"
-                />
-                <button
-                  type="button"
-                  onClick={handleImageClick}
-                  className="absolute bottom-0 right-0 flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-brand-500 text-white shadow-lg transition hover:bg-brand-600 dark:border-gray-800"
-                >
-                  <Camera className="h-4 w-4" />
-                </button>
-              </div>
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                {userData.name}
-              </h2>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                {userData.email}
-              </p>
-              <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-                <Badge variant="light" color="success" size="sm">
-                  Active
-                </Badge>
+      <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
+        <section className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950">
+          <div className="flex flex-col items-center text-center">
+            <div className="relative h-28 w-28 overflow-hidden rounded-full border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900">
+              <Image
+                src={imageSource(user?.picture ?? user?.avatar ?? user?.image)}
+                alt={displayName}
+                fill
+                sizes="112px"
+                className="object-cover"
+                unoptimized
+              />
+            </div>
+
+            <h1 className="mt-4 text-xl font-semibold text-gray-900 dark:text-gray-100">{displayName}</h1>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{username}</p>
+
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              <Badge variant="light" color={session?.token ? "success" : "warning"} size="sm">
+                {session?.token ? "Authenticated" : "Session unavailable"}
+              </Badge>
+              {firstText(user?.role) !== "-" ? (
                 <Badge variant="light" color="primary" size="sm">
-                  Verified
+                  {firstText(user?.role)}
                 </Badge>
-              </div>
-
-              <div className="mt-6 w-full space-y-3 border-t border-gray-200 pt-6 dark:border-gray-800">
-                <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-300">
-                  <Phone className="h-4 w-4 text-gray-400" />
-                  <span>{userData.phone}</span>
-                </div>
-                <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-300">
-                  <MapPin className="h-4 w-4 text-gray-400" />
-                  <span>{userData.location}</span>
-                </div>
-                <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-300">
-                  <Calendar className="h-4 w-4 text-gray-400" />
-                  <span>Member since {new Date().getFullYear()}</span>
-                </div>
-              </div>
+              ) : null}
             </div>
           </div>
-        </div>
 
-        {/* Profile Form */}
-        <div className="lg:col-span-2">
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950">
-            <div className="mb-6 flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                  Personal Information
-                </h2>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  Update your profile details and personal information.
-                </p>
-              </div>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid gap-6 md:grid-cols-2">
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-200">
-                    Full Name
-                  </label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                    <input
-                      type="text"
-                      className={`${inputClassName} pl-10`}
-                      value={userData.name}
-                      onChange={(e) => handleChange("name", e.target.value)}
-                      placeholder="Enter your full name"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-200">
-                    Email Address
-                  </label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                    <input
-                      type="email"
-                      className={`${inputClassName} pl-10`}
-                      value={userData.email}
-                      onChange={(e) => handleChange("email", e.target.value)}
-                      placeholder="Enter your email"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-200">
-                    Phone Number
-                  </label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                    <input
-                      type="tel"
-                      className={`${inputClassName} pl-10`}
-                      value={userData.phone}
-                      onChange={(e) => handleChange("phone", e.target.value)}
-                      placeholder="Enter your phone number"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-200">
-                    Location
-                  </label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                    <input
-                      type="text"
-                      className={`${inputClassName} pl-10`}
-                      value={userData.location}
-                      onChange={(e) => handleChange("location", e.target.value)}
-                      placeholder="Enter your location"
-                    />
-                  </div>
-                </div>
-              </div>
-
-             
-
-              {successMessage && (
-                <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                  {successMessage}
-                </div>
-              )}
-
-              <div className="flex flex-wrap gap-3 border-t border-gray-200 pt-6 dark:border-gray-800">
-                <Button variant="outline" type="button" onClick={() => window.location.reload()}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={isSaving} startIcon={<Save className="h-4 w-4" />}>
-                  {isSaving ? "Saving..." : "Save Changes"}
-                </Button>
-              </div>
-            </form>
+          <div className="mt-6 space-y-3 border-t border-gray-200 pt-6 dark:border-gray-800">
+            <ProfileLine icon={<User size={16} />} label="Username" value={username} />
+            <ProfileLine icon={<Mail size={16} />} label="Email" value={email} />
+            <ProfileLine icon={<Shield size={16} />} label="Permissions" value={String(permissions.length)} />
           </div>
-        </div>
+        </section>
+
+        <section className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950">
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Account Access</h2>
+              <p className="mt-1 max-w-2xl text-sm text-gray-500 dark:text-gray-400">
+                Review the active admin session and use the account shortcuts for common access tasks.
+              </p>
+            </div>
+            <Button type="button" variant="outline" startIcon={<LogOut size={16} />} onClick={signOut}>
+              Sign out
+            </Button>
+          </div>
+
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
+            <ActionLink href="/user-management/users" icon={<Users size={18} />} title="User Management" detail="Open the admin user list." />
+            <ActionLink href="/change-password" icon={<KeyRound size={18} />} title="Change Password" detail="Update account credentials." />
+            <ActionLink href="/account-settings" icon={<Shield size={18} />} title="Account Settings" detail="Review local account preferences." />
+          </div>
+
+          <div className="mt-6 grid gap-4 lg:grid-cols-2">
+            <InfoPanel title="Roles" emptyText="No roles were returned with this session.">
+              {roleNames.map((role) => (
+                <span key={role} className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                  {role}
+                </span>
+              ))}
+            </InfoPanel>
+
+            <InfoPanel title="Permissions" emptyText="No explicit permissions were returned with this session.">
+              {permissions.slice(0, 24).map((permission) => (
+                <span key={permission} className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                  {permission}
+                </span>
+              ))}
+              {permissions.length > 24 ? (
+                <span className="rounded-full bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700 dark:bg-brand-500/10 dark:text-brand-200">
+                  +{permissions.length - 24} more
+                </span>
+              ) : null}
+            </InfoPanel>
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
+
+function ProfileLine({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-4 text-sm">
+      <span className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
+        {icon}
+        {label}
+      </span>
+      <span className="max-w-[180px] truncate font-medium text-gray-900 dark:text-gray-100">{value}</span>
+    </div>
+  );
+}
+
+function ActionLink({
+  href,
+  icon,
+  title,
+  detail,
+}: {
+  href: string;
+  icon: React.ReactNode;
+  title: string;
+  detail: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="rounded-lg border border-gray-200 p-4 transition hover:border-brand-300 hover:bg-brand-50/40 dark:border-gray-800 dark:hover:border-brand-700 dark:hover:bg-brand-500/10"
+    >
+      <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+        {icon}
+      </span>
+      <h3 className="mt-3 text-sm font-semibold text-gray-900 dark:text-gray-100">{title}</h3>
+      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{detail}</p>
+    </Link>
+  );
+}
+
+function InfoPanel({
+  title,
+  emptyText,
+  children,
+}: {
+  title: string;
+  emptyText: string;
+  children: React.ReactNode;
+}) {
+  const hasItems = Array.isArray(children) ? children.some(Boolean) : Boolean(children);
+
+  return (
+    <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-800">
+      <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{title}</h3>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {hasItems ? children : <p className="text-sm text-gray-500 dark:text-gray-400">{emptyText}</p>}
       </div>
     </div>
   );
 }
 
 export default withAuth(ProfilePage);
-
