@@ -11,7 +11,11 @@ import { Range } from "react-date-range";
 import { columns, JackpotTicket } from "./columns";
 import { jackpotTicketsData } from "./data";
 import { TableFilterToolbar } from "@/components/common/TableFilterToolbar";
-import { FilterOption } from "../../network/pending-requests/data";
+
+type FilterOption = {
+  value: string;
+  label: string;
+};
 
 const defaultDateRange: Range = {
   startDate: new Date(new Date().setHours(0, 0, 0, 0)),
@@ -185,4 +189,3 @@ function JackpotTicketsPage() {
 }
 
 export default withAuth(JackpotTicketsPage);
-
