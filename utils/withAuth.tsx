@@ -4,8 +4,8 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { toast } from "sonner";
 
-export function withAuth(Component: React.FC) {
-  return function AuthenticatedComponent(props: any) {
+export function withAuth<P extends object>(Component: React.ComponentType<P>) {
+  return function AuthenticatedComponent(props: P) {
     const router = useRouter();
     const { isReady, isAuthenticated } = useAuth();
 

@@ -64,7 +64,7 @@ async function createApiSignature(apiKeyHex: string) {
   return `${bytesToHex(iv)}${bytesToHex(encrypted)}`;
 }
 
-async function buildHeaders() {
+async function buildHeaders(includeJsonContentType = true) {
   const clientId = process.env.NEXT_PUBLIC_CLIENT_ID ?? "";
   const siteKey = process.env.NEXT_PUBLIC_SITE_KEY ?? "";
   const token = getStoredToken();
@@ -72,11 +72,14 @@ async function buildHeaders() {
   const signature = apiKey ? await createApiSignature(apiKey) : "";
 
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
     "client-code": process.env.NEXT_PUBLIC_CLIENT_CODE ?? "",
     "SBE-Client-ID": clientId,
     "sbe-client-id": clientId,
   };
+
+  if (includeJsonContentType) {
+    headers["Content-Type"] = "application/json";
+  }
 
   if (token) headers.Authorization = token;
   if (apiKey) headers["SBE-API-KEY"] = apiKey;
@@ -101,10 +104,15 @@ export const ApiRequest = async <T = unknown>(
   data: unknown = null
 ): Promise<ApiResponse<T>> => {
   try {
+    const isFormDataPayload =
+      typeof FormData !== "undefined" && data instanceof FormData;
+
     const response = await fetch(fullEndpoint(url), {
       method,
-      headers: await buildHeaders(),
-      ...(data !== null && data !== undefined ? { body: JSON.stringify(data) } : {}),
+      headers: await buildHeaders(!isFormDataPayload),
+      ...(data !== null && data !== undefined
+        ? { body: isFormDataPayload ? data : JSON.stringify(data) }
+        : {}),
     });
     const responseData = (await response.json().catch(() => null)) as T | null;
 
